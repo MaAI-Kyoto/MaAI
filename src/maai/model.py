@@ -155,38 +155,49 @@ class Maai():
         self.use_kv_cache = use_kv_cache
         self.vap_cache = None
         
-        # Thread control
         self._stop_event = threading.Event()
         self._worker_thread = None
-    
+        self._worker_error = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        self.stop()
+        return False
+
     def worker(self):
-        
-        # Clear the queues at the start
-        # This is to ensure that the queues are empty before starting the processing loop
+
         self._mic1_queue.queue.clear()
         self._mic2_queue.queue.clear()
-        
-        while not self._stop_event.is_set():
-            x1 = self.mic1.get_audio_data(self._mic1_queue)
-            x2 = self.mic2.get_audio_data(self._mic2_queue)
 
-            if self._stop_event.is_set() or x1 is None or x2 is None:
-                break
+        try:
+            while not self._stop_event.is_set():
+                x1 = self.mic1.get_audio_data(self._mic1_queue)
+                x2 = self.mic2.get_audio_data(self._mic2_queue)
 
-            self.process(x1, x2)
+                if self._stop_event.is_set() or x1 is None or x2 is None:
+                    break
 
-            # Clear the queues if they are too large
-            if self._mic1_queue.qsize() > 100:
-                self._mic1_queue.queue.clear()
-                print("[Warning] Audio queue (channel 1) overflow detected. Clearing audio queues.")
-            if self._mic2_queue.qsize() > 100:
-                self._mic2_queue.queue.clear()
-                print("[Warning] Audio queue (channel 2) overflow detected. Clearing audio queues.")
+                self.process(x1, x2)
 
-            # print(self._mic1_queue.qsize(), self._mic2_queue.qsize())
+                if self._mic1_queue.qsize() > 100:
+                    self._mic1_queue.queue.clear()
+                    print("[Warning] Audio queue (channel 1) overflow detected. Clearing audio queues.")
+                if self._mic2_queue.qsize() > 100:
+                    self._mic2_queue.queue.clear()
+                    print("[Warning] Audio queue (channel 2) overflow detected. Clearing audio queues.")
 
-            # self._mic1_queue.queue.clear()
-            # self._mic2_queue.queue.clear()
+        except Exception as e:
+
+            self._worker_error = e
+            self._stop_event.set()
+
+            try:
+                self.result_dict_queue.put(None)
+            except Exception:
+                pass
+            raise
 
     def start(self):
 
@@ -372,9 +383,36 @@ class Maai():
         # Keep only the last samples in the buffer (use views for efficiency)
         self.current_x1_audio = self.current_x1_audio[-self.frame_contxt_padding:].copy()
         self.current_x2_audio = self.current_x2_audio[-self.frame_contxt_padding:].copy()
-    
-    def get_result(self):
-        return self.result_dict_queue.get()
+
+        raise ValueError("TEST ERROR")
+
+    def get_result(self, timeout=1.0):
+        """
+        Get the next result from the queue.
+
+        Args:
+            timeout (float): Maximum seconds to wait for a result. Default is 1.0.
+                            Returns None if timeout occurs.
+
+        Returns:
+            dict: Result dictionary, or None if timeout occurs.
+
+        Raises:
+            Exception: Re-raises any exception that occurred in the worker thread.
+        """
+
+        if self._worker_error is not None:
+            raise self._worker_error
+
+        try:
+            result = self.result_dict_queue.get(timeout=timeout)
+            if self._worker_error is not None:
+                raise self._worker_error
+            return result
+        except queue.Empty:
+            if self._worker_error is not None:
+                raise self._worker_error
+            return None
     
     def set_prompt_ch1(self, prompt: str):
         """

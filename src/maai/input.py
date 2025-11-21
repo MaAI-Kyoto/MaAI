@@ -127,6 +127,21 @@ class Mic(Base):
             threading.Thread(target=self._read_mic, daemon=True).start()
             self._is_thread_started = True
 
+    def stop(self):
+        """Stop the microphone stream and cleanup resources."""
+        try:
+            if hasattr(self, 'stream') and self.stream is not None:
+                if self.stream.is_active():
+                    self.stream.stop_stream()
+                self.stream.close()
+        except Exception:
+            pass
+        try:
+            if hasattr(self, 'p') and self.p is not None:
+                self.p.terminate()
+        except Exception:
+            pass
+
 class Wav(Base):
     def __init__(self, wav_file_path, audio_gain=1.0):
         super().__init__()
