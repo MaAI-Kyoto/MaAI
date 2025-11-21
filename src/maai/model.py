@@ -384,8 +384,6 @@ class Maai():
         self.current_x1_audio = self.current_x1_audio[-self.frame_contxt_padding:].copy()
         self.current_x2_audio = self.current_x2_audio[-self.frame_contxt_padding:].copy()
 
-        raise ValueError("TEST ERROR")
-
     def get_result(self, timeout=1.0):
         """
         Get the next result from the queue.
