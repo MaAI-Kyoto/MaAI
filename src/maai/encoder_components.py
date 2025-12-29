@@ -500,6 +500,18 @@ def get_cnn_layer(
     dilation: List[int] = [1],
     activation: str = "GELU",
 ):
+    """Build a sequential convolutional block with normalization and activation.
+
+    Args:
+        dim: Channel dimension for the convolution.
+        kernel: List of kernel sizes.
+        stride: List of stride values.
+        dilation: List of dilation values.
+        activation: Activation class name in torch.nn.
+
+    Returns:
+        Sequential convolutional block.
+    """
     layers = []
     layers.append(Rearrange("b t d -> b d t"))
     for k, s, d in zip(kernel, stride, dilation):

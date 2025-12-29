@@ -1,3 +1,5 @@
+"""VAP model variant for two-type backchannel prediction."""
+
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -10,8 +12,13 @@ from ..modules import GPT, GPTStereo
 from ..objective import ObjectiveVAP
 
 class VapGPT_bc_2type(nn.Module):
-    
+    """GPT-based VAP model for reactive and emotional backchannels."""
     def __init__(self, conf: Optional[VapConfig] = None):
+        """Initialize the two-type backchannel VAP model.
+
+        Args:
+            conf: Optional configuration object.
+        """
         super().__init__()
         if conf is None:
             conf = VapConfig()
@@ -62,6 +69,11 @@ class VapGPT_bc_2type(nn.Module):
         self.bc_head = nn.Linear(conf.dim, 3)
 
     def load_encoder(self, cpc_model):
+        """Load CPC encoders and optionally freeze them.
+
+        Args:
+            cpc_model: Path to the CPC checkpoint.
+        """
         
         # Audio Encoder
         self.encoder1 = EncoderCPC(
@@ -86,10 +98,19 @@ class VapGPT_bc_2type(nn.Module):
 
     @property
     def horizon_time(self):
+        """Return the prediction horizon time in seconds."""
         return self.objective.horizon_time
 
     def encode_audio(self, audio1: torch.Tensor, audio2: torch.Tensor) -> Tuple[Tensor, Tensor]:
-        
+        """Encode paired audio tensors into embeddings.
+
+        Args:
+            audio1: Audio tensor for channel 1.
+            audio2: Audio tensor for channel 2.
+
+        Returns:
+            Tuple of encoded tensors (x1, x2).
+        """
         # Channel swap for temporal consistency
         x1 = self.encoder1(audio2)  # speaker 1 (User)
         x2 = self.encoder2(audio1)  # speaker 2 (System)
@@ -97,6 +118,15 @@ class VapGPT_bc_2type(nn.Module):
         return x1, x2
 
     def vad_loss(self, vad_output, vad):
+        """Compute VAD loss for the model outputs.
+
+        Args:
+            vad_output: VAD logits.
+            vad: VAD labels.
+
+        Returns:
+            Loss tensor.
+        """
         return F.binary_cross_entropy_with_logits(vad_output, vad)
     
     def forward(

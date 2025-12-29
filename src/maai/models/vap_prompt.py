@@ -1,3 +1,5 @@
+"""VAP model variant with prompt-conditioned behavior."""
+
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -12,7 +14,7 @@ from ..objective import ObjectiveVAP
 from sentence_transformers import SentenceTransformer
 
 class VapGPT_prompt(nn.Module):
-    
+    """GPT-based VAP model augmented with text prompt embeddings."""
     BINS_P_NOW = [0, 1]
     BINS_PFUTURE = [2, 3]
 
@@ -20,7 +22,11 @@ class VapGPT_prompt(nn.Module):
     prompt_model_name = "cl-nagoya/ruri-v3-pt-30m"
 
     def __init__(self, conf: Optional[VapConfig] = None):
-        
+        """Initialize the prompt-conditioned VAP model.
+
+        Args:
+            conf: Optional configuration object.
+        """
         super().__init__()
         
         # print this model is a beta version
@@ -83,6 +89,11 @@ class VapGPT_prompt(nn.Module):
         self.set_prompt_ch2("発話前に少し間を取り、考えてから丁寧に話し始めてください。応答は急がず、落ち着いたテンポを意識してください。")
 
     def load_encoder(self, cpc_model):
+        """Load CPC encoders and optionally freeze them.
+
+        Args:
+            cpc_model: Path to the CPC checkpoint.
+        """
         
         # Audio Encoder
         #if self.conf.encoder_type == "cpc":
@@ -111,19 +122,43 @@ class VapGPT_prompt(nn.Module):
 
     @property
     def horizon_time(self):
+        """Return the prediction horizon time in seconds."""
         return self.objective.horizon_time
 
     def encode_audio(self, audio1: torch.Tensor, audio2: torch.Tensor) -> Tuple[Tensor, Tensor]:
-        
+        """Encode paired audio tensors into embeddings.
+
+        Args:
+            audio1: Audio tensor for channel 1.
+            audio2: Audio tensor for channel 2.
+
+        Returns:
+            Tuple of encoded tensors (x1, x2).
+        """
         x1 = self.encoder1(audio1)  # speaker 1
         x2 = self.encoder2(audio2)  # speaker 2
         
         return x1, x2
 
     def vad_loss(self, vad_output, vad):
+        """Compute VAD loss for the model outputs.
+
+        Args:
+            vad_output: VAD logits.
+            vad: VAD labels.
+
+        Returns:
+            Loss tensor.
+        """
         return F.binary_cross_entropy_with_logits(vad_output, vad)
     
     def set_prompt_ch1(self, prompt: str, device: torch.device = torch.device('cpu')):
+        """Set the prompt embedding for channel 1.
+
+        Args:
+            prompt: Prompt text for channel 1.
+            device: Torch device to move embeddings to.
+        """
 
         embedding_ch1_ = self.prompt_embedding_model.encode([prompt], normalize_embeddings=True)[0]
         self.embedding_ch1 = torch.tensor(embedding_ch1_).unsqueeze(0)
@@ -134,6 +169,12 @@ class VapGPT_prompt(nn.Module):
         # input("Press Enter to continue...")
 
     def set_prompt_ch2(self, prompt: str, device: torch.device = torch.device('cpu')):
+        """Set the prompt embedding for channel 2.
+
+        Args:
+            prompt: Prompt text for channel 2.
+            device: Torch device to move embeddings to.
+        """
 
         embedding_ch2_ = self.prompt_embedding_model.encode([prompt], normalize_embeddings=True)[0]
         self.embedding_ch2 = torch.tensor(embedding_ch2_).unsqueeze(0)

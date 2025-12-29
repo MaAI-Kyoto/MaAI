@@ -1,3 +1,5 @@
+"""Output utilities for rendering and transmitting model results."""
+
 import sys
 import math
 import time
@@ -13,13 +15,29 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 def _draw_bar(value: float, length: int = 30) -> str:
-    """基本的なバーグラフを描画"""
+    """Draw a basic bar graph representation.
+
+    Args:
+        value: Normalized value between 0 and 1.
+        length: Total bar length in characters.
+
+    Returns:
+        Rendered bar string.
+    """
     bar_len = min(length, max(0, int(value * length)))
     return '█' * bar_len + '-' * (length - bar_len)
 
 
 def _draw_symmetric_bar(value: float, length: int = 30) -> str:
-    """対称的なバーグラフを描画（-1.0から1.0の範囲）"""
+    """Draw a symmetric bar graph in the range -1.0 to 1.0.
+
+    Args:
+        value: Value in the range -1.0 to 1.0.
+        length: Total bar length in characters.
+
+    Returns:
+        Rendered bar string.
+    """
     max_len = length // 2
     value = max(-1.0, min(1.0, value))
     if value >= 0:
@@ -31,7 +49,15 @@ def _draw_symmetric_bar(value: float, length: int = 30) -> str:
 
 
 def _draw_balance_bar(value: float, length: int = 30) -> str:
-    """0.5を中心としたバランスバーを描画"""
+    """Draw a balance bar centered at 0.5.
+
+    Args:
+        value: Value in the range 0.0 to 1.0.
+        length: Total bar length in characters.
+
+    Returns:
+        Rendered bar string.
+    """
     # 2チャネルの場合は1チャネル目のデータを渡すこと
     max_len = length // 2
     value = max(0.0, min(1.0, value))
@@ -47,14 +73,29 @@ def _draw_balance_bar(value: float, length: int = 30) -> str:
 
 
 def _rms(values: Union[List[float], tuple]) -> float:
-    """RMS値を計算"""
+    """Compute the RMS value of a sequence.
+
+    Args:
+        values: Sequence of numeric values.
+
+    Returns:
+        RMS value.
+    """
     if not values:
         return 0.0
     return math.sqrt(sum(x * x for x in values) / len(values))
 
 
 def _format_value(value: Any, max_length: int = 50) -> str:
-    """値を適切な形式でフォーマット"""
+    """Format a value for display in a compact form.
+
+    Args:
+        value: Value to format.
+        max_length: Maximum string length before truncation.
+
+    Returns:
+        Formatted string representation.
+    """
     if isinstance(value, (list, tuple)):
         if len(value) > 0:
             if isinstance(value[0], (int, float)):
@@ -80,7 +121,17 @@ def _format_value(value: Any, max_length: int = 50) -> str:
 
 
 def _get_bar_for_value(key: str, value: Any, bar_length: int = 30, bar_type: str = "normal") -> tuple[str, float]:
-    """キーと値に基づいて適切なバーを選択"""
+    """Select the appropriate bar visualization for a value.
+
+    Args:
+        key: Result key name.
+        value: Value to visualize.
+        bar_length: Total bar length in characters.
+        bar_type: Visualization style ("normal" or "balance").
+
+    Returns:
+        Tuple of (bar string, numeric value used).
+    """
     if isinstance(value, (list, tuple)):
         if len(value) > 2:
             if isinstance(value[0], (int, float)):
@@ -102,7 +153,7 @@ def _get_bar_for_value(key: str, value: Any, bar_length: int = 30, bar_type: str
 
 class ConsoleBar:
     """
-    maai.get_result()の内容をバーグラフで可視化するクラス
+    Render maai.get_result() output as a console bar chart.
     """
     def __init__(self, bar_length: int = 30, bar_type: str = "normal"):
         self.bar_length = bar_length
@@ -110,6 +161,11 @@ class ConsoleBar:
         self._first = True
 
     def update(self, result: Dict[str, Any]):
+        """Render an updated bar chart for a result dictionary.
+
+        Args:
+            result: Result dictionary from the model.
+        """
         if self._first:
             sys.stdout.write("\x1b[2J")  # 初期クリア
             self._first = False
@@ -155,6 +211,7 @@ class ConsoleBar:
         print("-" * (self.bar_length + 30))
 
 class TcpReceiver:
+    """Receive VAP results over TCP and expose a queue interface."""
     def __init__(self, ip, port, mode):
         self.ip = ip
         self.port = port
@@ -163,6 +220,14 @@ class TcpReceiver:
         self.result_queue = queue.Queue()
     
     def _bytearray_2_vapresult(self, data: bytes) -> Dict[str, Any]:
+        """Decode a byte payload into a VAP result dict.
+
+        Args:
+            data: Serialized result payload.
+
+        Returns:
+            Decoded result dictionary.
+        """
         if self.mode in ['vap', 'vap_mc', 'vap_prompt']:
             vap_result = util.conv_bytearray_2_vapresult(data)
         elif self.mode == 'bc_2type':
@@ -174,11 +239,13 @@ class TcpReceiver:
         return vap_result
     
     def connect_server(self):    
+        """Connect to the TCP result server."""
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.ip, self.port))
         print('[CLIENT] Connected to the server')
 
     def _start_client(self):
+        """Continuously receive results and enqueue them."""
         while True:
             try:
                 self.connect_server()
@@ -209,12 +276,15 @@ class TcpReceiver:
             time.sleep(0.5)
 
     def start(self):
+        """Start the TCP receiver thread."""
         threading.Thread(target=self._start_client, daemon=True).start()
     
     def get_result(self):
+        """Return the next received result."""
         return self.result_queue.get()
 
 class TcpTransmitter:
+    """Transmit VAP results over TCP to a client."""
     def __init__(self, ip, port, mode):
         self.ip = ip
         self.port = port
@@ -222,6 +292,14 @@ class TcpTransmitter:
         self.result_queue = queue.Queue()
     
     def _vapresult_2_bytearray(self, result_dict: Dict[str, Any]) -> bytes:
+        """Encode a result dictionary to bytes for transmission.
+
+        Args:
+            result_dict: Result dictionary to encode.
+
+        Returns:
+            Serialized byte buffer.
+        """
         if self.mode in ['vap', 'vap_mc']:
             data_sent = util.conv_vapresult_2_bytearray(result_dict)
         elif self.mode == 'bc_2type':
@@ -233,6 +311,7 @@ class TcpTransmitter:
         return data_sent
         
     def _start_server(self):
+        """Start the TCP server loop for sending results."""
         while True:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -256,14 +335,20 @@ class TcpTransmitter:
                 continue
             
     def start_server(self):
+        """Launch the TCP server thread."""
         threading.Thread(target=self._start_server, daemon=True).start()
         
     def update(self, result: Dict[str, Any]):
+        """Queue a result for transmission.
+
+        Args:
+            result: Result dictionary to send.
+        """
         self.result_queue.put(result)
 
 # 新規追加: GUIでバーグラフを表示するクラス
 class GuiBar:
-    """matplotlibを用いて結果をバーグラフでGUI表示するクラス"""
+    """Show results as a GUI bar chart using matplotlib."""
     def __init__(self, bar_type: str = "normal"):
         self.bar_type = bar_type
         self.plt = plt
@@ -277,7 +362,11 @@ class GuiBar:
         sns.set_theme(style="whitegrid")
 
     def update(self, result: Dict[str, Any]):
-        """resultのキーと値をバーグラフで更新表示する"""
+        """Update the bar chart using a result dictionary.
+
+        Args:
+            result: Result dictionary from the model.
+        """
         labels = []
         values = []
         for key, value in result.items():
@@ -319,6 +408,15 @@ class GuiBar:
         self.plt.pause(0.001)
         
 class GuiPlot:
+    """Plot waveform and probability traces in a GUI.
+
+    Args:
+        shown_context_sec: Seconds of history to display.
+        frame_rate: Frame rate used for model outputs.
+        sample_rate: Sample rate of waveform inputs.
+        figsize: Matplotlib figure size.
+        use_fixed_draw_rate: Whether to throttle redraws.
+    """
     def __init__(self, shown_context_sec: int = 10, frame_rate: int = 10, sample_rate: int = 16000, figsize=(14, 10), use_fixed_draw_rate: bool = True):
         self.figsize = figsize
         self.shown_context_sec = shown_context_sec
@@ -338,6 +436,11 @@ class GuiPlot:
         self._last_draw_time = 0.0
 
     def _init_fig(self, result: Dict[str, any]):
+        """Initialize the matplotlib figure layout for result keys.
+
+        Args:
+            result: Initial result dictionary.
+        """
         special_keys = ['x1', 'x2', 'p_now', 'p_future', 'vad']
         self.keys = [k for k in special_keys if k in result] + [k for k in result.keys() if k not in special_keys and k != 't']
         n = len(self.keys)
@@ -449,6 +552,11 @@ class GuiPlot:
         self.initialized = True
 
     def update(self, result: Dict[str, any]):
+        """Update all plots with the latest result values.
+
+        Args:
+            result: Result dictionary from the model.
+        """
         import time
         draw = True
         if self.use_fixed_draw_rate:
