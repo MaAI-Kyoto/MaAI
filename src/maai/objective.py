@@ -1,3 +1,5 @@
+"""Objective functions and label utilities for VAP training."""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,10 +10,26 @@ from typing import Dict, List, Tuple, Union
 
 
 def bin_times_to_frames(bin_times: List[float], frame_hz: int) -> List[int]:
+    """Convert bin durations (seconds) into frame counts.
+
+    Args:
+        bin_times: List of bin durations in seconds.
+        frame_hz: Frame rate in Hz.
+
+    Returns:
+        List of bin lengths in frames.
+    """
     return (torch.tensor(bin_times) * frame_hz).long().tolist()
 
 
 class ProjectionWindow:
+    """Extract projected activity windows for future bins.
+
+    Args:
+        bin_times: List of bin durations in seconds.
+        frame_hz: Frame rate in Hz.
+        threshold_ratio: Threshold for bin activation.
+    """
     def __init__(
         self,
         bin_times: List = [0.2, 0.4, 0.6, 0.8],
@@ -29,6 +47,7 @@ class ProjectionWindow:
         self.horizon = sum(self.bin_frames)
 
     def __repr__(self) -> str:
+        """Return a readable representation of the projection window."""
         s = f"{self.__class__.__name__}(\n"
         s += f"  bin_times: {self.bin_times}\n"
         s += f"  bin_frames: {self.bin_frames}\n"
@@ -72,11 +91,20 @@ class ProjectionWindow:
         return torch.stack(v_bins, dim=-1)  # (*, t, c, n_bins)
 
     def __call__(self, va: Tensor) -> Tensor:
+        """Project voice activity and return bin indicators.
+
+        Args:
+            va: Voice activity tensor of shape (B, N, C).
+
+        Returns:
+            Bin indicator tensor.
+        """
         projection_windows = self.projection(va)
         return self.projection_bins(projection_windows)
 
 
 class Codebook(nn.Module):
+    """Codebook for quantizing projection windows to discrete classes."""
     def __init__(self, bin_frames):
         super().__init__()
         self.bin_frames = bin_frames
@@ -91,6 +119,15 @@ class Codebook(nn.Module):
         self.emb.weight.requires_grad_(False)
 
     def single_idx_to_onehot(self, idx: int, d: int = 8) -> Tensor:
+        """Convert an integer index to a binary one-hot vector.
+
+        Args:
+            idx: Integer index to encode.
+            d: Number of bits in the output vector.
+
+        Returns:
+            One-hot tensor of length d.
+        """
         assert idx < 2 ** d, "must be possible with {d} binary digits"
         z = torch.zeros(d)
         b = bin(idx).replace("0b", "")
@@ -139,14 +176,37 @@ class Codebook(nn.Module):
         return embed_ind
 
     def decode(self, idx: Tensor):
+        """Decode codebook indices back into bin activations.
+
+        Args:
+            idx: Codebook indices.
+
+        Returns:
+            Decoded bin activations.
+        """
         v = self.emb(idx)
         return rearrange(v, "... (c b) -> ... c b", c=2)
 
     def forward(self, projection_windows: Tensor):
+        """Encode projection windows into codebook indices.
+
+        Args:
+            projection_windows: Projection window tensor.
+
+        Returns:
+            Codebook indices.
+        """
         return self.encode(projection_windows)
 
 
 class ObjectiveVAP(nn.Module):
+    """Loss utilities and label extraction for VAP training.
+
+    Args:
+        bin_times: List of bin durations in seconds.
+        frame_hz: Frame rate in Hz.
+        threshold_ratio: Threshold for bin activation.
+    """
     def __init__(
         self,
         bin_times: List[float] = [0.2, 0.4, 0.6, 0.8],
@@ -169,6 +229,7 @@ class ObjectiveVAP(nn.Module):
         self.lid_n_classes = 3
 
     def __repr__(self):
+        """Return a readable representation of the objective configuration."""
         s = str(self.__class__.__name__)
         s += f"\n{self.codebook}"
         s += f"\n{self.projection_window_extractor}"
@@ -190,6 +251,17 @@ class ObjectiveVAP(nn.Module):
         to_bin: int = 3,
         scale_with_bins: bool = False,
     ) -> Tensor:
+        """Aggregate probabilities over bins for next-speaker metrics.
+
+        Args:
+            probs: Probability tensor of shape (B, N, C).
+            from_bin: Starting bin index.
+            to_bin: Ending bin index.
+            scale_with_bins: Whether to scale by bin sizes.
+
+        Returns:
+            Aggregated probabilities.
+        """
         assert (
             probs.ndim == 3
         ), f"Expected probs of shape (B, n_frames, n_classes) but got {probs.shape}"
@@ -206,14 +278,38 @@ class ObjectiveVAP(nn.Module):
         return p_all
 
     def window_to_win_dialog_states(self, wins):
+        """Compute dialog state counts from projection windows.
+
+        Args:
+            wins: Projection window tensor.
+
+        Returns:
+            Dialog state counts.
+        """
         return (wins.sum(-1) > 0).sum(-1)
 
     def get_labels(self, va: Tensor) -> Tensor:
+        """Return discrete labels for voice activity inputs.
+
+        Args:
+            va: Voice activity tensor.
+
+        Returns:
+            Label indices tensor.
+        """
         projection_windows = self.projection_window_extractor(va).type(va.dtype)
         idx = self.codebook(projection_windows)
         return idx
     
     def get_labels_bc(self, bc_frame: Tensor) -> Tensor:
+        """Return backchannel labels aligned to projection windows.
+
+        Args:
+            bc_frame: Backchannel frame tensor.
+
+        Returns:
+            Backchannel label tensor.
+        """
         
         #
         # bc_frame: (B, N_FRAMES)
@@ -236,6 +332,14 @@ class ObjectiveVAP(nn.Module):
         return bc_projection_frame
 
     def get_da_labels(self, va: Tensor) -> Tuple[Tensor, Tensor]:
+        """Return labels and dialog state counts for a sequence.
+
+        Args:
+            va: Voice activity tensor.
+
+        Returns:
+            Tuple of (labels, dialog state counts).
+        """
         projection_windows = self.projection_window_extractor(va).type(va.dtype)
         idx = self.codebook(projection_windows)
         ds = self.window_to_win_dialog_states(projection_windows)
@@ -244,6 +348,16 @@ class ObjectiveVAP(nn.Module):
     def loss_vap(
         self, logits: Tensor, labels: Tensor, reduction: str = "mean"
     ) -> Tensor:
+        """Compute the VAP classification loss.
+
+        Args:
+            logits: Logits tensor of shape (B, N, C).
+            labels: Label tensor of shape (B, N).
+            reduction: Reduction mode for loss.
+
+        Returns:
+            Loss tensor.
+        """
         assert (
             logits.ndim == 3
         ), f"Exptected logits of shape (B, N_FRAMES, N_CLASSES) but got {logits.shape}"
@@ -269,6 +383,16 @@ class ObjectiveVAP(nn.Module):
     def loss_lid(
         self, logits: Tensor, labels: Tensor, reduction: str = "mean"
     ) -> Tensor:
+        """Compute the language ID loss.
+
+        Args:
+            logits: Logits tensor of shape (B, N, C).
+            labels: Label tensor of shape (B, N).
+            reduction: Reduction mode for loss.
+
+        Returns:
+            Loss tensor.
+        """
         assert (
             logits.ndim == 3
         ), f"Exptected logits of shape (B, N_FRAMES, N_CLASSES) but got {logits.shape}"
@@ -293,13 +417,41 @@ class ObjectiveVAP(nn.Module):
         return loss
 
     def loss_bc(self, bc_output, bc_label, bc_positive_weight=1.0):
+        """Compute the backchannel loss.
+
+        Args:
+            bc_output: Backchannel logits.
+            bc_label: Backchannel labels.
+            bc_positive_weight: Positive class weight.
+
+        Returns:
+            Loss tensor.
+        """
         return F.binary_cross_entropy_with_logits(bc_output, bc_label, pos_weight=torch.tensor([bc_positive_weight], device=bc_output.device))
     
     def loss_vad(self, vad_output, vad):
+        """Compute the VAD loss for stereo inputs.
+
+        Args:
+            vad_output: VAD logits.
+            vad: VAD labels.
+
+        Returns:
+            Loss tensor.
+        """
         n = vad_output.shape[-2]
         return F.binary_cross_entropy_with_logits(vad_output, vad[:, :n])
     
     def loss_vad_mono(self, vad_output, vad):
+        """Compute the VAD loss for mono inputs.
+
+        Args:
+            vad_output: VAD logits.
+            vad: VAD labels.
+
+        Returns:
+            Loss tensor.
+        """
         n = vad_output.shape[-2]
         v = vad[:, :n, 1]
         # print(torch.squeeze(vad_output))
@@ -350,6 +502,17 @@ class ObjectiveVAP(nn.Module):
         events: Dict[str, List[List[Tuple[int, int, int]]]],
         device=None,
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
+        """Extract prediction and target tensors for evaluation metrics.
+
+        Args:
+            p_now: Short-term probabilities.
+            p_fut: Long-term probabilities.
+            events: Event indices for evaluation.
+            device: Optional device for outputs.
+
+        Returns:
+            Tuple of (predictions, targets).
+        """
         batch_size = len(events["hold"])
 
         preds = {"hs": [], "hs2": [], "pred_shift": [], "pred_shift2": [], "ls": [], "pred_backchannel": [], "pred_backchannel2": [], "lid": []}

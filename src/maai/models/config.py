@@ -1,3 +1,5 @@
+"""Configuration dataclass for VAP models."""
+
 from dataclasses import dataclass, field
 from typing import List
 
@@ -5,6 +7,7 @@ BIN_TIMES: list = [0.2, 0.4, 0.6, 0.8]
 
 @dataclass
 class VapConfig:
+    """Configuration parameters for VAP model components."""
     sample_rate: int = 16000
     frame_hz: int = 10
     bin_times: List[float] = field(default_factory=lambda: BIN_TIMES)
@@ -40,6 +43,15 @@ class VapConfig:
 
     @staticmethod
     def add_argparse_args(parser, fields_added=[]):
+        """Add configuration fields to an argparse parser.
+
+        Args:
+            parser: argparse parser instance.
+            fields_added: List to append added field names to.
+
+        Returns:
+            Tuple of (parser, fields_added).
+        """
         for k, v in VapConfig.__dataclass_fields__.items():
             if k == "bin_times":
                 parser.add_argument(
@@ -52,6 +64,14 @@ class VapConfig:
 
     @staticmethod
     def args_to_conf(args):
+        """Convert argparse args into a VapConfig instance.
+
+        Args:
+            args: argparse namespace with "vap_" prefixed fields.
+
+        Returns:
+            VapConfig instance.
+        """
         return VapConfig(
             **{
                 k.replace("vap_", ""): v

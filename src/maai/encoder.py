@@ -1,3 +1,5 @@
+"""Audio encoder wrappers and utilities."""
+
 import torch
 import torch.nn as nn
 import einops
@@ -48,19 +50,30 @@ class EncoderCPC(nn.Module):
             self.freeze()
 
     def get_default_conf(self):
+        """Return a placeholder default configuration."""
         return {""}
 
     def freeze(self):
+        """Freeze encoder parameters for inference."""
         for p in self.encoder.parameters():
             p.requires_grad_(False)
         print(f"Froze {self.__class__.__name__}!")
 
     def unfreeze(self):
+        """Unfreeze encoder parameters for training."""
         for p in self.encoder.parameters():
             p.requires_grad_(True)
         print(f"Trainable {self.__class__.__name__}!")
 
     def forward(self, waveform):
+        """Encode waveform frames into downsampled representations.
+
+        Args:
+            waveform: Input waveform tensor.
+
+        Returns:
+            Encoded feature tensor.
+        """
         
         if waveform.ndim < 3:
             waveform = waveform.unsqueeze(1)  # channel dim
@@ -85,4 +98,12 @@ class EncoderCPC(nn.Module):
         return z
 
     def hash_tensor(self, tensor):
+        """Return a hash of a tensor's flattened values.
+
+        Args:
+            tensor: Tensor to hash.
+
+        Returns:
+            Integer hash of the flattened tensor values.
+        """
         return hash(tuple(tensor.reshape(-1).tolist()))

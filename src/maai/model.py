@@ -1,3 +1,5 @@
+"""Model orchestration for streaming VAP inference."""
+
 import torch
 import torch.nn as nn
 import time
@@ -17,7 +19,7 @@ from .models.config import VapConfig
 # from .models.vap_prompt import VapGPT_prompt
 
 class Maai():
-    
+    """Run streaming VAP inference from paired audio sources."""
     BINS_P_NOW = [0, 1]
     BINS_PFUTURE = [2, 3]
     
@@ -39,6 +41,22 @@ class Maai():
         use_kv_cache: bool = True,
         local_model = None,
     ):
+        """Initialize the Maai model with audio sources and configuration.
+
+        Args:
+            mode: Model mode (e.g., "vap", "vap_mc", "bc", "bc_2type", "nod").
+            lang: Language code for model selection.
+            audio_ch1: Audio source for channel 1.
+            audio_ch2: Audio source for channel 2.
+            frame_rate: Output frame rate in Hz.
+            context_len_sec: Context window length in seconds.
+            device: Torch device to run inference on.
+            cpc_model: Path to CPC checkpoint.
+            cache_dir: Optional cache directory for model downloads.
+            force_download: Whether to force model downloads.
+            use_kv_cache: Whether to use KV cache for streaming.
+            local_model: Optional local model checkpoint path.
+        """
 
         conf = VapConfig()
 
@@ -160,6 +178,7 @@ class Maai():
         self._worker_thread = None
     
     def worker(self):
+        """Background worker loop that reads audio and runs inference."""
         
         # Clear the queues at the start
         # This is to ensure that the queues are empty before starting the processing loop
@@ -189,7 +208,7 @@ class Maai():
             # self._mic2_queue.queue.clear()
 
     def start(self):
-
+        """Start audio capture and processing threads."""
         self.mic1.start()
         self.mic2.start()
         self._stop_event.clear()
@@ -225,7 +244,12 @@ class Maai():
             pass
     
     def process(self, x1, x2):
-        
+        """Process one frame of audio from both channels.
+
+        Args:
+            x1: Audio frame for channel 1.
+            x2: Audio frame for channel 2.
+        """
         time_start = time.time()
 
         # Initialize buffer if empty
@@ -374,6 +398,11 @@ class Maai():
         self.current_x2_audio = self.current_x2_audio[-self.frame_contxt_padding:].copy()
     
     def get_result(self):
+        """Return the next available inference result.
+
+        Returns:
+            Result dictionary for the latest processed frame.
+        """
         return self.result_dict_queue.get()
     
     def set_prompt_ch1(self, prompt: str):

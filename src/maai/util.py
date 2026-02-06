@@ -1,3 +1,5 @@
+"""Utility helpers for model loading and byte conversions."""
+
 import torch
 from huggingface_hub import hf_hub_download, list_repo_files
 
@@ -34,7 +36,20 @@ repo_ids = {
 }
 
 def load_vap_model(mode: str, frame_rate: int, context_len_sec: float, language: str = "jp", device: str = "cpu", cache_dir: str = None, force_download: bool = False):
-    
+    """Download and load a VAP model state dict from Hugging Face.
+
+    Args:
+        mode: Model family (e.g., "vap", "vap_mc", "bc", "bc_2type", "nod").
+        frame_rate: Frame rate in Hz used to select the checkpoint.
+        context_len_sec: Context length in seconds used to select the checkpoint.
+        language: Language code for the model variant.
+        device: Torch device for loading the state dict.
+        cache_dir: Optional Hugging Face cache directory.
+        force_download: Whether to force downloading weights.
+
+    Returns:
+        Loaded PyTorch state dict.
+    """
     if mode == "vap":
         if language == "jp":
             repo_id = repo_ids["vap_jp"]
@@ -186,6 +201,11 @@ def load_vap_model(mode: str, frame_rate: int, context_len_sec: float, language:
     return sd
 
 def get_available_models():
+    """Return available model files per repository.
+
+    Returns:
+        Mapping from repo id to a list of checkpoint filenames.
+    """
     available_models = {}
     for repo_id in repo_ids.values():
         files = list_repo_files(repo_id)
@@ -201,7 +221,15 @@ BYTE_ORDER = 'little'
 #
 
 def conv_2int16_2_byte(val1, val2):
-    
+    """Convert two int16 values to a 4-byte little-endian buffer.
+
+    Args:
+        val1: First int16 value.
+        val2: Second int16 value.
+
+    Returns:
+        Combined byte buffer.
+    """
     b1 = val1.to_bytes(2, BYTE_ORDER)
     b2 = val2.to_bytes(2, BYTE_ORDER)
     
@@ -215,7 +243,15 @@ def conv_2int16_2_byte(val1, val2):
     return b
 
 def conv_2int16array_2_bytearray(arr1, arr2):
-    
+    """Convert two int16 arrays into a concatenated byte array.
+
+    Args:
+        arr1: First int16 array.
+        arr2: Second int16 array.
+
+    Returns:
+        Concatenated byte buffer.
+    """
     if len(arr1) != len(arr2):
         raise ValueError('Two arrays must have the same length')
     
@@ -231,7 +267,15 @@ def conv_2int16array_2_bytearray(arr1, arr2):
 #
 
 def conv_2float_2_byte(val1, val2):
-    
+    """Convert two float64 values into a little-endian byte buffer.
+
+    Args:
+        val1: First float value.
+        val2: Second float value.
+
+    Returns:
+        Combined byte buffer.
+    """
     b1 = struct.pack('<d', val1)
     b2 = struct.pack('<d', val2)
     
@@ -240,7 +284,15 @@ def conv_2float_2_byte(val1, val2):
     return b
 
 def conv_2floatarray_2_bytearray(arr1, arr2):
-    
+    """Convert two float arrays into a concatenated byte array.
+
+    Args:
+        arr1: First float array.
+        arr2: Second float array.
+
+    Returns:
+        Concatenated byte buffer.
+    """
     if len(arr1) != len(arr2):
         raise ValueError('Two arrays must have the same length')
     
@@ -252,7 +304,15 @@ def conv_2floatarray_2_bytearray(arr1, arr2):
     return b
 
 def conv_float32_2_byte(val1, val2):
-    
+    """Convert two float values into a little-endian byte buffer.
+
+    Args:
+        val1: First float value.
+        val2: Second float value.
+
+    Returns:
+        Combined byte buffer.
+    """
     b1 = struct.pack('<d', val1)
     b2 = struct.pack('<d', val2)
 
@@ -261,7 +321,14 @@ def conv_float32_2_byte(val1, val2):
     return b
 
 def conv_floatarray_2_byte(arr):
-    
+    """Convert a float array into a little-endian byte buffer.
+
+    Args:
+        arr: Iterable of float values.
+
+    Returns:
+        Byte buffer for the array.
+    """
     b = b''
     
     for i in range(len(arr)):
@@ -274,14 +341,29 @@ def conv_floatarray_2_byte(arr):
 #
 
 def conv_byte_2_2float(b1, b2):
-    
+    """Convert two float64 byte buffers into float values.
+
+    Args:
+        b1: First byte buffer.
+        b2: Second byte buffer.
+
+    Returns:
+        Tuple of decoded float values.
+    """
     val1 = struct.unpack('<d', b1)[0]
     val2 = struct.unpack('<d', b2)[0]
     
     return val1, val2
 
 def conv_bytearray_2_2floatarray(barr):
-    
+    """Convert an interleaved float64 byte buffer into two float arrays.
+
+    Args:
+        barr: Byte buffer containing interleaved float64 values.
+
+    Returns:
+        Two float arrays split from the buffer.
+    """
     arr1, arr2 = [], []
     
     for i in range(0, len(barr), 16):
@@ -296,7 +378,14 @@ def conv_bytearray_2_2floatarray(barr):
     return arr1, arr2
 
 def conv_bytearray_2_floatarray(barr):
-    
+    """Convert a float64 byte buffer into a float array.
+
+    Args:
+        barr: Byte buffer containing float64 values.
+
+    Returns:
+        List of float values.
+    """
     arr = []
     
     for i in range(0, len(barr), 8):
@@ -307,6 +396,14 @@ def conv_bytearray_2_floatarray(barr):
     return arr
 
 def conv_bytearray_2_floatarray_short(barr):
+    """Convert a float32 byte buffer into a float array.
+
+    Args:
+        barr: Byte buffer containing float32 values.
+
+    Returns:
+        List of float values.
+    """
     arr = []
     for i in range(0, len(barr), 4):
         b = barr[i:i+4]
@@ -318,7 +415,14 @@ def conv_bytearray_2_floatarray_short(barr):
 # VAP result -> Byte
 #
 def conv_vapresult_2_bytearray(vap_result):
-    
+    """Serialize a VAP result dictionary to bytes.
+
+    Args:
+        vap_result: Result dictionary containing arrays and probabilities.
+
+    Returns:
+        Serialized byte buffer.
+    """
     b = b''
     #print(type(vap_result['t']))
     b += struct.pack('<d', vap_result['t'])
@@ -344,7 +448,14 @@ def conv_vapresult_2_bytearray(vap_result):
 # Byte -> VAP result
 #
 def conv_bytearray_2_vapresult(barr):
-    
+    """Deserialize a VAP result dictionary from bytes.
+
+    Args:
+        barr: Byte buffer containing a serialized VAP result.
+
+    Returns:
+        Decoded VAP result dictionary.
+    """
     idx = 0
     t = struct.unpack('<d', barr[idx:8])[0]
     idx += 8
@@ -389,7 +500,14 @@ def conv_bytearray_2_vapresult(barr):
 # VAP result -> Byte
 #
 def conv_vapresult_2_bytearray_bc_2type(vap_result):
-    
+    """Serialize a VAP backchannel 2-type result dictionary to bytes.
+
+    Args:
+        vap_result: Result dictionary with backchannel outputs.
+
+    Returns:
+        Serialized byte buffer.
+    """
     b = b''
     #print(type(vap_result['t']))
     b += struct.pack('<d', vap_result['t'])
@@ -409,7 +527,14 @@ def conv_vapresult_2_bytearray_bc_2type(vap_result):
     return b
 
 def conv_vapresult_2_bytearray_nod(vap_result):
-    
+    """Serialize a nodding result dictionary to bytes.
+
+    Args:
+        vap_result: Result dictionary with nodding outputs.
+
+    Returns:
+        Serialized byte buffer.
+    """
     b = b''
     #print(type(vap_result['t']))
     b += struct.pack('<d', vap_result['t'])
@@ -438,7 +563,14 @@ def conv_vapresult_2_bytearray_nod(vap_result):
 # Byte -> VAP result
 #
 def conv_bytearray_2_vapresult_bc_2type(barr):
-    
+    """Deserialize a VAP backchannel 2-type result from bytes.
+
+    Args:
+        barr: Byte buffer containing a serialized result.
+
+    Returns:
+        Decoded result dictionary.
+    """
     idx = 0
     t = struct.unpack('<d', barr[idx:8])[0]
     idx += 8
@@ -473,7 +605,14 @@ def conv_bytearray_2_vapresult_bc_2type(barr):
     return result_vap
 
 def conv_bytearray_2_vapresult_nod(barr):
-    
+    """Deserialize a nodding result dictionary from bytes.
+
+    Args:
+        barr: Byte buffer containing a serialized result.
+
+    Returns:
+        Decoded result dictionary.
+    """
     idx = 0
     t = struct.unpack('<d', barr[idx:8])[0]
     idx += 8

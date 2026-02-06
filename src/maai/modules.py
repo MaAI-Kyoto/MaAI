@@ -1,3 +1,5 @@
+"""Transformer building blocks used by the VAP models."""
+
 import math
 import torch
 import torch.nn as nn
@@ -13,6 +15,18 @@ def ffn_block(
     dropout: float = 0.0,
     bias: bool = False,
 ) -> nn.Sequential:
+    """Create a feed-forward network block used in transformers.
+
+    Args:
+        din: Input feature dimension.
+        dff: Hidden feed-forward dimension.
+        activation: Activation class name in torch.nn.
+        dropout: Dropout probability.
+        bias: Whether to use bias in linear layers.
+
+    Returns:
+        Sequential feed-forward block.
+    """
     return nn.Sequential(
         nn.Linear(din, dff, bias=bias),
         getattr(nn, activation)(),
@@ -121,6 +135,7 @@ class MultiHeadAttention(nn.Module):
 
 
 class MultiHeadAttentionAlibi(MultiHeadAttention):
+    """Multi-head attention with ALiBi positional bias."""
     def __init__(self, dim: int, num_heads: int, dropout: float, bias: bool = False, context_limit: int = -1):
         super().__init__(dim, num_heads, dropout, bias)
         # self.m = torch.tensor(MultiHeadAttentionAlibi.get_slopes(num_heads))
@@ -306,6 +321,7 @@ class TransformerLayer(nn.Module):
 
 
 class TransformerStereoLayer(TransformerLayer):
+    """Transformer layer that processes two streams with cross-attention."""
     def forward(
         self,
         x1: torch.Tensor,
@@ -420,6 +436,7 @@ class GPT(nn.Module):
 
 
 class GPTStereo(GPT):
+    """Stereo GPT that performs cross-attention between two streams."""
     def _build_layers(self):
         layers = []
         for _ in range(self.num_layers):
@@ -568,6 +585,7 @@ class Combinator(nn.Module):
 
 
 def test_gpt():
+    """Quick sanity check for GPT attention outputs."""
     model = GPT(dim=256, dff_k=3, num_layers=4, num_heads=8)
     x = torch.rand((4, 20, model.dim))
     with torch.no_grad():

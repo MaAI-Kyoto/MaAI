@@ -1,3 +1,5 @@
+"""Audio input helpers for microphones, WAV files, and TCP streams."""
+
 import socket
 import pyaudio
 import queue
@@ -13,6 +15,14 @@ import sys
 import locale
 
 def available_mic_devices(print_out=True):
+    """Return a dictionary of available microphone devices.
+
+    Args:
+        print_out: Whether to print the device list to stdout.
+
+    Returns:
+        Mapping of device index to device info.
+    """
     p = pyaudio.PyAudio()
     device_info = {}
     
@@ -53,6 +63,7 @@ def available_mic_devices(print_out=True):
     return device_info
 
 class Base:
+    """Base class for audio sources with subscription support."""
     FRAME_SIZE = 160
     SAMPLING_RATE = 16000
     def __init__(self):
@@ -61,25 +72,51 @@ class Base:
         self._is_thread_started = False
 
     def subscribe(self):
+        """Create and register a subscriber queue.
+
+        Returns:
+            Queue receiving audio frames.
+        """
         q = queue.Queue()
         with self._lock:
             self._subscriber_queues.append(q)
         return q
 
     def _put_to_all_queues(self, data):
+        """Fan out audio data to all subscriber queues.
+
+        Args:
+            data: Audio frame data to broadcast.
+        """
         # Put data into all subscriber queues and the default queue
         with self._lock:
             for q in self._subscriber_queues:
                 q.put(data)
 
     def get_audio_data(self, q=None):
+        """Get the next audio frame from a subscribed queue.
+
+        Args:
+            q: Subscriber queue to read from.
+
+        Returns:
+            Audio frame data.
+        """
         return q.get()
     
     def _get_queue_size(self):
+        """Return the total queued frame count across subscribers."""
         with self._lock:
             return sum([len(q.queue) for q in self._subscriber_queues])
 
 class Mic(Base):
+    """Microphone-backed audio source.
+
+    Args:
+        audio_gain: Gain multiplier applied to audio frames.
+        mic_device_index: Optional device index to capture from.
+        device_name: Optional device name substring to select.
+    """
 
     def __init__(self, audio_gain=1.0, mic_device_index=-1, device_name=None):
         
@@ -113,6 +150,7 @@ class Mic(Base):
                                   start=False)
 
     def _read_mic(self):
+        """Read frames from the microphone and broadcast to subscribers."""
 
         self.stream.start_stream()
         
@@ -123,11 +161,18 @@ class Mic(Base):
             self._put_to_all_queues(d)
 
     def start(self):
+        """Start the microphone read thread."""
         if not self._is_thread_started:
             threading.Thread(target=self._read_mic, daemon=True).start()
             self._is_thread_started = True
 
 class Wav(Base):
+    """WAV-file-backed audio source.
+
+    Args:
+        wav_file_path: Path to the WAV file.
+        audio_gain: Gain multiplier applied to audio frames.
+    """
     def __init__(self, wav_file_path, audio_gain=1.0):
         super().__init__()
         self.wav_file_path = wav_file_path
@@ -150,6 +195,7 @@ class Wav(Base):
             self.raw_wav_queue.put(d)
 
     def _read_wav(self):
+        """Stream WAV frames in real time and broadcast to subscribers."""
         start_time = time.time()
         frame_duration = self.FRAME_SIZE / self.SAMPLING_RATE
         pygame.mixer.init(frequency=16000, size=-16, channels=1, buffer=512)
@@ -171,11 +217,21 @@ class Wav(Base):
             self._put_to_all_queues(data)
 
     def start(self):
+        """Start the WAV streaming thread."""
         if not self._is_thread_started:
             threading.Thread(target=self._read_wav, daemon=True).start()
             self._is_thread_started = True
 
 class Tcp(Base):
+    """TCP audio receiver that provides frames to subscribers.
+
+    Args:
+        ip: IP address to bind/connect.
+        port: TCP port to bind/connect.
+        audio_gain: Gain multiplier applied to audio frames.
+        recv_float32: Whether to read 4-byte float frames.
+        client_mode: Whether to connect as a client.
+    """
     def __init__(self, ip='127.0.0.1', port=8501, audio_gain=1.0,recv_float32=False, client_mode=False):
         super().__init__()
         self.ip = ip
@@ -189,6 +245,7 @@ class Tcp(Base):
         self.client_mode = client_mode  # クライアントモードオプション
 
     def _server(self):
+        """Start the TCP server for incoming audio streams."""
         while True:
             if self.conn is not None:
                 time.sleep(0.1)
@@ -206,6 +263,7 @@ class Tcp(Base):
                 continue
 
     def _client(self):
+        """Start the TCP client for audio streams."""
         while True:
             if self.conn is not None:
                 time.sleep(0.1)
@@ -222,6 +280,7 @@ class Tcp(Base):
                 continue
 
     def _process(self):
+        """Receive audio frames over TCP and broadcast to subscribers."""
         import struct
         while True:
             try:
@@ -277,11 +336,13 @@ class Tcp(Base):
                 continue
 
     def start(self):
+        """Start the audio processing thread."""
         if not self._is_thread_started_process:
             threading.Thread(target=self._process, daemon=True).start()
             self._is_thread_started_process = True
 
     def start_server(self):
+        """Start the TCP server/client thread."""
         if not self._is_thread_started_server:
             if self.client_mode:
                 threading.Thread(target=self._client, daemon=True).start()
@@ -290,15 +351,29 @@ class Tcp(Base):
             self._is_thread_started_server = True
     
     def _send_data_manual(self, data):
+        """Send raw audio bytes to the connected peer.
+
+        Args:
+            data: Raw byte payload to send.
+        """
         if self.conn is None:
             raise ConnectionError("No connection established. Call start_server() first.")
         self.conn.send(data)
     
     def is_connected(self):
+        """Return True when a TCP connection is established."""
         return self.conn is not None and self.addr is not None
 
 
 class TcpMic(Base):
+    """Microphone source that sends frames to a TCP server.
+
+    Args:
+        server_ip: Target server IP.
+        port: Target server port.
+        audio_gain: Gain multiplier applied to audio frames.
+        mic_device_index: Device index to capture from.
+    """
     def __init__(self, server_ip='127.0.0.1', port=8501, audio_gain=1.0, mic_device_index=0):
         self.ip = server_ip
         self.port = port
@@ -313,11 +388,13 @@ class TcpMic(Base):
                                   input_device_index=self.mic_device_index)
     
     def connect_server(self):    
+        """Connect to the TCP server."""
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.ip, self.port))
         print('[CLIENT] Connected to the server')
 
     def _start_client(self):
+        """Continuously send microphone frames to the server."""
         while True:
             try:
                 self.connect_server()
@@ -349,10 +426,17 @@ class TcpMic(Base):
             time.sleep(0.5)
 
     def start(self):
+        """Start the TCP microphone client thread."""
         threading.Thread(target=self._start_client, daemon=True).start()
 
 
 class TcpChunk(Base):
+    """TCP receiver that processes raw audio chunks.
+
+    Args:
+        server_ip: Target server IP.
+        port: Target server port.
+    """
     def __init__(self, server_ip='127.0.0.1', port=8501):
         self.ip = server_ip
         self.port = port
@@ -360,11 +444,13 @@ class TcpChunk(Base):
         self.sock = None
 
     def connect_server(self):
+        """Connect to the TCP server."""
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.ip, self.port))
         print('[CLIENT] Connected to the server')
 
     def _start_client(self):
+        """Receive raw chunks and process them."""
         while True:
             try:
                 self.connect_server()
@@ -392,9 +478,15 @@ class TcpChunk(Base):
             time.sleep(0.5)
 
     def start(self):
+        """Start the TCP chunk receiver thread."""
         threading.Thread(target=self._start_client, daemon=True).start()
     
     def put_chunk(self, chunk_data):
+        """Send a chunk of audio data to the connected server.
+
+        Args:
+            chunk_data: Audio frame array to send.
+        """
         if self.sock is not None:
             data_sent = util.conv_floatarray_2_byte(chunk_data)
             self.sock.sendall(data_sent)
