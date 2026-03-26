@@ -22,7 +22,8 @@ from maai import Maai, MaaiInput, MaaiOutput
 
 
 def test():
-    local_model = "epoch2-val_loss_nod_all_4.54749.pt"
+    # local_model = "epoch2-val_loss_nod_all_4.54749.pt"
+    local_model = "realtime_rgain_lr1e-4.pt"
     if not local_model:
         print(
             "Set MAAI_NOD_PARA_PT to your nod_para .pt checkpoint path "

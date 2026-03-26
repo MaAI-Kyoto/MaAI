@@ -5,12 +5,15 @@ import einops
 import os
 import math
 import numpy as np
+import json
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
+from pathlib import Path
 
 from .encoder_components import CConv1d, load_CPC, get_cnn_layer
 
 import time
+import copy
 
 
 @dataclass
@@ -216,6 +219,7 @@ class EncoderMimi(nn.Module):
         try:
             from transformers import MimiConfig, MimiModel
             from transformers.models.mimi.modeling_mimi import MimiConv1dPaddingCache
+            from transformers.cache_utils import DynamicCache
         except ModuleNotFoundError as exc:
             raise ModuleNotFoundError(
                 "Mimi encoder requires transformers with Mimi support."
@@ -228,6 +232,7 @@ class EncoderMimi(nn.Module):
 
         self._torchaudio = torchaudio
         self._MimiConv1dPaddingCache = MimiConv1dPaddingCache
+        self._DynamicCache = DynamicCache
         self.sample_rate = 24000
 
         config = MimiConfig.from_pretrained(mimi_model_name)
@@ -346,6 +351,123 @@ class EncoderMimi(nn.Module):
             per_layer_in_channels=per_layer_in_channels,
         )
         return self._mimi_padding_cache
+
+    def get_streaming_emit_samples_16k(self) -> int:
+        """New 16k samples processed in one streaming call."""
+        if self.frame_hz <= 0:
+            raise ValueError("frame_hz must be > 0")
+        return int(round(16000.0 / float(self.frame_hz)))
+
+    def get_streaming_call_window_16k(self) -> int:
+        """Current PyTorch call window size (context + new samples) at 16k."""
+        return int(self.context_samples + self.get_streaming_emit_samples_16k())
+
+    def get_streaming_mimi_input_24k(self) -> int:
+        """Mimi core input size at 24k after stripping overlap context."""
+        emit_16k = self.get_streaming_emit_samples_16k()
+        return int(round(float(emit_16k) * float(self.sample_rate) / 16000.0))
+
+    def _mimi_padding_layout(self) -> list[tuple[int, int]]:
+        """
+        Returns list of (in_channels, padding_total) for Mimi conv cache layers.
+        """
+        layout: list[tuple[int, int]] = []
+        for layer_name in self.model.encoder._mimiconv1d_layer_names:
+            layer = self.model.encoder.get_submodule(layer_name)
+            layout.append((int(layer.in_channels), int(layer.padding_total)))
+        if self.model.downsample is not None:
+            layout.append(
+                (
+                    int(self.model.downsample.in_channels),
+                    int(self.model.downsample.padding_total),
+                )
+            )
+        return layout
+
+    def _probe_mimi_cache_templates(
+        self,
+        batch_size: int = 1,
+        num_samples_24k: Optional[int] = None,
+        device: Optional[torch.device] = None,
+        dtype: torch.dtype = torch.float32,
+    ) -> tuple[list[torch.Tensor], tuple]:
+        """
+        Run one Mimi core step and capture cache tensor templates.
+        This is used to build fixed ONNX IO signatures for streaming cache IO.
+        """
+        if num_samples_24k is None:
+            num_samples_24k = self.get_streaming_mimi_input_24k()
+        if device is None:
+            device = next(self.model.parameters()).device
+
+        self._fix_mimi_padding_buffers()
+        ref_cache = self._ensure_mimi_padding_cache()
+        n_layers = len(ref_cache.per_layer_padding)
+        padding_cache = copy.deepcopy(ref_cache)
+        padding_cache.padding_cache = [None for _ in range(n_layers)]
+        if hasattr(padding_cache, "per_layer_is_init"):
+            padding_cache.per_layer_is_init = [False for _ in range(n_layers)]
+
+        x = torch.zeros(
+            (batch_size, 1, int(num_samples_24k)),
+            device=device,
+            dtype=dtype,
+        )
+        with torch.inference_mode():
+            emb = self.model.encoder(x, padding_cache=padding_cache)
+            enc_out = self.model.encoder_transformer(
+                emb.transpose(1, 2),
+                past_key_values=None,
+                use_cache=True,
+                return_dict=True,
+            )
+            hidden = enc_out.last_hidden_state.transpose(1, 2)
+            if self.model.downsample is not None:
+                _ = self.model.downsample(hidden, padding_cache=padding_cache)
+
+        pad_templates: list[torch.Tensor] = []
+        for t in padding_cache.padding_cache:
+            if t is None:
+                pad_templates.append(torch.zeros((batch_size, 1, 0), device=device, dtype=dtype))
+            else:
+                pad_templates.append(t.detach().clone())
+        return pad_templates, enc_out.past_key_values
+
+    def get_mimi_streaming_onnx_io_spec(
+        self,
+        batch_size: int = 1,
+        num_samples_24k: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """
+        Returns a concrete IO specification for Mimi-core ONNX streaming export.
+        """
+        dev = next(self.model.parameters()).device
+        dtype = next(self.model.parameters()).dtype
+        pad_templates, past = self._probe_mimi_cache_templates(
+            batch_size=batch_size,
+            num_samples_24k=num_samples_24k,
+            device=dev,
+            dtype=dtype,
+        )
+
+        past_shapes: list[tuple[int, ...]] = []
+        for layer in past:
+            for t in layer:
+                past_shapes.append(tuple(int(v) for v in t.shape))
+
+        return {
+            "wave_16k_call_window": self.get_streaming_call_window_16k(),
+            "wave_24k_mimi_input": int(
+                self.get_streaming_mimi_input_24k()
+                if num_samples_24k is None
+                else num_samples_24k
+            ),
+            "padding_cache_shapes": [tuple(int(v) for v in t.shape) for t in pad_templates],
+            "past_key_value_shapes": past_shapes,
+            "num_padding_tensors": len(pad_templates),
+            "num_past_tensors": len(past_shapes),
+            "output_dim": int(self.output_dim),
+        }
 
     def _encode_continuous_embeddings(self, x: torch.Tensor, streaming: bool) -> torch.Tensor:
         padding_cache = None
@@ -556,20 +678,18 @@ class EncoderMimi(nn.Module):
                 waveform,
                 finalize_stream=finalize_stream,
             )
-            # First streaming forward after 16 kHz -> 24 kHz: prepend zeros spanning the same
-            # duration as overlap stripped at 16 kHz (causal warmup for Mimi).
+            # Causal streaming resampler (16 kHz -> 24 kHz): the first chunk is one sample
+            # short of Mimi's expected input length (e.g. 1920); prepend a single zero once.
             if (
                 not self._mimi_did_first_24k_leading_zeros
                 and waveform.shape[-1] > 0
             ):
-                n_pad = int(round(float(overlap_context) * float(self.sample_rate) / 16000.0))
-                if n_pad > 0:
-                    pad = waveform.new_zeros(
-                        waveform.shape[0],
-                        waveform.shape[1],
-                        n_pad,
-                    )
-                    waveform = torch.cat([pad, waveform], dim=-1)
+                pad = waveform.new_zeros(
+                    waveform.shape[0],
+                    waveform.shape[1],
+                    1,
+                )
+                waveform = torch.cat([pad, waveform], dim=-1)
                 self._mimi_did_first_24k_leading_zeros = True
         elif waveform.shape[-1] == 0:
             return waveform.new_zeros((waveform.shape[0], 0, self.output_dim))
@@ -589,6 +709,238 @@ class EncoderMimi(nn.Module):
         )
 
 
+class _ReusableOrtRunner:
+    def __init__(self, ort, sess, input_template: dict[str, np.ndarray], use_cuda: bool):
+        self.sess = sess
+        self.io = sess.io_binding()
+        self.input_ortvalues = {}
+
+        for name, arr in input_template.items():
+            if use_cuda:
+                ov = ort.OrtValue.ortvalue_from_numpy(arr, "cuda", 0)
+            else:
+                ov = ort.OrtValue.ortvalue_from_numpy(arr, "cpu", 0)
+            self.io.bind_ortvalue_input(name, ov)
+            self.input_ortvalues[name] = ov
+
+        for out in sess.get_outputs():
+            self.io.bind_output(out.name, "cuda" if use_cuda else "cpu")
+
+    def run(self, ort_inputs: dict[str, np.ndarray]):
+        for name, arr in ort_inputs.items():
+            self.input_ortvalues[name].update_inplace(arr)
+        self.sess.run_with_iobinding(self.io)
+        return self.io.copy_outputs_to_cpu()
+
+
+class EncoderMimiOnnx(EncoderMimi):
+    """
+    Mimi core ONNX backend:
+    - CUDA: FP32 ONNX + CUDA EP optimized + reusable IOBinding
+    - CPU: INT8 ONNX
+    """
+
+    def __init__(
+        self,
+        frame_hz: float = 10,
+        freeze: bool = True,
+        mimi_model_name: str = "kyutai/mimi",
+        context_samples: int = 320,
+        onnx_model_path: str = "",
+        onnx_meta_path: str = "",
+        runtime_device: str = "cpu",
+        onnx_cpu_intra_threads: int = 2,
+        onnx_cpu_inter_threads: int = 1,
+        onnx_reuse_input_dict: bool = True,
+        onnx_tune_cpu_threads: bool = True,
+    ):
+        super().__init__(
+            frame_hz=frame_hz,
+            freeze=freeze,
+            mimi_model_name=mimi_model_name,
+            context_samples=context_samples,
+        )
+
+        try:
+            import onnxruntime as ort
+        except ModuleNotFoundError as exc:
+            raise ModuleNotFoundError(
+                "EncoderMimiOnnx requires onnxruntime/onnxruntime-gpu."
+            ) from exc
+
+        self._ort = ort
+        self._runtime_device = str(runtime_device)
+        self._use_cuda = self._runtime_device.startswith("cuda")
+        self._onnx_model_path = str(onnx_model_path)
+        self._onnx_meta_path = str(onnx_meta_path)
+        self._onnx_runner = None
+        self._onnx_states: list[np.ndarray] = []
+        self._onnx_input_names: list[str] = []
+        self._onnx_pad_input_keys: list[str] = []
+        self._onnx_past_input_keys: list[str] = []
+        self._onnx_num_pad = 0
+        self._onnx_wave_shape: tuple[int, ...] = (1, 1, 0)
+        self._onnx_inputs: dict[str, np.ndarray] = {}
+        self._onnx_cpu_intra_threads = int(onnx_cpu_intra_threads)
+        self._onnx_cpu_inter_threads = int(onnx_cpu_inter_threads)
+        self._onnx_reuse_input_dict = bool(onnx_reuse_input_dict)
+        self._onnx_tune_cpu_threads = bool(onnx_tune_cpu_threads)
+        # Match PyTorch Mimi DynamicCache effective cap (sliding_window - 1).
+        sw = getattr(getattr(self, "model", None), "config", None)
+        sw_val = getattr(sw, "sliding_window", None) if sw is not None else None
+        self._onnx_max_past_len = int(sw_val - 1) if isinstance(sw_val, int) and sw_val > 0 else None
+
+        self._onnx_sess = self._create_onnx_session()
+        self._init_onnx_states()
+
+    def _create_onnx_session(self):
+        so = self._ort.SessionOptions()
+        so.graph_optimization_level = self._ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        if self._use_cuda and "CUDAExecutionProvider" in self._ort.get_available_providers():
+            providers = [
+                (
+                    "CUDAExecutionProvider",
+                    {
+                        "do_copy_in_default_stream": "1",
+                        "cudnn_conv_use_max_workspace": "1",
+                    },
+                ),
+                "CPUExecutionProvider",
+            ]
+        else:
+            # Realtime-friendly default for CPU EP.
+            if self._onnx_tune_cpu_threads:
+                so.intra_op_num_threads = max(1, self._onnx_cpu_intra_threads)
+                so.inter_op_num_threads = max(1, self._onnx_cpu_inter_threads)
+            providers = ["CPUExecutionProvider"]
+        return self._ort.InferenceSession(self._onnx_model_path, sess_options=so, providers=providers)
+
+    def _load_meta(self) -> dict[str, Any]:
+        p = Path(self._onnx_meta_path)
+        if not p.exists():
+            raise FileNotFoundError(f"ONNX meta file not found: {p}")
+        return json.loads(p.read_text(encoding="utf-8"))
+
+    def _init_onnx_states(self):
+        meta = self._load_meta()
+        self._onnx_input_names = list(meta["input_names"])
+        self._onnx_num_pad = int(meta["num_pad_tensors"])
+        self._onnx_pad_input_keys = [f"pad_cache_{i}" for i in range(self._onnx_num_pad)]
+        n_states_total = len(self._onnx_input_names) - 1
+        n_past = max(0, n_states_total - self._onnx_num_pad)
+        self._onnx_past_input_keys = [f"past_{i}" for i in range(n_past)]
+        if "max_past_len" in meta and meta["max_past_len"] is not None:
+            self._onnx_max_past_len = int(meta["max_past_len"])
+        spec = self.get_mimi_streaming_onnx_io_spec(batch_size=1)
+
+        wave_len = int(meta["wave_24k_mimi_input"])
+        self._onnx_wave_shape = (1, 1, wave_len)
+        dtype = np.float32
+        wave = np.zeros(self._onnx_wave_shape, dtype=dtype)
+        pad = [np.zeros(tuple(s), dtype=dtype) for s in spec["padding_cache_shapes"]]
+        past = [np.zeros(tuple(s), dtype=dtype) for s in spec["past_key_value_shapes"]]
+        self._onnx_states = [*pad, *past]
+
+        input_template = {"wave_24k": wave}
+        for i, s in enumerate(self._onnx_states):
+            if i < self._onnx_num_pad:
+                input_template[self._onnx_pad_input_keys[i]] = s
+            else:
+                input_template[self._onnx_past_input_keys[i - self._onnx_num_pad]] = s
+        self._onnx_inputs = dict(input_template)
+        self._onnx_runner = _ReusableOrtRunner(self._ort, self._onnx_sess, input_template, self._use_cuda)
+
+    def _run_onnx_cuda_iobinding(self, ort_inputs: dict[str, np.ndarray]):
+        # Cache length grows in early streaming steps; rebuild bindings when input shape changes.
+        try:
+            return self._onnx_runner.run(ort_inputs)
+        except Exception:
+            self._onnx_runner = _ReusableOrtRunner(self._ort, self._onnx_sess, ort_inputs, use_cuda=True)
+            return self._onnx_runner.run(ort_inputs)
+
+    def reset_streaming_state(self):
+        super().reset_streaming_state()
+        self._init_onnx_states()
+
+    @staticmethod
+    def _fit_np_shape(x: np.ndarray, target_shape: tuple[int, ...]) -> np.ndarray:
+        y = x
+        if y.ndim >= 3 and len(target_shape) >= 3 and target_shape[-2] > 0 and y.shape[-2] > target_shape[-2]:
+            start = y.shape[-2] - target_shape[-2]
+            y = y.take(indices=range(start, y.shape[-2]), axis=-2)
+        if y.shape != target_shape:
+            slices = tuple(slice(0, min(y.shape[i], target_shape[i])) for i in range(len(target_shape)))
+            y = y[slices]
+        if y.shape != target_shape:
+            out = np.zeros(target_shape, dtype=y.dtype)
+            slices = tuple(slice(0, min(out.shape[i], y.shape[i])) for i in range(len(target_shape)))
+            out[slices] = y[slices]
+            y = out
+        return y
+
+    def _clip_past_len(self, x: np.ndarray) -> np.ndarray:
+        if self._onnx_max_past_len is None:
+            return x
+        if x.ndim < 3:
+            return x
+        # KV shape: [B, H, T, D], clip T axis (-2)
+        t = int(x.shape[-2])
+        if t <= self._onnx_max_past_len:
+            return x
+        return x[..., -self._onnx_max_past_len :, :]
+
+    def _encode_continuous_embeddings(self, x: torch.Tensor, streaming: bool) -> torch.Tensor:
+        if not streaming:
+            return super()._encode_continuous_embeddings(x, streaming=False)
+
+        # ONNX model was exported with B=1 fixed signature.
+        if x.shape[0] != 1:
+            raise ValueError(f"EncoderMimiOnnx supports batch_size=1, got {x.shape[0]}")
+
+        wave_t = x.detach()
+        if wave_t.device.type != "cpu":
+            wave_t = wave_t.cpu()
+        if wave_t.dtype != torch.float32:
+            wave_t = wave_t.to(dtype=torch.float32)
+        if not wave_t.is_contiguous():
+            wave_t = wave_t.contiguous()
+        wave = wave_t.numpy()
+        if wave.shape != self._onnx_wave_shape:
+            raise ValueError(
+                f"ONNX Mimi input shape mismatch: got {tuple(wave.shape)}, "
+                f"expected {self._onnx_wave_shape}. "
+                "Adjusted path was removed; please provide fixed-length chunks."
+            )
+        if self._onnx_reuse_input_dict:
+            self._onnx_inputs["wave_24k"] = wave
+            ort_inputs = self._onnx_inputs
+        else:
+            ort_inputs = {"wave_24k": wave}
+        for i in range(self._onnx_num_pad):
+            ort_inputs[self._onnx_pad_input_keys[i]] = self._onnx_states[i]
+        for i in range(self._onnx_num_pad, len(self._onnx_states)):
+            ort_inputs[self._onnx_past_input_keys[i - self._onnx_num_pad]] = self._clip_past_len(
+                self._onnx_states[i]
+            )
+        if self._use_cuda:
+            ort_out = self._run_onnx_cuda_iobinding(ort_inputs)
+        else:
+            ort_out = self._onnx_sess.run(None, ort_inputs)
+        emb_np = ort_out[0]
+        # Keep variable-length cache states, but cap past len to match PyTorch.
+        new_states: list[np.ndarray] = []
+        for i, o in enumerate(ort_out[1:]):
+            if i < self._onnx_num_pad:
+                new_states.append(o)
+            else:
+                new_states.append(self._clip_past_len(o))
+        self._onnx_states = new_states
+        emb_t = torch.from_numpy(emb_np)
+        if x.device.type == "cpu":
+            return emb_t
+        return emb_t.to(device=x.device, dtype=torch.float32)
+
+
 def build_audio_encoder(conf, cpc_model: str = ""):
     encoder_type = getattr(conf, "encoder_type", "cpc")
 
@@ -600,10 +952,67 @@ def build_audio_encoder(conf, cpc_model: str = ""):
         )
 
     if encoder_type == "mimi":
-        return EncoderMimi(
+        runtime_device = str(getattr(conf, "runtime_device", "cpu"))
+        use_onnx = bool(int(getattr(conf, "mimi_use_onnx", 1)))
+        fp32_path = str(
+            getattr(
+                conf,
+                "mimi_onnx_fp32_path",
+                "onnx/mimi_streaming_fp32.onnx",
+            )
+        )
+        int8_path = str(
+            getattr(
+                conf,
+                "mimi_onnx_int8_path",
+                "onnx/mimi_streaming_int8_matmul.onnx",
+            )
+        )
+        if not use_onnx:
+            return EncoderMimi(
+                frame_hz=getattr(conf, "frame_hz", 10),
+                freeze=conf.freeze_encoder,
+                mimi_model_name=getattr(conf, "mimi_model_name", "kyutai/mimi"),
+            )
+
+        fp32_meta = str(
+            getattr(
+                conf,
+                "mimi_onnx_fp32_meta_path",
+                f"{fp32_path}.json",
+            )
+        )
+        int8_meta = str(
+            getattr(
+                conf,
+                "mimi_onnx_int8_meta_path",
+                f"{int8_path}.json",
+            )
+        )
+        if runtime_device.startswith("cuda"):
+            selected = fp32_path
+            selected_meta = fp32_meta
+        else:
+            selected = int8_path
+            selected_meta = int8_meta
+
+        if not os.path.exists(selected):
+            raise FileNotFoundError(f"Mimi ONNX model not found: {selected}")
+        if not os.path.exists(selected_meta):
+            raise FileNotFoundError(f"Mimi ONNX meta not found: {selected_meta}")
+
+        print(f"Using ONNX Mimi backend: {selected}")
+        return EncoderMimiOnnx(
             frame_hz=getattr(conf, "frame_hz", 10),
             freeze=conf.freeze_encoder,
             mimi_model_name=getattr(conf, "mimi_model_name", "kyutai/mimi"),
+            onnx_model_path=selected,
+            onnx_meta_path=selected_meta,
+            runtime_device=runtime_device,
+            onnx_cpu_intra_threads=getattr(conf, "mimi_onnx_cpu_intra_threads", 2),
+            onnx_cpu_inter_threads=getattr(conf, "mimi_onnx_cpu_inter_threads", 1),
+            onnx_reuse_input_dict=bool(int(getattr(conf, "mimi_onnx_reuse_input_dict", 1))),
+            onnx_tune_cpu_threads=bool(int(getattr(conf, "mimi_onnx_tune_cpu_threads", 1))),
         )
 
     raise ValueError(f"Unsupported encoder_type: {encoder_type}")

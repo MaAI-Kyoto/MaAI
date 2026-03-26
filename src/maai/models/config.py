@@ -17,6 +17,15 @@ class VapConfig:
     freeze_encoder: int = 1  # stupid but works (--vap_freeze_encoder 1)
     load_pretrained: int = 1  # stupid but works (--vap_load_pretrained 1)
     only_feature_extraction: int = 0
+    mimi_use_onnx: int = 1
+    mimi_onnx_fp32_path: str = "onnx/mimi_streaming_fp32.onnx"
+    mimi_onnx_int8_path: str = "onnx/mimi_streaming_int8_matmul.onnx"
+    mimi_onnx_fp32_meta_path: str = "onnx/mimi_streaming_fp32.onnx.json"
+    mimi_onnx_int8_meta_path: str = "onnx/mimi_streaming_int8_matmul.onnx.json"
+    mimi_onnx_cpu_intra_threads: int = 4
+    mimi_onnx_cpu_inter_threads: int = 4
+    mimi_onnx_reuse_input_dict: int = 1
+    mimi_onnx_tune_cpu_threads: int = 1
 
     # GPT
     dim: int = 256

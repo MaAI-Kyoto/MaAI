@@ -297,7 +297,9 @@ class VapGPT_nod_para(nn.Module):
             probs, from_bin=self.BINS_PFUTURE[0], to_bin=self.BINS_PFUTURE[1]
         )
         p_now = p_now.to("cpu").tolist()[0][-1]
+        p_now = [p_now[1], p_now[0]]
         p_future = p_future.to("cpu").tolist()[0][-1]
+        p_future = [p_future[1], p_future[0]]
 
         vad1 = float(v1.sigmoid().to("cpu").tolist()[0][-1][0])
         vad2 = float(v2.sigmoid().to("cpu").tolist()[0][-1][0])
