@@ -39,6 +39,14 @@ class VapConfig:
     dim_prompt: int = 256
     dim_prompt_2: int = 256
 
+    # --- Nod para（mode=nod_para / MLP 層数・隠れ次元・TaskGPT 層数のみ可変、他は vap_nod_para 内固定）---
+    nod_head_mlp_count: int = 1
+    nod_head_mlp_range: int = 1
+    nod_head_mlp_speed: int = 1
+    nod_head_mlp_swing_binary: int = 1
+    nod_head_mlp_hidden: int = 128
+    nod_task_gpt_layers: int = 2
+
     @staticmethod
     def add_argparse_args(parser, fields_added=[]):
         for k, v in VapConfig.__dataclass_fields__.items():

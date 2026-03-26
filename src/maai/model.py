@@ -13,6 +13,7 @@ from .models.vap import VapGPT
 from .models.vap_bc import VapGPT_bc
 from .models.vap_bc_2type import VapGPT_bc_2type
 from .models.vap_nod import VapGPT_nod
+from .models.vap_nod_para import VapGPT_nod_para
 from .models.config import VapConfig
 # from .models.vap_prompt import VapGPT_prompt
 
@@ -67,6 +68,15 @@ class Maai():
         
         elif mode == "nod":
             self.vap = VapGPT_nod(conf)
+
+        elif mode == "nod_para":
+            # grid_config_12.5hz_taskGPT_mimi_realtime の有効行相当（12.5 Hz 前提、別 YAML 分岐なし）
+            conf.dim = 256
+            conf.channel_layers = 1
+            conf.cross_layers = 3
+            conf.num_heads = 4
+            conf.dropout = 0.2
+            self.vap = VapGPT_nod_para(conf)
         
         elif mode == "vap_prompt":
             from .models.vap_prompt import VapGPT_prompt
@@ -83,6 +93,7 @@ class Maai():
         # Store the initial state of the model to check for unchanged parameters
         initial_state_dict = {name: param.clone() for name, param in self.vap.named_parameters()}
 
+        nod_param_stats_from_file = None
         if local_model is None:
             sd = load_vap_model(
                 mode,
@@ -96,10 +107,31 @@ class Maai():
             )
         else:
             print("Loading model from local file:", local_model)
-            sd = torch.load(local_model, map_location="cpu")
+            raw = torch.load(local_model, map_location="cpu")
+            if isinstance(raw, dict):
+                nod_param_stats_from_file = raw.get("nod_param_stats")
+                if "state_dict" in raw:
+                    sd = raw["state_dict"]
+                else:
+                    sd = raw
+            else:
+                sd = raw
+
+        if isinstance(sd, dict):
+            if any(isinstance(k, str) and k.startswith("model.") for k in sd):
+                sd = {k[6:] if k.startswith("model.") else k: v for k, v in sd.items()}
         
         self.vap.load_encoder(cpc_model=cpc_model)
         self.vap.load_state_dict(sd, strict=False)
+
+        if (
+            mode == "nod_para"
+            and nod_param_stats_from_file is not None
+            and isinstance(nod_param_stats_from_file, dict)
+        ):
+            for _k in ("range_mean", "range_std", "speed_mean", "speed_std"):
+                if _k in nod_param_stats_from_file:
+                    self.vap.nod_param_stats[_k] = float(nod_param_stats_from_file[_k])
 
         if conf.encoder_type == "cpc" and 'encoder.downsample.1.weight' in sd:
             self.vap.encoder1.downsample[1].weight = nn.Parameter(sd['encoder.downsample.1.weight'])
@@ -149,13 +181,11 @@ class Maai():
         self.audio_context_len = int(round(self.audio_contenxt_lim_sec * self.frame_rate))
         
         self.sampling_rate = 16000
-        if encoder_type == "mimi":
-            self.frame_contxt_padding = 640
-        else:
-            self.frame_contxt_padding = 320 # Independe from frame size
+        self.frame_contxt_padding = 320
         
         # Frame size
-        # 10Hz -> 320 + 1600 samples
+        # 10Hz -> 320 + 1600 
+        # 12.5Hz -> 320 + 1280 samples
         # 20Hz -> 320 + 800 samples
         # 50Hz -> 320 + 320 samples
         self.audio_frame_size = int(round(self.sampling_rate / self.frame_rate)) + self.frame_contxt_padding
@@ -438,7 +468,18 @@ class Maai():
                     "p_nod_short": out['p_nod_short'],
                     "p_nod_long": out['p_nod_long'],
                     "p_nod_long_p": out['p_nod_long_p']
-                }
+                },
+                "nod_para": lambda: {
+                    "p_now": out["p_now"],
+                    "p_future": out["p_future"],
+                    "vad": out["vad"],
+                    "p_bc": out["p_bc"],
+                    "p_nod": out["p_nod"],
+                    "nod_count": out["nod_count"],
+                    "nod_range": out["nod_range"],
+                    "nod_speed": out["nod_speed"],
+                    "nod_swing_up": out["nod_swing_up"],
+                },
             }
             
             # Get mode-specific outputs

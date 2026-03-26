@@ -200,8 +200,15 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
         else:
             supported_languages = ["jp"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
+    elif mode == "nod_para":
+        raise ValueError(
+            "mode nod_para has no pretrained HuggingFace weights in this package; "
+            "use local_model=<path_to_checkpoint.pt> (e.g. training ckpt with encoder.* keys)."
+        )
+
     else:
-        supported_modes = ["vap", "vap_mc", "bc_2type", "nod"]
+        supported_modes = ["vap", "vap_mc", "bc", "bc_2type", "nod", "vap_prompt", "nod_para"]
         raise ValueError(f"Invalid mode: {mode}. Supported modes are: {supported_modes}")
 
     try:
@@ -462,6 +469,83 @@ def conv_vapresult_2_bytearray_nod(vap_result):
     b += conv_floatarray_2_byte(vap_result['p_nod_long_p'])
     
     return b
+
+
+def conv_vapresult_2_bytearray_nod_para(vap_result):
+
+    def pack_field(v):
+        if isinstance(v, (list, tuple)):
+            arr = [float(x) for x in v]
+        else:
+            arr = [float(v)]
+        return len(arr).to_bytes(4, BYTE_ORDER) + conv_floatarray_2_byte(arr)
+
+    b = b""
+    b += struct.pack("<d", vap_result["t"])
+    b += len(vap_result["x1"]).to_bytes(4, BYTE_ORDER)
+    b += conv_floatarray_2_byte(vap_result["x1"])
+    b += len(vap_result["x2"]).to_bytes(4, BYTE_ORDER)
+    b += conv_floatarray_2_byte(vap_result["x2"])
+    b += pack_field(vap_result["p_now"])
+    b += pack_field(vap_result["p_future"])
+    b += pack_field(vap_result["vad"])
+    b += pack_field(vap_result["p_bc"])
+    b += pack_field(vap_result["p_nod"])
+    b += pack_field(vap_result["nod_count"])
+    b += pack_field(vap_result["nod_range"])
+    b += pack_field(vap_result["nod_speed"])
+    b += pack_field(vap_result["nod_swing_up"])
+    return b
+
+
+def conv_bytearray_2_vapresult_nod_para(barr):
+    idx = 0
+    t = struct.unpack("<d", barr[idx:8])[0]
+    idx += 8
+
+    def read_f64_array():
+        nonlocal idx
+        n = struct.unpack("<I", barr[idx : idx + 4])[0]
+        idx += 4
+        chunk = conv_bytearray_2_floatarray(barr[idx : idx + 8 * n])
+        idx += 8 * n
+        return chunk
+
+    len_x1 = struct.unpack("<I", barr[idx : idx + 4])[0]
+    idx += 4
+    x1 = conv_bytearray_2_floatarray(barr[idx : idx + 8 * len_x1])
+    idx += 8 * len_x1
+
+    len_x2 = struct.unpack("<I", barr[idx : idx + 4])[0]
+    idx += 4
+    x2 = conv_bytearray_2_floatarray(barr[idx : idx + 8 * len_x2])
+    idx += 8 * len_x2
+
+    p_now = float(read_f64_array()[0])
+    p_future = float(read_f64_array()[0])
+    vad = read_f64_array()
+    p_bc = float(read_f64_array()[0])
+    p_nod = float(read_f64_array()[0])
+    nod_count = read_f64_array()
+    nod_range = float(read_f64_array()[0])
+    nod_speed = float(read_f64_array()[0])
+    nod_swing_up = float(read_f64_array()[0])
+
+    return {
+        "t": t,
+        "x1": x1,
+        "x2": x2,
+        "p_now": p_now,
+        "p_future": p_future,
+        "vad": vad,
+        "p_bc": p_bc,
+        "p_nod": p_nod,
+        "nod_count": nod_count,
+        "nod_range": nod_range,
+        "nod_speed": nod_speed,
+        "nod_swing_up": nod_swing_up,
+    }
+
 
 #
 # Byte -> VAP result
