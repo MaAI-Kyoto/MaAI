@@ -129,11 +129,9 @@ class VapGPT_bc(nn.Module):
             "cross2_c": (out["past_k2_c"], out["past_v2_c"]),
         }
 
-        bc = self.bc_head(out["x"])
+        p_bc = self.bc_head(out["x"]).sigmoid().to("cpu").tolist()[0][-1][0]
+        p_bc_detect = self.bc_detect_head(out["x"]).sigmoid().to("cpu").tolist()[0][-1][0]
 
-        p_bc = bc.sigmoid().to("cpu").tolist()[0][-1][0]
-        # print(p_bc)
-
-        ret = {"p_bc": p_bc}
+        ret = {"p_bc": p_bc, "p_bc_detect": p_bc_detect}
 
         return ret, new_cache

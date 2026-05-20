@@ -547,7 +547,8 @@ class Maai():
                     "vad": out['vad']
                 },
                 "bc": lambda: {
-                    "p_bc": out['p_bc']
+                    "p_bc": out['p_bc'],
+                    "p_bc_detect": out['p_bc_detect']
                 },
                 "bc_2type": lambda: {
                     "p_bc_react": out['p_bc_react'],
