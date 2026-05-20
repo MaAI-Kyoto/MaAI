@@ -1055,7 +1055,10 @@ class MaaiMultiple:
                 "vad": out["vad"],
             }
         if mode == "bc":
-            return {"p_bc": out["p_bc"]}
+            return {
+                "p_bc": out["p_bc"],
+                "p_bc_detect": out["p_bc_detect"],
+            }
         if mode == "bc_2type":
             return {
                 "p_bc_react": out["p_bc_react"],
