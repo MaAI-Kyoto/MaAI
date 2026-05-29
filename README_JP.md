@@ -14,6 +14,8 @@ MaAI
 <p align="center">（Voice Activity Projectionのリアルタイム実装）</p>
 <p align="center">
 📄 README: <a href="README.md">English </a> | <a href="README_JP.md">Japanese (日本語) </a>
+<br>
+📚 API Documentation: <a href="https://maai-kyoto.github.io/MaAI/">https://maai-kyoto.github.io/MaAI/</a>
 </p>
 
 <b>MaAI</b>は（１）<b>ターンテイキング</b>、（２）<b>相槌</b>、（３）<b>頷き</b>をリアルタイムかつ連続的に予測するソフトウェアです。

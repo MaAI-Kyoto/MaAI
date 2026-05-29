@@ -18,6 +18,8 @@ MaAI
 <p align="center">(Real-time Implementation of Voice Activity Projection)</p>
 <p align="center">
 📄 README: <a href="README.md">English </a> | <a href="README_JP.md">Japanese (日本語) </a>
+<br>
+📚 API Documentation: <a href="https://maai-kyoto.github.io/MaAI/">https://maai-kyoto.github.io/MaAI/</a>
 </p>
 
 <b>MaAI</b> is a state-of-the-art and light-weight software that can generate (predict) non-linguistic behaviors in real time and continuously.
