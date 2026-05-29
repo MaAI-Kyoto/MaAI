@@ -1,0 +1,3 @@
+# objective API
+
+::: maai.objective

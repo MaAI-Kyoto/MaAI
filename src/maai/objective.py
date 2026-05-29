@@ -8,18 +8,38 @@ from typing import Dict, List, Tuple, Union
 
 
 def bin_times_to_frames(bin_times: List[float], frame_hz: float) -> List[int]:
+    """Convert a list of time durations into a list of frame counts.
+    
+    Args:
+        bin_times (List[float]): A list of time durations in seconds.
+        frame_hz (float): The frame rate (Hz) of the system.
+        
+    Returns:
+        List[int]: A list of corresponding frame counts.
+    """
     frames = torch.tensor(bin_times, dtype=torch.float32) * float(frame_hz)
     frames = torch.floor(frames + 0.5).clamp(min=1)
     return frames.to(dtype=torch.long).tolist()
 
 
 class ProjectionWindow:
+    """Extracts and evaluates projection windows to determine voice activity.
+    
+    Used to chunk future voice activity sequences into discrete projection bins.
+    """
     def __init__(
         self,
         bin_times: List = [0.2, 0.4, 0.6, 0.8],
         frame_hz: float = 50,
         threshold_ratio: float = 0.5,
     ):
+        """Initialize the ProjectionWindow.
+        
+        Args:
+            bin_times (List[float]): Duration of each projection bin in seconds.
+            frame_hz (float): Frame rate of the input signal.
+            threshold_ratio (float): Ratio threshold to consider a bin as active.
+        """
         super().__init__()
         self.bin_times = bin_times
         self.frame_hz = frame_hz
@@ -79,7 +99,16 @@ class ProjectionWindow:
 
 
 class Codebook(nn.Module):
+    """A discrete codebook that maps binary sequences to indices and vice-versa.
+    
+    Represents combinations of future voice activity patterns.
+    """
     def __init__(self, bin_frames):
+        """Initialize the Codebook.
+        
+        Args:
+            bin_frames (List[int]): List of frame counts for each bin.
+        """
         super().__init__()
         self.bin_frames = bin_frames
         self.n_bins: int = len(self.bin_frames)
@@ -149,12 +178,24 @@ class Codebook(nn.Module):
 
 
 class ObjectiveVAP(nn.Module):
+    """The central objective module for Voice Activity Projection (VAP).
+    
+    Handles the transformation of raw future voice activities into codebook labels,
+    calculates probabilities, and computes the loss for predictions.
+    """
     def __init__(
         self,
         bin_times: List[float] = [0.2, 0.4, 0.6, 0.8],
         frame_hz: float = 50,
         threshold_ratio: float = 0.5,
     ):
+        """Initialize the ObjectiveVAP module.
+        
+        Args:
+            bin_times (List[float]): Bin durations in seconds.
+            frame_hz (float): Frame rate.
+            threshold_ratio (float): Threshold to mark a bin as active.
+        """
         super().__init__()
         self.frame_hz = frame_hz
         self.bin_times = bin_times

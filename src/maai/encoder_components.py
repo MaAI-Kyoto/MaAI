@@ -35,13 +35,21 @@ Explicit checkpoint path saved manually in "assets/" see CHECKPOINTS below.
 
 
 class ChannelNorm(nn.Module):
-    """
+    """Channel normalization layer.
+    
     Most of the code in this file are scaled down (and heavily copied) versions of
         https://github.com/facebookresearch/CPC_audio
     """
 
     def __init__(self, numFeatures, epsilon=1e-05, affine=True):
-
+        """Initialize the ChannelNorm module.
+        
+        Args:
+            numFeatures (int): Number of features in the input tensor.
+            epsilon (float): A value added to the denominator for numerical stability.
+            affine (bool): A boolean value that when set to True, this module has 
+                           learnable affine parameters.
+        """
         super(ChannelNorm, self).__init__()
         if affine:
             self.weight = nn.parameter.Parameter(torch.Tensor(1, numFeatures, 1))
@@ -71,12 +79,19 @@ class ChannelNorm(nn.Module):
 
 
 class CPCEncoder(nn.Module):
-    """
+    """Contrastive Predictive Coding (CPC) audio encoder.
+    
     Most of the code in this file are scaled down (and heavily copied) versions of
         https://github.com/facebookresearch/CPC_audio
     """
 
     def __init__(self, sizeHidden=512, normMode="layerNorm"):
+        """Initialize the CPCEncoder module.
+        
+        Args:
+            sizeHidden (int): Number of hidden dimensions for the convolutions.
+            normMode (str): Normalization mode to use.
+        """
         super(CPCEncoder, self).__init__()
         normLayer = ChannelNorm
         self.dimEncoded = sizeHidden
@@ -105,7 +120,8 @@ class CPCEncoder(nn.Module):
 
 
 class CPCAR(nn.Module):
-    """
+    """Autoregressive module for Contrastive Predictive Coding (CPC).
+    
     Most of the code in this file are scaled down (and heavily copied) versions of
         https://github.com/facebookresearch/CPC_audio
     """
@@ -113,7 +129,16 @@ class CPCAR(nn.Module):
     def __init__(
         self, dimEncoded, dimOutput, keepHidden, nLevelsGRU, mode="GRU", reverse=False
     ):
-
+        """Initialize the CPCAR module.
+        
+        Args:
+            dimEncoded (int): Dimension of the encoded input features.
+            dimOutput (int): Dimension of the autoregressive output.
+            keepHidden (bool): If True, retains the hidden state across batches.
+            nLevelsGRU (int): Number of recurrent layers.
+            mode (str): RNN mode ('GRU', 'LSTM', or 'RNN').
+            reverse (bool): If True, processes the sequence in reverse.
+        """
         super(CPCAR, self).__init__()
         self.RESIDUAL_STD = 0.1
 
@@ -160,12 +185,19 @@ class CPCAR(nn.Module):
 
 
 class CPCModel(nn.Module):
-    """
+    """Complete Contrastive Predictive Coding (CPC) model combining encoder and AR network.
+    
     Most of the code in this file are scaled down (and heavily copied) versions of
         https://github.com/facebookresearch/CPC_audio
     """
 
     def __init__(self, encoder, AR):
+        """Initialize the CPCModel.
+        
+        Args:
+            encoder (nn.Module): The audio encoder network.
+            AR (nn.Module): The autoregressive network.
+        """
         super(CPCModel, self).__init__()
         self.gEncoder = encoder
         self.gAR = AR
@@ -177,14 +209,20 @@ class CPCModel(nn.Module):
 
 
 def load_CPC(checkpoint_cpc, load_state_dict=True):
-    """
-    Contrast predictive learning model for audio data
+    """Load a pretrained Contrastive Predictive Coding (CPC) model for audio data.
+    
     pretrained: if True, load a model trained on libri-light 60k
     (https://arxiv.org/abs/1912.07875)
-    **kwargs : see cpc/cpc_default_config to get the list of possible arguments
-
+    
     Most of the code in this file are scaled down (and heavily copied) versions of
         https://github.com/facebookresearch/CPC_audio
+        
+    Args:
+        checkpoint_cpc (str): Path to the checkpoint file.
+        load_state_dict (bool): If True, loads the pretrained weights.
+        
+    Returns:
+        CPCModel: The initialized and (optionally) loaded CPC model.
     """
 
     def loadArgs(args, locArgs, forbiddenAttr=None):
@@ -429,7 +467,10 @@ class LayerNorm(nn.Module):
 
 
 class CConv1d(nn.Conv1d):
-    """source: https://github.com/pytorch/pytorch/issues/1333"""
+    """Causal 1D Convolution extending nn.Conv1d.
+    
+    source: https://github.com/pytorch/pytorch/issues/1333
+    """
 
     def __init__(
         self,
@@ -500,6 +541,18 @@ def get_cnn_layer(
     dilation: List[int] = [1],
     activation: str = "GELU",
 ):
+    """Create a sequential CNN layer with specified parameters.
+    
+    Args:
+        dim (int): Dimensionality of the input and output features.
+        kernel (List[int]): List of kernel sizes for the convolutions.
+        stride (List[int]): List of stride values for the convolutions.
+        dilation (List[int]): List of dilation values for the convolutions.
+        activation (str): The activation function to use (e.g., 'GELU', 'ReLU').
+        
+    Returns:
+        nn.Sequential: A sequential module containing the convolutional layers.
+    """
     layers = []
     layers.append(Rearrange("b t d -> b d t"))
     for k, s, d in zip(kernel, stride, dilation):

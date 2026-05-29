@@ -331,15 +331,19 @@ def build_mimi_hf_cache_from_flat_past(
 
 
 class EncoderCPC(nn.Module):
-    """
-    Encoder: waveform -> h
-    pretrained: default='cpc'
-
-    A simpler version of the Encoder
-    check paper (branch) version to see other encoders...
+    """CPC-based Audio Encoder.
+    
+    Transforms raw waveform audio into continuous feature representations (h).
     """
 
     def __init__(self, load_pretrained=True, freeze=True, cpc_model=''):
+        """Initialize the CPC Encoder.
+        
+        Args:
+            load_pretrained (bool): Whether to load pre-trained CPC weights.
+            freeze (bool): Whether to freeze the encoder weights during training.
+            cpc_model (str): Path or identifier for the CPC model checkpoint.
+        """
         
         super().__init__()
         
@@ -407,6 +411,11 @@ class EncoderCPC(nn.Module):
 
 
 class EncoderMimi(nn.Module):
+    """Mimi-based Audio Encoder.
+    
+    Uses Kyutai's Mimi model to extract continuous features from audio.
+    Supports streaming and context tracking.
+    """
     def __init__(
         self,
         frame_hz: float = 10,
@@ -414,6 +423,14 @@ class EncoderMimi(nn.Module):
         mimi_model_name: str = "kyutai/mimi",
         context_samples: int = 320,
     ):
+        """Initialize the Mimi Encoder.
+        
+        Args:
+            frame_hz (float): Target frame rate of the output features.
+            freeze (bool): Whether to freeze the encoder weights.
+            mimi_model_name (str): Identifier of the Mimi model.
+            context_samples (int): Number of overlap context samples.
+        """
         super().__init__()
 
         try:
@@ -1011,20 +1028,17 @@ class EncoderMimi(nn.Module):
 
 
 class EncoderMimiOnnx(EncoderMimi):
-    """
-    Mimi core ONNX backend (streaming contract matches ``transformers`` v5 ``StaticCache`` + flat K/V I/O).
-
-    Pair ``.onnx`` with its ``.json`` from ``export_mimi_streaming_onnx_v2.py`` in the same venv as runtime Torch.
-
-    - CUDA: FP32 ONNX + CUDA EP optimized + reusable IOBinding
-    - CPU: INT8 ONNX
+    """Mimi core ONNX backend for optimized inference.
+    
+    Provides a streaming contract matching `transformers` v5 `StaticCache` with flat K/V I/O.
+    Supports CUDA (FP32) and CPU (INT8) execution providers.
     """
 
     @staticmethod
     def _onnx_output_shape_for_fixed_bind(shape: list[Any] | tuple[Any, ...]) -> tuple[int, ...]:
         """
-        ORT の動的次元（文字列や 0 以下）を 1 に置き換え、IOBinding 用の固定形状にする。
-        ストリーミング Mimi は通常 batch=1・1 ステップあたり emb_t=1。
+        Convert ORT's dynamic dimensions (strings or <= 0) to 1 for fixed IOBinding.
+        Streaming Mimi typically uses batch=1 and emb_t=1 per step.
         """
         resolved: list[int] = []
         for d in shape:
@@ -1046,6 +1060,19 @@ class EncoderMimiOnnx(EncoderMimi):
         onnx_cpu_intra_threads: int = 2,
         onnx_cpu_inter_threads: int = 1,
     ):
+        """Initialize the ONNX-backed Mimi Encoder.
+        
+        Args:
+            frame_hz (float): Target output frame rate.
+            freeze (bool): Whether to freeze weights (mostly for API compatibility here).
+            mimi_model_name (str): The identifier of the original model.
+            context_samples (int): Overlap context samples.
+            onnx_model_path (str): Path to the ONNX model file.
+            onnx_meta_path (str): Path to the ONNX metadata JSON file.
+            runtime_device (str): Device to run the ONNX model on ('cpu', 'cuda').
+            onnx_cpu_intra_threads (int): Number of intra-op threads for CPU execution.
+            onnx_cpu_inter_threads (int): Number of inter-op threads for CPU execution.
+        """
         super().__init__(
             frame_hz=frame_hz,
             freeze=freeze,
@@ -1513,6 +1540,18 @@ class EncoderMimiOnnx(EncoderMimi):
 
 
 def build_audio_encoder(conf, cpc_model: str = ""):
+    """Build and return the appropriate audio encoder instance based on the configuration.
+    
+    Instantiates either EncoderCPC, EncoderMimi, or EncoderMimiOnnx depending on the
+    `encoder_type` and related settings specified in `conf`.
+    
+    Args:
+        conf: The configuration object containing encoder settings.
+        cpc_model (str): Optional path to a pretrained CPC model.
+        
+    Returns:
+        nn.Module: The configured audio encoder.
+    """
     encoder_type = getattr(conf, "encoder_type", "cpc")
 
     if encoder_type == "cpc":

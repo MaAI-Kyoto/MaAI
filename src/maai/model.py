@@ -18,6 +18,11 @@ from .models.config import VapConfig
 # from .models.vap_prompt import VapGPT_prompt
 
 class Maai():
+    """Main wrapper class for running the MaAI model.
+    
+    Handles audio input streams, model loading, audio processing,
+    feature extraction, and VAP outputs in a background thread.
+    """
     
     BINS_P_NOW = [0, 1]
     BINS_PFUTURE = [2, 3]
@@ -55,6 +60,37 @@ class Maai():
         local_model = None,
         return_p_bins: bool = False,
     ):
+        """Initialize the Maai instance.
+        
+        Args:
+            mode (str): Operational mode (e.g., 'vap', 'bc', 'nod').
+            lang (str): Language setting (e.g., 'jp', 'en').
+            audio_ch1 (Base): Audio input source for channel 1.
+            audio_ch2 (Base): Audio input source for channel 2.
+            frame_rate (float): Frame rate for processing audio.
+            context_len_sec (int): Audio context length in seconds.
+            device (str): Device to run the model on ('cpu', 'cuda').
+            cpc_model (str): Path to CPC model weights.
+            model_type (str): General model type (e.g., 'normal').
+            mimi_model_name (str): Hugging Face model name for Mimi.
+            use_mimi_onnx (bool): Whether to use ONNX backend for Mimi.
+            mimi_onnx_precision (str): Precision for ONNX model ('fp32', 'int8').
+            mimi_onnx_fp32_path (str | None): Path to FP32 ONNX model.
+            mimi_onnx_fp32_meta_path (str | None): Path to FP32 ONNX meta.
+            mimi_onnx_int8_path (str | None): Path to INT8 ONNX model.
+            mimi_onnx_int8_meta_path (str | None): Path to INT8 ONNX meta.
+            mimi_local_onnx_fp32_path (str | None): Path to local FP32 ONNX model.
+            mimi_local_onnx_fp32_meta_path (str | None): Path to local FP32 ONNX meta.
+            mimi_local_onnx_int8_path (str | None): Path to local INT8 ONNX model.
+            mimi_local_onnx_int8_meta_path (str | None): Path to local INT8 ONNX meta.
+            mimi_onnx_cpu_intra_threads (int | None): ONNX CPU intra-op threads.
+            mimi_onnx_cpu_inter_threads (int | None): ONNX CPU inter-op threads.
+            cache_dir (str): Cache directory for model weights.
+            force_download (bool): Force download of model weights.
+            use_kv_cache (bool): Whether to use KV caching during inference.
+            local_model (str | None): Path to a local custom model file.
+            return_p_bins (bool): Whether to return probability bins in 'vap' mode.
+        """
 
         self.return_p_bins = bool(return_p_bins)
 
@@ -296,6 +332,7 @@ class Maai():
         self.reset_runtime_state()
 
     def reset_runtime_state(self):
+        """Reset the internal audio buffers and cache states."""
         self.current_x1_audio = []
         self.current_x2_audio = []
         self.e1_full = []
@@ -325,6 +362,7 @@ class Maai():
     #         )
     
     def worker(self):
+        """Background loop to fetch audio from queues and run inference."""
         
         # Clear the queues at the start
         # This is to ensure that the queues are empty before starting the processing loop
@@ -354,6 +392,7 @@ class Maai():
             # self._mic2_queue.queue.clear()
 
     def start(self):
+        """Start the background audio fetching and processing thread."""
 
         self.reset_runtime_state()
 
@@ -393,6 +432,12 @@ class Maai():
         self.reset_runtime_state()
     
     def process(self, x1, x2):
+        """Process a chunk of audio for both channels.
+        
+        Args:
+            x1 (np.ndarray): Audio data chunk for channel 1.
+            x2 (np.ndarray): Audio data chunk for channel 2.
+        """
         
         time_start = time.time()
 
@@ -607,6 +652,11 @@ class Maai():
             self.current_x2_audio = np.empty(0, dtype=np.float32)
     
     def get_result(self):
+        """Retrieve the latest inference result from the queue.
+        
+        Returns:
+            dict: The latest result containing predictions and raw audio data.
+        """
         return self.result_dict_queue.get()
     
     def set_prompt_ch1(self, prompt: str):

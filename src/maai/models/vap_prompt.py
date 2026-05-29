@@ -12,7 +12,11 @@ from ..objective import ObjectiveVAP
 from sentence_transformers import SentenceTransformer
 
 class VapGPT_prompt(nn.Module):
+    """Voice Activity Projection with Prompt Control (Beta).
     
+    This model integrates text prompts (e.g., personality or instruction prompts)
+    into the VAP architecture using sentence embeddings to condition the output.
+    """
     BINS_P_NOW = [0, 1]
     BINS_PFUTURE = [2, 3]
 
@@ -20,8 +24,12 @@ class VapGPT_prompt(nn.Module):
     prompt_model_name = "cl-nagoya/ruri-v3-pt-30m"
 
     def __init__(self, conf: Optional[VapConfig] = None):
+        """Initialize the VapGPT_prompt model.
         
-        super().__init__()
+        Args:
+            conf (Optional[VapConfig]): Configuration object.
+                If None, default VapConfig is used.
+        """
         
         # print this model is a beta version
         print('--------------------------------')
@@ -83,6 +91,11 @@ class VapGPT_prompt(nn.Module):
         self.set_prompt_ch2("発話前に少し間を取り、考えてから丁寧に話し始めてください。応答は急がず、落ち着いたテンポを意識してください。")
 
     def load_encoder(self, cpc_model):
+        """Load and build the audio encoders for both speakers.
+        
+        Args:
+            cpc_model: Pre-trained CPC model to be used as feature extractor.
+        """
         self.encoder1 = build_audio_encoder(self.conf, cpc_model=cpc_model)
         self.encoder1 = self.encoder1.eval()
         self.encoder2 = build_audio_encoder(self.conf, cpc_model=cpc_model)
@@ -99,9 +112,23 @@ class VapGPT_prompt(nn.Module):
 
     @property
     def horizon_time(self):
+        """Get the horizon time for the projection in seconds.
+        
+        Returns:
+            float: Horizon time for the objective.
+        """
         return self.objective.horizon_time
 
     def encode_audio(self, audio1: torch.Tensor, audio2: torch.Tensor) -> Tuple[Tensor, Tensor]:
+        """Encode the raw audio inputs into feature representations.
+        
+        Args:
+            audio1 (torch.Tensor): Audio waveform for speaker 1.
+            audio2 (torch.Tensor): Audio waveform for speaker 2.
+            
+        Returns:
+            Tuple[Tensor, Tensor]: Encoded features for the two speakers.
+        """
         
         x1 = self.encoder1(audio1)  # speaker 1
         x2 = self.encoder2(audio2)  # speaker 2
@@ -113,9 +140,24 @@ class VapGPT_prompt(nn.Module):
         return x1, x2
 
     def vad_loss(self, vad_output, vad):
+        """Compute the Voice Activity Detection (VAD) loss.
+        
+        Args:
+            vad_output: Predicted VAD logits.
+            vad: Ground truth VAD labels.
+            
+        Returns:
+            Tensor: Binary cross-entropy loss between predictions and targets.
+        """
         return F.binary_cross_entropy_with_logits(vad_output, vad)
     
     def set_prompt_ch1(self, prompt: str, device: torch.device = torch.device('cpu')):
+        """Set the text prompt for channel 1 (speaker 1).
+        
+        Args:
+            prompt (str): The text instruction or personality prompt.
+            device (torch.device): The device to load the embedding tensor onto.
+        """
 
         embedding_ch1_ = self.prompt_embedding_model.encode([prompt], normalize_embeddings=True)[0]
         self.embedding_ch1 = torch.tensor(embedding_ch1_).unsqueeze(0)
@@ -126,6 +168,12 @@ class VapGPT_prompt(nn.Module):
         # input("Press Enter to continue...")
 
     def set_prompt_ch2(self, prompt: str, device: torch.device = torch.device('cpu')):
+        """Set the text prompt for channel 2 (speaker 2).
+        
+        Args:
+            prompt (str): The text instruction or personality prompt.
+            device (torch.device): The device to load the embedding tensor onto.
+        """
 
         embedding_ch2_ = self.prompt_embedding_model.encode([prompt], normalize_embeddings=True)[0]
         self.embedding_ch2 = torch.tensor(embedding_ch2_).unsqueeze(0)
@@ -142,7 +190,7 @@ class VapGPT_prompt(nn.Module):
         cache: Optional[dict] = None,
     ) -> Tuple[dict, dict]:
         """
-        Forward pass for the VapGPT model.
+        Forward pass for the VapGPT_prompt model.
 
         Args:
             x1 (Tensor): Input audio tensor for speaker 1.

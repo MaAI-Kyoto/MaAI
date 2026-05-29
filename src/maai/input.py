@@ -13,6 +13,14 @@ import sys
 import locale
 
 def available_mic_devices(print_out=True):
+    """Retrieve and optionally print a list of available microphone devices.
+    
+    Args:
+        print_out (bool): Whether to print the device list to the console.
+        
+    Returns:
+        dict: A dictionary mapping device index to device information.
+    """
     p = pyaudio.PyAudio()
     device_info = {}
     
@@ -53,12 +61,17 @@ def available_mic_devices(print_out=True):
     return device_info
 
 class Base:
+    """Base class for all audio input sources.
+    
+    Provides a publish-subscribe mechanism for audio data streams.
+    """
     FRAME_SIZE = 160
     SAMPLING_RATE = 16000
     def __init__(self):
         self._subscriber_queues = []  # List of subscriber queues
         self._lock = threading.Lock()
         self._is_thread_started = False
+        self.channels = 1
 
     def subscribe(self):
         q = queue.Queue()
@@ -79,14 +92,56 @@ class Base:
         with self._lock:
             return sum([len(q.queue) for q in self._subscriber_queues])
 
-class Mic(Base):
+    def get_channel(self, channel_index):
+        return ChannelSelector(self, channel_index)
 
-    def __init__(self, audio_gain=1.0, mic_device_index=-1, device_name=None):
+class ChannelSelector(Base):
+    """Selects and isolates a specific audio channel from a multi-channel source."""
+    
+    def __init__(self, source, channel_index):
+        super().__init__()
+        self.source = source
+        self.channel_index = channel_index
+        self.channels = 1
+
+    def subscribe(self):
+        return self.source.subscribe()
+
+    def get_audio_data(self, q=None):
+        data = self.source.get_audio_data(q)
+        source_channels = getattr(self.source, 'channels', 1)
+        if source_channels > 1:
+            data_np = np.array(data)
+            if data_np.ndim == 1:
+                data_np = data_np.reshape(-1, source_channels)[:, self.channel_index]
+            elif data_np.ndim == 2:
+                data_np = data_np[:, self.channel_index]
+            return data_np.tolist()
+        return data
+
+    def start(self):
+        self.source.start()
+
+class Mic(Base):
+    """Audio input source that reads directly from a local microphone."""
+
+    def __init__(self, audio_gain=1.0, mic_device_index=-1, device_name=None, channels=1, use_channel=None):
+        """Initialize the Mic input source.
+        
+        Args:
+            audio_gain (float): Multiplier for the audio signal amplitude.
+            mic_device_index (int): PyAudio device index to use.
+            device_name (str, optional): Substring of the device name to search for.
+            channels (int): Number of audio channels to capture.
+            use_channel (int, optional): Specific channel to extract if capturing multiple channels.
+        """
         
         super().__init__()
         
         self.p = pyaudio.PyAudio()
         self.audio_gain = audio_gain
+        self.channels = channels
+        self.use_channel = use_channel
 
         if device_name is not None and mic_device_index == -1:
             # If a specific device name is provided, find the index of that device
@@ -105,7 +160,7 @@ class Mic(Base):
             
         self.mic_device_index = mic_device_index if mic_device_index >= 0 else None
         self.stream = self.p.open(format=pyaudio.paFloat32,
-                                  channels=1,
+                                  channels=self.channels,
                                   rate=self.SAMPLING_RATE,
                                   input=True,
                                   output=False,
@@ -119,7 +174,15 @@ class Mic(Base):
         while True:
             d = self.stream.read(self.FRAME_SIZE, exception_on_overflow=False)
             d = np.frombuffer(d, dtype=np.float32)
+            
+            if self.channels > 1 and self.use_channel is not None:
+                d = d.reshape(-1, self.channels)[:, self.use_channel]
+                
             d = [float(a) for a in d]
+            
+            if self.audio_gain != 1.0:
+                d = [a * self.audio_gain for a in d]
+
             self._put_to_all_queues(d)
 
     def start(self):
@@ -128,21 +191,37 @@ class Mic(Base):
             self._is_thread_started = True
 
 class Wav(Base):
-    def __init__(self, wav_file_path, audio_gain=1.0):
+    """Audio input source that reads from a WAV file and plays it back."""
+    
+    def __init__(self, wav_file_path, audio_gain=1.0, use_channel=None):
+        """Initialize the Wav input source.
+        
+        Args:
+            wav_file_path (str): Path to the WAV file.
+            audio_gain (float): Multiplier for the audio signal amplitude.
+            use_channel (int, optional): Specific channel to extract if the file has multiple channels.
+        """
         super().__init__()
         self.wav_file_path = wav_file_path
         self.audio_gain = audio_gain
+        self.use_channel = use_channel
         self.raw_wav_queue = queue.Queue()
 
         if not os.path.exists(self.wav_file_path):
             raise FileNotFoundError(f"WAV file not found: {self.wav_file_path}")
         
         # Check the frame rate of the WAV file
-        self.SAMPLING_RATE = sf.info(self.wav_file_path).samplerate
+        info = sf.info(self.wav_file_path)
+        self.SAMPLING_RATE = info.samplerate
+        self.channels = info.channels
         if self.SAMPLING_RATE != 16000:
             raise ValueError(f"Unsupported sample rate: {self.SAMPLING_RATE}. Expected 16000 Hz.")
         
         data, _ = sf.read(file=self.wav_file_path, dtype='float32')
+        
+        if self.channels > 1 and self.use_channel is not None:
+            data = data[:, self.use_channel]
+            
         for i in range(0, len(data), self.FRAME_SIZE):
             if i + self.FRAME_SIZE > len(data):
                 break
@@ -176,7 +255,18 @@ class Wav(Base):
             self._is_thread_started = True
 
 class Tcp(Base):
+    """Audio input source that receives data over a TCP connection."""
+    
     def __init__(self, ip='127.0.0.1', port=8501, audio_gain=1.0,recv_float32=False, client_mode=False):
+        """Initialize the Tcp input source.
+        
+        Args:
+            ip (str): IP address to bind or connect to.
+            port (int): Port number.
+            audio_gain (float): Multiplier for the audio signal amplitude.
+            recv_float32 (bool): If True, expects 4-byte float data. Otherwise expects 8-byte float.
+            client_mode (bool): If True, acts as a TCP client. If False, acts as a TCP server.
+        """
         super().__init__()
         self.ip = ip
         self.port = port
@@ -299,14 +389,28 @@ class Tcp(Base):
 
 
 class TcpMic(Base):
-    def __init__(self, server_ip='127.0.0.1', port=8501, audio_gain=1.0, mic_device_index=0):
+    """Audio input source that reads from a microphone and sends the data to a TCP server."""
+    
+    def __init__(self, server_ip='127.0.0.1', port=8501, audio_gain=1.0, mic_device_index=0, channels=1, use_channel=None):
+        """Initialize the TcpMic source.
+        
+        Args:
+            server_ip (str): IP address of the TCP server.
+            port (int): Port of the TCP server.
+            audio_gain (float): Multiplier for the audio signal amplitude.
+            mic_device_index (int): PyAudio device index to use.
+            channels (int): Number of audio channels.
+            use_channel (int, optional): Specific channel to extract.
+        """
         self.ip = server_ip
         self.port = port
         self.p = pyaudio.PyAudio()
         self.audio_gain = audio_gain
         self.mic_device_index = mic_device_index
+        self.channels = channels
+        self.use_channel = use_channel
         self.stream = self.p.open(format=pyaudio.paFloat32,
-                                  channels=1,
+                                  channels=self.channels,
                                   rate=self.SAMPLING_RATE,
                                   input=True,
                                   output=False,
@@ -324,10 +428,14 @@ class TcpMic(Base):
                 while True:
                     try:
                         d = self.stream.read(self.FRAME_SIZE, exception_on_overflow=False)
+                        d = np.frombuffer(d, dtype=np.float32)
+                        
+                        if self.channels > 1 and self.use_channel is not None:
+                            d = d.reshape(-1, self.channels)[:, self.use_channel]
+
                         if self.audio_gain != 1.0:
-                            d = np.frombuffer(d, dtype=np.float32) * self.audio_gain
-                        else:
-                            d = np.frombuffer(d, dtype=np.float32)
+                            d = d * self.audio_gain
+                            
                         d = [float(a) for a in d]
                         data_sent = util.conv_floatarray_2_byte(d)
                         self.sock.sendall(data_sent)
@@ -353,7 +461,15 @@ class TcpMic(Base):
 
 
 class TcpChunk(Base):
+    """Audio input source that receives arbitrary sized chunks over TCP."""
+    
     def __init__(self, server_ip='127.0.0.1', port=8501):
+        """Initialize the TcpChunk source.
+        
+        Args:
+            server_ip (str): IP address of the TCP server.
+            port (int): Port of the TCP server.
+        """
         self.ip = server_ip
         self.port = port
         self.chunk_size = 1024
@@ -400,7 +516,14 @@ class TcpChunk(Base):
             self.sock.sendall(data_sent)
 
 class Zero(Base):
+    """Audio input source that generates continuous zeros or white noise."""
+    
     def __init__(self, white_noise=False):
+        """Initialize the Zero input source.
+        
+        Args:
+            white_noise (bool): If True, generates low-amplitude white noise instead of zeros.
+        """
         super().__init__()
         self.max_queue_size = 10
         self._is_thread_started_process = False
@@ -450,6 +573,8 @@ class Zero(Base):
 
 
 class Chunk(Base):
+    """Audio input source for manually providing chunked data."""
+    
     def __init__(self):
         super().__init__()
 

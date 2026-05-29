@@ -13,6 +13,18 @@ def ffn_block(
     dropout: float = 0.0,
     bias: bool = False,
 ) -> nn.Sequential:
+    """Create a feed-forward network block.
+    
+    Args:
+        din (int): Input dimension.
+        dff (int): Hidden layer dimension.
+        activation (str): Activation function to use.
+        dropout (float): Dropout probability.
+        bias (bool): Whether to use bias in linear layers.
+        
+    Returns:
+        nn.Sequential: The constructed FFN block.
+    """
     return nn.Sequential(
         nn.Linear(din, dff, bias=bias),
         getattr(nn, activation)(),
@@ -22,8 +34,8 @@ def ffn_block(
 
 
 class MultiHeadAttention(nn.Module):
-    """
-    A vanilla multi-head masked self-attention layer with a projection at the end.
+    """A vanilla multi-head masked self-attention layer with a projection at the end.
+    
     It is possible to use torch.nn.MultiheadAttention here but I am including an
     explicit implementation here to show that there is nothing too scary here.
     """
@@ -121,6 +133,11 @@ class MultiHeadAttention(nn.Module):
 
 
 class MultiHeadAttentionAlibi(MultiHeadAttention):
+    """Multi-head attention with Attention with Linear Biases (ALiBi).
+    
+    ALiBi eliminates the need for positional embeddings by biasing the query-key
+    attention scores with a penalty proportional to their distance.
+    """
     def __init__(self, dim: int, num_heads: int, dropout: float, bias: bool = False, context_limit: int = -1):
         super().__init__(dim, num_heads, dropout, bias)
         # self.m = torch.tensor(MultiHeadAttentionAlibi.get_slopes(num_heads))
@@ -224,9 +241,8 @@ class MultiHeadAttentionAlibi(MultiHeadAttention):
 
 
 class TransformerLayer(nn.Module):
-    """
-    Transformer Layer
-
+    """Transformer Layer using pre-layer-normalization and ALiBi attention.
+    
     Using pre-layer-normalization: https://arxiv.org/pdf/2002.04745.pdf
     Inspiration: https://nn.labml.ai/transformers/models.html
     AliBI Attention: https://ofir.io/train_short_test_long.pdf
@@ -306,6 +322,7 @@ class TransformerLayer(nn.Module):
 
 
 class TransformerStereoLayer(TransformerLayer):
+    """Transformer Layer extended for stereo (dual-channel) processing with cross-attention."""
     def forward(
         self,
         x1: torch.Tensor,
@@ -334,10 +351,9 @@ class TransformerStereoLayer(TransformerLayer):
 
 
 class GPT(nn.Module):
-    """
-    GPT like transformer Decoder-only class.
-
-    * Uses AliBi attention (no positional embeddings or max-sequence-length)
+    """GPT like transformer Decoder-only class.
+    
+    Uses ALiBi attention (no positional embeddings or max-sequence-length).
     """
 
     def __init__(
@@ -420,6 +436,7 @@ class GPT(nn.Module):
 
 
 class GPTStereo(GPT):
+    """GPT model adapted for stereo processing using cross-attention towers."""
     def _build_layers(self):
         layers = []
         for _ in range(self.num_layers):
@@ -527,7 +544,8 @@ class GPTStereo(GPT):
 
 
 class Combinator(nn.Module):
-    """
+    """Combines ego-centric representations from channel-agnostic towers.
+    
     Combines the "ego-centric" representations from identical 'towers'
     processing channel 0 and 1. The towers are identical (shared weights)
     and therefore channel agnostic, e.g. they don't know if they process information

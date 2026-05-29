@@ -1,0 +1,3 @@
+# input API
+
+::: maai.input

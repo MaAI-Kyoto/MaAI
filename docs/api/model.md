@@ -1,0 +1,3 @@
+# model API
+
+::: maai.model

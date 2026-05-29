@@ -46,3 +46,9 @@ packages = ["src/maai"]
 
 [project.urls]
 Homepage = "https://github.com/MaAI-Kyoto/MaAI"
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]

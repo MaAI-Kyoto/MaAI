@@ -26,6 +26,18 @@ def _build_mlp(
     n_layers: int,
     dropout: float,
 ) -> nn.Module:
+    """Build a Multi-Layer Perceptron (MLP) module.
+    
+    Args:
+        in_dim (int): Input dimension.
+        hidden_dim (int): Hidden layer dimension.
+        out_dim (int): Output dimension.
+        n_layers (int): Number of layers in the MLP.
+        dropout (float): Dropout probability.
+        
+    Returns:
+        nn.Module: The constructed MLP module.
+    """
     layers: List[nn.Module] = [
         nn.Linear(in_dim, hidden_dim),
         nn.ReLU(),
@@ -42,10 +54,22 @@ def _build_mlp(
 
 
 class VapGPT_nod_para(nn.Module):
+    """Voice Activity Projection with parameterized Nodding prediction.
+    
+    This model predicts detailed parameters for nodding behaviors such as
+    repetitions, range, speed, and swing directions, in addition to standard
+    voice activity and backchannels.
+    """
     BINS_P_NOW: List[int] = [0, 1]
     BINS_PFUTURE: List[int] = [2, 3]
 
     def __init__(self, conf: Optional[VapConfig] = None):
+        """Initialize the VapGPT_nod_para model.
+        
+        Args:
+            conf (Optional[VapConfig]): Configuration object.
+                If None, default VapConfig is used.
+        """
         super().__init__()
         if conf is None:
             conf = VapConfig()
@@ -166,6 +190,11 @@ class VapGPT_nod_para(nn.Module):
         self.decrease_dimension_param = None
 
     def load_encoder(self, cpc_model: str) -> None:
+        """Load and build the audio encoders for both speakers.
+        
+        Args:
+            cpc_model (str): Pre-trained CPC model name or path.
+        """
         self.encoder1 = build_audio_encoder(self.conf, cpc_model=cpc_model)
         self.encoder1 = self.encoder1.eval()
         self.encoder2 = build_audio_encoder(self.conf, cpc_model=cpc_model)
@@ -186,14 +215,38 @@ class VapGPT_nod_para(nn.Module):
 
     @property
     def horizon_time(self):
+        """Get the horizon time for the projection in seconds.
+        
+        Returns:
+            float: Horizon time for the objective.
+        """
         return self.objective.horizon_time
 
     @staticmethod
     def denormalize(value: float, mean: float, std: float) -> float:
+        """Denormalize a z-score value using mean and standard deviation.
+        
+        Args:
+            value (float): The normalized z-score value.
+            mean (float): The mean used for normalization.
+            std (float): The standard deviation used for normalization.
+            
+        Returns:
+            float: The denormalized original value.
+        """
         return value * std + mean
 
     @staticmethod
     def _apply_repetitions_thresholds(prob: List[float], thresholds: Dict[str, float]) -> int:
+        """Apply thresholds to repetition probabilities to determine the predicted class.
+        
+        Args:
+            prob (List[float]): List of probabilities for each repetition class.
+            thresholds (Dict[str, float]): Dictionary containing threshold values ('t0', 't1', 't2').
+            
+        Returns:
+            int: The index of the predicted repetition class.
+        """
         t = torch.tensor(
             [
                 float(thresholds.get("t0", 1.0)),
@@ -208,6 +261,17 @@ class VapGPT_nod_para(nn.Module):
         return int(torch.argmax(ratio).item())
 
     def encode_audio(self, audio1: torch.Tensor, audio2: torch.Tensor) -> Tuple[Tensor, Tensor]:
+        """Encode the raw audio inputs into feature representations.
+        
+        Note: Channel swap is applied for temporal consistency.
+        
+        Args:
+            audio1 (torch.Tensor): Audio waveform for speaker 1 (User).
+            audio2 (torch.Tensor): Audio waveform for speaker 2 (System).
+            
+        Returns:
+            Tuple[Tensor, Tensor]: Encoded features for the two speakers.
+        """
         
         # Channel swap for temporal consistency
         x1 = self.encoder1(audio2)  # speaker 1 (User)
@@ -221,6 +285,17 @@ class VapGPT_nod_para(nn.Module):
         x2: Tensor,
         cache: Optional[dict] = None,
     ) -> Tuple[dict, dict]:
+        """Forward pass for the VapGPT_nod_para model.
+        
+        Args:
+            x1 (Tensor): Input audio embedded tensor for speaker 1.
+            x2 (Tensor): Input audio embedded tensor for speaker 2.
+            cache (dict, optional): Cache of past keys/values.
+            
+        Returns:
+            Tuple[dict, dict]: Model outputs (predictions for VAD, backchannels, and nodding parameters) 
+                               and the updated cache.
+        """
         if cache is None:
             cache = {}
 

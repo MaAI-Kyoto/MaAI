@@ -1,0 +1,47 @@
+site_name: MaAI API Documentation
+site_url: https://MaAI-Kyoto.github.io/MaAI/
+repo_url: https://github.com/MaAI-Kyoto/MaAI
+repo_name: MaAI-Kyoto/MaAI
+site_description: API Documentation for MaAI (Real-time and Continuous Non-Linguistic Behavior Generation Software)
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_root_heading: true
+            show_source: true
+            docstring_style: google
+
+nav:
+  - Home: index.md
+  - API Reference:
+    - encoder: api/encoder.md
+    - encoder_components: api/encoder_components.md
+    - input: api/input.md
+    - model: api/model.md
+    - modules: api/modules.md
+    - objective: api/objective.md
+    - output: api/output.md
+    - util: api/util.md
+    - models:
+      - config: api/models/config.md
+      - vap: api/models/vap.md
+      - vap_bc: api/models/vap_bc.md
+      - vap_bc_2type: api/models/vap_bc_2type.md
+      - vap_nod: api/models/vap_nod.md
+      - vap_nod_para: api/models/vap_nod_para.md
+      - vap_prompt: api/models/vap_prompt.md

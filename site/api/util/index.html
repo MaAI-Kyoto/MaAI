@@ -1,0 +1,3180 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="API Documentation for MaAI (Real-time and Continuous Non-Linguistic Behavior Generation Software)">
+      
+      
+      
+        <link rel="canonical" href="https://MaAI-Kyoto.github.io/MaAI/api/util/">
+      
+      
+        <link rel="prev" href="../output/">
+      
+      
+        <link rel="next" href="../models/config/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>util - MaAI API Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#util-api" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MaAI API Documentation" class="md-header__button md-logo" aria-label="MaAI API Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MaAI API Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              util
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/MaAI-Kyoto/MaAI" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    MaAI-Kyoto/MaAI
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../encoder/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MaAI API Documentation" class="md-nav__button md-logo" aria-label="MaAI API Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MaAI API Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/MaAI-Kyoto/MaAI" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    MaAI-Kyoto/MaAI
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encoder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    encoder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encoder_components/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    encoder_components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../objective/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    objective
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    util
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    util
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#maai.util" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        util
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="util">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_2float_2_byte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_2float_2_byte
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_2int16_2_byte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_2int16_2_byte
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_byte_2_2float" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_byte_2_2float
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_bytearray_2_vapresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_bytearray_2_vapresult
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_vapresult_2_bytearray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_vapresult_2_bytearray
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.download_continuous_mimi_onnx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        download_continuous_mimi_onnx
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.euler_to_quaternion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        euler_to_quaternion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.generate_natural_nod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_natural_nod
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_natural_nod">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.generate_natural_nod--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.generate_natural_nod--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Returns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.get_available_models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_available_models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.load_vap_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_vap_model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.resolve_encoder_type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_encoder_type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_9" id="__nav_2_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_bc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_bc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_bc_2type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_bc_2type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_nod/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_nod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_nod_para/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_nod_para
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_prompt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#maai.util" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        util
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="util">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_2float_2_byte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_2float_2_byte
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_2int16_2_byte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_2int16_2_byte
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_byte_2_2float" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_byte_2_2float
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_bytearray_2_vapresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_bytearray_2_vapresult
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.conv_vapresult_2_bytearray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conv_vapresult_2_bytearray
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.download_continuous_mimi_onnx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        download_continuous_mimi_onnx
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.euler_to_quaternion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        euler_to_quaternion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.generate_natural_nod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_natural_nod
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="generate_natural_nod">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.generate_natural_nod--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.generate_natural_nod--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Returns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.get_available_models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_available_models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.load_vap_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_vap_model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.util.resolve_encoder_type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_encoder_type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="util-api">util API</h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="maai.util" class="doc doc-heading">
+            <code>maai.util</code>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.conv_2float_2_byte" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">conv_2float_2_byte</span><span class="p">(</span><span class="n">val1</span><span class="p">,</span> <span class="n">val2</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert two double-precision floats into a combined byte array.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>val1</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>First float.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>val2</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Second float.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>bytes</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Combined byte array.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">conv_2float_2_byte</span><span class="p">(</span><span class="n">val1</span><span class="p">,</span> <span class="n">val2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert two double-precision floats into a combined byte array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        val1 (float): First float.</span>
+<span class="sd">        val2 (float): Second float.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytes: Combined byte array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;d&#39;</span><span class="p">,</span> <span class="n">val1</span><span class="p">)</span>
+    <span class="n">b2</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;d&#39;</span><span class="p">,</span> <span class="n">val2</span><span class="p">)</span>
+
+    <span class="n">b</span> <span class="o">=</span> <span class="n">b1</span> <span class="o">+</span> <span class="n">b2</span>
+
+    <span class="k">return</span> <span class="n">b</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.conv_2int16_2_byte" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">conv_2int16_2_byte</span><span class="p">(</span><span class="n">val1</span><span class="p">,</span> <span class="n">val2</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert two integers into a combined byte array using 2 bytes each.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>val1</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>First integer.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>val2</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Second integer.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>bytes</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Combined byte array.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">conv_2int16_2_byte</span><span class="p">(</span><span class="n">val1</span><span class="p">,</span> <span class="n">val2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert two integers into a combined byte array using 2 bytes each.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        val1 (int): First integer.</span>
+<span class="sd">        val2 (int): Second integer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytes: Combined byte array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="n">val1</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">BYTE_ORDER</span><span class="p">)</span>
+    <span class="n">b2</span> <span class="o">=</span> <span class="n">val2</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">BYTE_ORDER</span><span class="p">)</span>
+
+    <span class="c1"># print(b1)</span>
+    <span class="c1"># print(b2)</span>
+    <span class="c1"># concatenate two bytes</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">b1</span> <span class="o">+</span> <span class="n">b2</span>
+
+    <span class="c1">#print(b)</span>
+
+    <span class="k">return</span> <span class="n">b</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.conv_byte_2_2float" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">conv_byte_2_2float</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">b2</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert two double-precision byte blocks back into floats.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>b1</code>
+            </td>
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>First byte block.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>b2</code>
+            </td>
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Second byte block.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tuple[float, float]: The decoded floats.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">conv_byte_2_2float</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">b2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert two double-precision byte blocks back into floats.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        b1 (bytes): First byte block.</span>
+<span class="sd">        b2 (bytes): Second byte block.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[float, float]: The decoded floats.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">val1</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;d&#39;</span><span class="p">,</span> <span class="n">b1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">val2</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;d&#39;</span><span class="p">,</span> <span class="n">b2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">val1</span><span class="p">,</span> <span class="n">val2</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.conv_bytearray_2_vapresult" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">conv_bytearray_2_vapresult</span><span class="p">(</span><span class="n">barr</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Deserialize a byte array back into a VAP result dictionary.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>barr</code>
+            </td>
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Serialized byte array.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dict[str, Any]: The decoded VAP result data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">conv_bytearray_2_vapresult</span><span class="p">(</span><span class="n">barr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deserialize a byte array back into a VAP result dictionary.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        barr (bytes): Serialized byte array.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict[str, Any]: The decoded VAP result data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;d&#39;</span><span class="p">,</span> <span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="mi">8</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">8</span>
+
+    <span class="n">len_x1</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">4</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">conv_bytearray_2_floatarray</span><span class="p">(</span><span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">8</span><span class="o">*</span><span class="n">len_x1</span><span class="p">])</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">8</span><span class="o">*</span><span class="n">len_x1</span>
+
+    <span class="n">len_x2</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">4</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">conv_bytearray_2_floatarray</span><span class="p">(</span><span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">8</span><span class="o">*</span><span class="n">len_x2</span><span class="p">])</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">len_x2</span>
+
+    <span class="n">len_p_now</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">4</span>
+    <span class="n">p_now</span> <span class="o">=</span> <span class="n">conv_bytearray_2_floatarray</span><span class="p">(</span><span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">8</span><span class="o">*</span><span class="n">len_p_now</span><span class="p">])</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">8</span><span class="o">*</span><span class="n">len_p_now</span>
+
+    <span class="n">len_p_future</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">4</span>
+    <span class="n">p_future</span> <span class="o">=</span> <span class="n">conv_bytearray_2_floatarray</span><span class="p">(</span><span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">8</span><span class="o">*</span><span class="n">len_p_future</span><span class="p">])</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">8</span><span class="o">*</span><span class="n">len_p_future</span>
+
+    <span class="n">len_vad</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">4</span>
+    <span class="n">vad</span> <span class="o">=</span> <span class="n">conv_bytearray_2_floatarray</span><span class="p">(</span><span class="n">barr</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span><span class="o">+</span><span class="mi">8</span><span class="o">*</span><span class="n">len_vad</span><span class="p">])</span>
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">8</span><span class="o">*</span><span class="n">len_vad</span>
+
+    <span class="n">result_vap</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span>
+        <span class="s1">&#39;x1&#39;</span><span class="p">:</span> <span class="n">x1</span><span class="p">,</span>
+        <span class="s1">&#39;x2&#39;</span><span class="p">:</span> <span class="n">x2</span><span class="p">,</span>
+        <span class="s1">&#39;p_now&#39;</span><span class="p">:</span> <span class="n">p_now</span><span class="p">,</span>
+        <span class="s1">&#39;p_future&#39;</span><span class="p">:</span> <span class="n">p_future</span><span class="p">,</span>
+        <span class="s1">&#39;vad&#39;</span><span class="p">:</span> <span class="n">vad</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">result_vap</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.conv_vapresult_2_bytearray" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">conv_vapresult_2_bytearray</span><span class="p">(</span><span class="n">vap_result</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize a VAP result dictionary into a byte array.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>vap_result</code>
+            </td>
+            <td>
+                  <code><span title="Dict">Dict</span>[<span title="str">str</span>, <span title="Any">Any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>VAP result data.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>bytes</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The serialized byte array.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">conv_vapresult_2_bytearray</span><span class="p">(</span><span class="n">vap_result</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialize a VAP result dictionary into a byte array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        vap_result (Dict[str, Any]): VAP result data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytes: The serialized byte array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
+    <span class="c1">#print(type(vap_result[&#39;t&#39;]))</span>
+    <span class="n">b</span> <span class="o">+=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;d&#39;</span><span class="p">,</span> <span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">])</span>
+
+    <span class="n">b</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">BYTE_ORDER</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">+=</span> <span class="n">conv_floatarray_2_byte</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">])</span>
+
+    <span class="n">b</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">BYTE_ORDER</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">+=</span> <span class="n">conv_floatarray_2_byte</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">])</span>
+
+    <span class="n">b</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;p_now&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">BYTE_ORDER</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">+=</span> <span class="n">conv_floatarray_2_byte</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;p_now&#39;</span><span class="p">])</span>
+
+    <span class="n">b</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;p_future&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">BYTE_ORDER</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">+=</span> <span class="n">conv_floatarray_2_byte</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;p_future&#39;</span><span class="p">])</span>
+
+    <span class="n">b</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;vad&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">BYTE_ORDER</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">+=</span> <span class="n">conv_floatarray_2_byte</span><span class="p">(</span><span class="n">vap_result</span><span class="p">[</span><span class="s1">&#39;vad&#39;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">b</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.download_continuous_mimi_onnx" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">download_continuous_mimi_onnx</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="s1">&#39;fp32&#39;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Resolve paths to the streaming Mimi ONNX model and JSON sidecar on disk.</p>
+<p>Files are fetched from <code>maai-kyoto/continuous-mimi-onnx</code> via <code>hf_hub_download</code>
+(cached under the usual Hugging Face cache layout, or under <code>cache_dir</code> when set).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span>
+<span class="normal">658</span>
+<span class="normal">659</span>
+<span class="normal">660</span>
+<span class="normal">661</span>
+<span class="normal">662</span>
+<span class="normal">663</span>
+<span class="normal">664</span>
+<span class="normal">665</span>
+<span class="normal">666</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">download_continuous_mimi_onnx</span><span class="p">(</span>
+    <span class="n">precision</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+    <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">force_download</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resolve paths to the streaming Mimi ONNX model and JSON sidecar on disk.</span>
+
+<span class="sd">    Files are fetched from ``maai-kyoto/continuous-mimi-onnx`` via ``hf_hub_download``</span>
+<span class="sd">    (cached under the usual Hugging Face cache layout, or under ``cache_dir`` when set).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">precision</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">precision</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">precision</span> <span class="o">==</span> <span class="s2">&quot;fp32&quot;</span><span class="p">:</span>
+        <span class="n">onnx_fn</span> <span class="o">=</span> <span class="s2">&quot;continuous_mimi_fp32.onnx&quot;</span>
+        <span class="n">meta_fn</span> <span class="o">=</span> <span class="s2">&quot;continuous_mimi_fp32.json&quot;</span>
+    <span class="k">elif</span> <span class="n">precision</span> <span class="o">==</span> <span class="s2">&quot;int8&quot;</span><span class="p">:</span>
+        <span class="n">onnx_fn</span> <span class="o">=</span> <span class="s2">&quot;continuous_mimi_int8.onnx&quot;</span>
+        <span class="n">meta_fn</span> <span class="o">=</span> <span class="s2">&quot;continuous_mimi_int8.json&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported precision for continuous Mimi ONNX: </span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">onnx_path</span> <span class="o">=</span> <span class="n">hf_hub_download</span><span class="p">(</span>
+        <span class="n">repo_id</span><span class="o">=</span><span class="n">CONTINUOUS_MIMI_ONNX_REPO_ID</span><span class="p">,</span>
+        <span class="n">filename</span><span class="o">=</span><span class="n">onnx_fn</span><span class="p">,</span>
+        <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span>
+        <span class="n">force_download</span><span class="o">=</span><span class="n">force_download</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">meta_path</span> <span class="o">=</span> <span class="n">hf_hub_download</span><span class="p">(</span>
+        <span class="n">repo_id</span><span class="o">=</span><span class="n">CONTINUOUS_MIMI_ONNX_REPO_ID</span><span class="p">,</span>
+        <span class="n">filename</span><span class="o">=</span><span class="n">meta_fn</span><span class="p">,</span>
+        <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span>
+        <span class="n">force_download</span><span class="o">=</span><span class="n">force_download</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">onnx_path</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">meta_path</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.euler_to_quaternion" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">euler_to_quaternion</span><span class="p">(</span><span class="n">rx</span><span class="p">,</span> <span class="n">ry</span><span class="p">,</span> <span class="n">rz</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>XYZ intrinsic Euler angles (radians) to quaternion (qx, qy, qz, qw).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">803</span>
+<span class="normal">804</span>
+<span class="normal">805</span>
+<span class="normal">806</span>
+<span class="normal">807</span>
+<span class="normal">808</span>
+<span class="normal">809</span>
+<span class="normal">810</span>
+<span class="normal">811</span>
+<span class="normal">812</span>
+<span class="normal">813</span>
+<span class="normal">814</span>
+<span class="normal">815</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">euler_to_quaternion</span><span class="p">(</span><span class="n">rx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ry</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rz</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;XYZ intrinsic Euler angles (radians) to quaternion (qx, qy, qz, qw).&quot;&quot;&quot;</span>
+    <span class="n">cx</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">rx</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">sx</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">rx</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">cy</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ry</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">sy</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">ry</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">cz</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">rz</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">sz</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">rz</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">qx</span> <span class="o">=</span> <span class="n">sx</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">+</span> <span class="n">cx</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">sz</span>
+    <span class="n">qy</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">-</span> <span class="n">sx</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">sz</span>
+    <span class="n">qz</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">sz</span> <span class="o">+</span> <span class="n">sx</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">cz</span>
+    <span class="n">qw</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">-</span> <span class="n">sx</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">sz</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">,</span> <span class="n">qz</span><span class="p">,</span> <span class="n">qw</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.generate_natural_nod" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_natural_nod</span><span class="p">(</span><span class="n">range_rad</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">use_pre_rise</span><span class="p">,</span> <span class="n">velocity</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">decay_rate</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">pre_rise_ratio</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Generate a natural nodding motion sequence (pitch in radians vs time in seconds).</p>
+<p>Interpolation is cubic spline (<code>CubicSpline</code>) when scipy is available,
+else cosine interpolation between keyframes.</p>
+<h5 id="maai.util.generate_natural_nod--parameters">Parameters</h5>
+<p>range_rad : float
+    Nod depth in radians (absolute value).
+count : int
+    Number of nods (&gt;= 1).
+use_pre_rise : bool
+    Whether to include a pre-rise before the first nod.
+velocity : float
+    Target average angular velocity (rad/s).
+fps : int
+    Output frame rate.
+decay_rate : float
+    Amplitude decay per nod (0–1).
+pre_rise_ratio : float
+    Pre-rise amplitude as a ratio of <em>range_rad</em>.</p>
+<h5 id="maai.util.generate_natural_nod--returns">Returns</h5>
+<p>motion : np.ndarray
+    Pitch values in radians, one per frame.
+time_axis : np.ndarray
+    Time stamps in seconds, same length as <em>motion</em>.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">681</span>
+<span class="normal">682</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span>
+<span class="normal">691</span>
+<span class="normal">692</span>
+<span class="normal">693</span>
+<span class="normal">694</span>
+<span class="normal">695</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span>
+<span class="normal">713</span>
+<span class="normal">714</span>
+<span class="normal">715</span>
+<span class="normal">716</span>
+<span class="normal">717</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
+<span class="normal">722</span>
+<span class="normal">723</span>
+<span class="normal">724</span>
+<span class="normal">725</span>
+<span class="normal">726</span>
+<span class="normal">727</span>
+<span class="normal">728</span>
+<span class="normal">729</span>
+<span class="normal">730</span>
+<span class="normal">731</span>
+<span class="normal">732</span>
+<span class="normal">733</span>
+<span class="normal">734</span>
+<span class="normal">735</span>
+<span class="normal">736</span>
+<span class="normal">737</span>
+<span class="normal">738</span>
+<span class="normal">739</span>
+<span class="normal">740</span>
+<span class="normal">741</span>
+<span class="normal">742</span>
+<span class="normal">743</span>
+<span class="normal">744</span>
+<span class="normal">745</span>
+<span class="normal">746</span>
+<span class="normal">747</span>
+<span class="normal">748</span>
+<span class="normal">749</span>
+<span class="normal">750</span>
+<span class="normal">751</span>
+<span class="normal">752</span>
+<span class="normal">753</span>
+<span class="normal">754</span>
+<span class="normal">755</span>
+<span class="normal">756</span>
+<span class="normal">757</span>
+<span class="normal">758</span>
+<span class="normal">759</span>
+<span class="normal">760</span>
+<span class="normal">761</span>
+<span class="normal">762</span>
+<span class="normal">763</span>
+<span class="normal">764</span>
+<span class="normal">765</span>
+<span class="normal">766</span>
+<span class="normal">767</span>
+<span class="normal">768</span>
+<span class="normal">769</span>
+<span class="normal">770</span>
+<span class="normal">771</span>
+<span class="normal">772</span>
+<span class="normal">773</span>
+<span class="normal">774</span>
+<span class="normal">775</span>
+<span class="normal">776</span>
+<span class="normal">777</span>
+<span class="normal">778</span>
+<span class="normal">779</span>
+<span class="normal">780</span>
+<span class="normal">781</span>
+<span class="normal">782</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">generate_natural_nod</span><span class="p">(</span>
+    <span class="n">range_rad</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">use_pre_rise</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">velocity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="n">decay_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">,</span>
+    <span class="n">pre_rise_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a natural nodding motion sequence (pitch in radians vs time in seconds).</span>
+
+<span class="sd">    Interpolation is cubic spline (``CubicSpline``) when scipy is available,</span>
+<span class="sd">    else cosine interpolation between keyframes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    range_rad : float</span>
+<span class="sd">        Nod depth in radians (absolute value).</span>
+<span class="sd">    count : int</span>
+<span class="sd">        Number of nods (&gt;= 1).</span>
+<span class="sd">    use_pre_rise : bool</span>
+<span class="sd">        Whether to include a pre-rise before the first nod.</span>
+<span class="sd">    velocity : float</span>
+<span class="sd">        Target average angular velocity (rad/s).</span>
+<span class="sd">    fps : int</span>
+<span class="sd">        Output frame rate.</span>
+<span class="sd">    decay_rate : float</span>
+<span class="sd">        Amplitude decay per nod (0–1).</span>
+<span class="sd">    pre_rise_ratio : float</span>
+<span class="sd">        Pre-rise amplitude as a ratio of *range_rad*.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    motion : np.ndarray</span>
+<span class="sd">        Pitch values in radians, one per frame.</span>
+<span class="sd">    time_axis : np.ndarray</span>
+<span class="sd">        Time stamps in seconds, same length as *motion*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">count</span><span class="p">))</span>
+    <span class="n">fps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">fps</span><span class="p">))</span>
+
+    <span class="n">keyframe_vals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
+    <span class="n">current_amp</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">range_rad</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">use_pre_rise</span><span class="p">:</span>
+        <span class="n">keyframe_vals</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">current_amp</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">pre_rise_ratio</span><span class="p">),</span>
+                <span class="o">-</span><span class="n">current_amp</span><span class="p">,</span>
+                <span class="mf">0.0</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">keyframe_vals</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="o">-</span><span class="n">current_amp</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">current_amp</span> <span class="o">*=</span> <span class="nb">float</span><span class="p">(</span><span class="n">decay_rate</span><span class="p">)</span>
+        <span class="n">keyframe_vals</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="o">-</span><span class="n">current_amp</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+
+    <span class="n">n_seg</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keyframe_vals</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">distances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">vel_scales</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_seg</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">keyframe_vals</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">keyframe_vals</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+            <span class="n">vel_scales</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">use_pre_rise</span><span class="p">:</span>
+                <span class="n">nod_idx</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">nod_idx</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="mi">2</span>
+            <span class="n">vel_scales</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">decay_rate</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">nod_idx</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">))</span>
+
+    <span class="n">total_distance</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
+    <span class="n">raw_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="n">vs</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">vs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">vel_scales</span><span class="p">))</span>
+    <span class="n">total_time</span> <span class="o">=</span> <span class="n">total_distance</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">velocity</span><span class="p">)</span> <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">velocity</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-9</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+    <span class="n">keyframe_frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">vs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">vel_scales</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">raw_total</span> <span class="o">&gt;</span> <span class="mf">1e-9</span> <span class="ow">and</span> <span class="n">d</span> <span class="o">&gt;=</span> <span class="mf">1e-6</span><span class="p">:</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="n">vs</span><span class="p">)</span> <span class="o">*</span> <span class="n">total_time</span> <span class="o">/</span> <span class="n">raw_total</span>
+            <span class="n">n_frames</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">duration</span> <span class="o">*</span> <span class="n">fps</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_frames</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">keyframe_frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">keyframe_frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">n_frames</span><span class="p">)</span>
+
+    <span class="n">keyframe_times</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="o">/</span> <span class="n">fps</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">keyframe_frames</span><span class="p">]</span>
+    <span class="n">total_frames</span> <span class="o">=</span> <span class="n">keyframe_frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">total_frames</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">])</span>
+
+    <span class="n">time_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">total_frames</span><span class="p">)</span> <span class="o">/</span> <span class="n">fps</span>
+
+    <span class="n">motion</span> <span class="o">=</span> <span class="n">_nod_motion_cubic_spline_or_cosine</span><span class="p">(</span>
+        <span class="n">keyframe_times</span><span class="p">,</span>
+        <span class="n">keyframe_vals</span><span class="p">,</span>
+        <span class="n">keyframe_frames</span><span class="p">,</span>
+        <span class="n">time_axis</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">motion</span><span class="p">,</span> <span class="n">time_axis</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.get_available_models" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_available_models</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve a dictionary of available pre-trained models from the Hugging Face hub.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dict[str, List[str]]: A mapping of repository IDs to their available model files.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_available_models</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve a dictionary of available pre-trained models from the Hugging Face hub.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict[str, List[str]]: A mapping of repository IDs to their available model files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">available_models</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">repo_id</span> <span class="ow">in</span> <span class="n">repo_ids</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">list_repo_files</span><span class="p">(</span><span class="n">repo_id</span><span class="p">)</span>
+        <span class="n">available_models</span><span class="p">[</span><span class="n">repo_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pt&quot;</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">available_models</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.load_vap_model" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">load_vap_model</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">frame_rate</span><span class="p">,</span> <span class="n">context_len_sec</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="s1">&#39;jp&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Load a pretrained VAP model from the Hugging Face hub.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>mode</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The operational mode of the model (e.g., 'vap', 'vap_mc', 'bc', 'nod').</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>frame_rate</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The frame rate expected by the model.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>context_len_sec</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context length in seconds.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>language</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The language identifier for the model (e.g., 'jp', 'en').</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;jp&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>device</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The device to load the model onto ('cpu', 'cuda').</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;cpu&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cache_dir</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Directory to cache the downloaded model.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>force_download</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, forces download even if cached.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_type</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The general model architecture type.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;normal&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dict[str, Any]: The loaded state dictionary of the model.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_vap_model</span><span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">frame_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">context_len_sec</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">language</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;jp&quot;</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">force_download</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;normal&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a pretrained VAP model from the Hugging Face hub.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mode (str): The operational mode of the model (e.g., &#39;vap&#39;, &#39;vap_mc&#39;, &#39;bc&#39;, &#39;nod&#39;).</span>
+<span class="sd">        frame_rate (float): The frame rate expected by the model.</span>
+<span class="sd">        context_len_sec (float): The context length in seconds.</span>
+<span class="sd">        language (str): The language identifier for the model (e.g., &#39;jp&#39;, &#39;en&#39;).</span>
+<span class="sd">        device (str): The device to load the model onto (&#39;cpu&#39;, &#39;cuda&#39;).</span>
+<span class="sd">        cache_dir (str, optional): Directory to cache the downloaded model.</span>
+<span class="sd">        force_download (bool): If True, forces download even if cached.</span>
+<span class="sd">        model_type (str): The general model architecture type.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict[str, Any]: The loaded state dictionary of the model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">frame_rate_label</span> <span class="o">=</span> <span class="n">_format_frame_rate</span><span class="p">(</span><span class="n">frame_rate</span><span class="p">)</span>
+    <span class="n">encoder_type</span> <span class="o">=</span> <span class="n">resolve_encoder_type</span><span class="p">(</span><span class="n">model_type</span><span class="p">)</span>
+    <span class="n">encoder_suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">encoder_type</span> <span class="o">==</span> <span class="s2">&quot;mimi&quot;</span><span class="p">:</span>
+        <span class="n">encoder_suffix</span> <span class="o">=</span> <span class="s2">&quot;_mimi&quot;</span>
+    <span class="k">elif</span> <span class="n">encoder_type</span> <span class="o">!=</span> <span class="s2">&quot;cpc&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported encoder_type for pretrained model lookup: </span><span class="si">{</span><span class="n">encoder_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;vap&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;jp&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_jp&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_jp_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;en&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_en&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_en_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;ch&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_ch&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_ch_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;tri&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_tri&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_tri_ecj_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;jp_kyoto&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_jp_kyoto&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_jp_kyoto_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;en_kyoto&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_en_kyoto&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_en_kyoto_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;ch_kyoto&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_ch_kyoto&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_ch_kyoto_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;tri_kyoto&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_tri_kyoto&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_tri_kyoto_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;ca&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_ca&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_ca_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;fr&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_fr&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_fr_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">supported_languages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;jp&quot;</span><span class="p">,</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="s2">&quot;ch&quot;</span><span class="p">,</span> <span class="s2">&quot;tri&quot;</span><span class="p">,</span> <span class="s2">&quot;jp_kyoto&quot;</span><span class="p">,</span> <span class="s2">&quot;en_kyoto&quot;</span><span class="p">,</span> <span class="s2">&quot;ch_kyoto&quot;</span><span class="p">,</span> <span class="s2">&quot;tri_kyoto&quot;</span><span class="p">,</span> <span class="s2">&quot;ca&quot;</span><span class="p">,</span> <span class="s2">&quot;fr&quot;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid language: </span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">. Mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> supports languages are: </span><span class="si">{</span><span class="n">supported_languages</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;vap_mc&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;jp&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_jp&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_jp_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;en&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_en&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_en_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;ch&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_ch&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_ch_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;tri&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_tri&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_tri_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;fr&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_fr&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_fr_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;jp_kyoto&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_jp_kyoto&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_jp_kyoto_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;en_kyoto&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_en_kyoto&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_en_kyoto_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;ch_kyoto&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_ch_kyoto&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_ch_kyoto_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;tri_kyoto&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_mc_tri_kyoto&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_mc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_tri_kyoto_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">supported_languages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;jp&quot;</span><span class="p">,</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="s2">&quot;ch&quot;</span><span class="p">,</span> <span class="s2">&quot;tri&quot;</span><span class="p">,</span> <span class="s2">&quot;jp_kyoto&quot;</span><span class="p">,</span> <span class="s2">&quot;en_kyoto&quot;</span><span class="p">,</span> <span class="s2">&quot;ch_kyoto&quot;</span><span class="p">,</span> <span class="s2">&quot;tri_kyoto&quot;</span><span class="p">,</span> <span class="s2">&quot;fr&quot;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid language: </span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">. Mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> supports languages are: </span><span class="si">{</span><span class="n">supported_languages</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;bc&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;jp&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_bc_jp&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap-bc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_jp_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;en&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_bc_en&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap-bc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_en_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;ch&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_bc_ch&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap-bc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_ch_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;tri&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_bc_tri&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap-bc</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_tri_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">supported_languages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;jp&quot;</span><span class="p">,</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="s2">&quot;ch&quot;</span><span class="p">,</span> <span class="s2">&quot;tri&quot;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid language: </span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">. Mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> supports languages are: </span><span class="si">{</span><span class="n">supported_languages</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;bc_2type&quot;</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;jp&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_bc_2type_jp&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap-bc-2type</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_jp_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="c1"># elif language == &quot;en&quot;:</span>
+        <span class="c1">#     repo_id = repo_ids[&quot;vap_bc_2type_en&quot;]</span>
+        <span class="c1">#     file_path = f&quot;vap-bc_2type_state_dict_erica_{frame_rate}hz_{int(context_len_sec*1000)}msec.pt&quot;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">supported_languages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;jp&quot;</span><span class="p">,</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="s2">&quot;tri&quot;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid language: </span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">. Mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> supports languages are: </span><span class="si">{</span><span class="n">supported_languages</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;nod&quot;</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;jp&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_nod_jp&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap-nod</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_erica_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;en&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_nod_en&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap-nod</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_erica_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">supported_languages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;jp&quot;</span><span class="p">,</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="s2">&quot;tri&quot;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid language: </span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">. Mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> supports languages are: </span><span class="si">{</span><span class="n">supported_languages</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;vap_prompt&quot;</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;jp&quot;</span><span class="p">:</span>
+            <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_prompt_jp&quot;</span><span class="p">]</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;vap_prompt</span><span class="si">{</span><span class="n">encoder_suffix</span><span class="si">}</span><span class="s2">_state_dict_jp_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">supported_languages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;jp&quot;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid language: </span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">. Mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> supports languages are: </span><span class="si">{</span><span class="n">supported_languages</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;nod_para&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">language</span> <span class="o">!=</span> <span class="s2">&quot;jp&quot;</span><span class="p">:</span>
+            <span class="n">supported_languages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;jp&quot;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid language: </span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">. Mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> supports languages are: </span><span class="si">{</span><span class="n">supported_languages</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_ids</span><span class="p">[</span><span class="s2">&quot;vap_nod_para_jp&quot;</span><span class="p">]</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;vap-nod_para_state_dict_erica_</span><span class="si">{</span><span class="n">frame_rate_label</span><span class="si">}</span><span class="s2">hz_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">context_len_sec</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span><span class="si">}</span><span class="s2">msec.pt&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">supported_modes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;vap&quot;</span><span class="p">,</span> <span class="s2">&quot;vap_mc&quot;</span><span class="p">,</span> <span class="s2">&quot;bc&quot;</span><span class="p">,</span> <span class="s2">&quot;bc_2type&quot;</span><span class="p">,</span> <span class="s2">&quot;nod&quot;</span><span class="p">,</span> <span class="s2">&quot;vap_prompt&quot;</span><span class="p">,</span> <span class="s2">&quot;nod_para&quot;</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid mode: </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">. Supported modes are: </span><span class="si">{</span><span class="n">supported_modes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">hf_hub_download</span><span class="p">(</span><span class="n">repo_id</span><span class="o">=</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="n">force_download</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid model: mode: </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">, frame_rate: </span><span class="si">{</span><span class="n">frame_rate</span><span class="si">}</span><span class="s2">, context_len_sec: </span><span class="si">{</span><span class="n">context_len_sec</span><span class="si">}</span><span class="s2">, language: </span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">. Run get_available_models() for available models.&quot;</span><span class="p">)</span>
+
+    <span class="n">sd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">sd</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">sd</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.util.resolve_encoder_type" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">resolve_encoder_type</span><span class="p">(</span><span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Resolve the encoder type based on the provided model type.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_type</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The type of model (e.g., 'normal', 'normal-ver2').</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;normal&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>str</code></td>            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The corresponding encoder type ('cpc' or 'mimi').</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\maai\util.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">resolve_encoder_type</span><span class="p">(</span><span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;normal&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the encoder type based on the provided model type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_type (str): The type of model (e.g., &#39;normal&#39;, &#39;normal-ver2&#39;).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: The corresponding encoder type (&#39;cpc&#39; or &#39;mimi&#39;).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">MODEL_TYPE_TO_ENCODER_TYPE</span><span class="p">[</span><span class="n">model_type</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">supported_model_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">MODEL_TYPE_TO_ENCODER_TYPE</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unsupported model_type: </span><span class="si">{</span><span class="n">model_type</span><span class="si">}</span><span class="s2">. Supported model_type values are: </span><span class="si">{</span><span class="n">supported_model_types</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

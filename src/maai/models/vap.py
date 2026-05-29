@@ -10,11 +10,24 @@ from ..modules import GPT, GPTStereo
 from ..objective import ObjectiveVAP
 
 class VapGPT(nn.Module):
+    """Voice Activity Projection (VAP) core model using GPT architecture.
     
+    This model processes audio features using a GPT-based architecture
+    to predict future voice activity, which can be used for turn-taking
+    predictions in spoken dialogue systems.
+    """
+    
+
     BINS_P_NOW = [0, 1]
     BINS_PFUTURE = [2, 3]
     
     def __init__(self, conf: Optional[VapConfig] = None):
+        """Initialize the VapGPT model.
+        
+        Args:
+            conf (Optional[VapConfig]): Configuration object for the model.
+                If None, default VapConfig is used.
+        """
         super().__init__()
         if conf is None:
             conf = VapConfig()
@@ -62,6 +75,11 @@ class VapGPT(nn.Module):
         self.vap_head = nn.Linear(conf.dim, self.objective.n_classes)
 
     def load_encoder(self, cpc_model):
+        """Load and build the audio encoders for both speakers.
+        
+        Args:
+            cpc_model: Pre-trained CPC model to be used as feature extractor.
+        """
         self.encoder1 = build_audio_encoder(self.conf, cpc_model=cpc_model)
         self.encoder1 = self.encoder1.eval()
         self.encoder2 = build_audio_encoder(self.conf, cpc_model=cpc_model)
@@ -78,10 +96,25 @@ class VapGPT(nn.Module):
 
     @property
     def horizon_time(self):
+        """Get the horizon time for the projection in seconds.
+        
+        Returns:
+            float: Horizon time for the objective.
+        """
         return self.objective.horizon_time
 
     def encode_audio(self, audio1: torch.Tensor, audio2: torch.Tensor) -> Tuple[Tensor, Tensor]:
+        """Encode the raw audio inputs into feature representations.
         
+        Args:
+            audio1 (torch.Tensor): Audio waveform for speaker 1.
+            audio2 (torch.Tensor): Audio waveform for speaker 2.
+            
+        Returns:
+            Tuple[Tensor, Tensor]: Encoded features for speaker 1 and speaker 2.
+        """
+        
+
         x1 = self.encoder1(audio1)  # speaker 1
         x2 = self.encoder2(audio2)  # speaker 2
 
@@ -92,6 +125,15 @@ class VapGPT(nn.Module):
         return x1, x2
 
     def vad_loss(self, vad_output, vad):
+        """Compute the Voice Activity Detection (VAD) loss.
+        
+        Args:
+            vad_output: Predicted VAD logits.
+            vad: Ground truth VAD labels.
+            
+        Returns:
+            Tensor: Binary cross-entropy loss between predictions and targets.
+        """
         return F.binary_cross_entropy_with_logits(vad_output, vad)
     
     def forward(

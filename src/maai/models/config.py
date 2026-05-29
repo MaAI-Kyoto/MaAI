@@ -5,6 +5,11 @@ BIN_TIMES: list = [0.2, 0.4, 0.6, 0.8]
 
 @dataclass
 class VapConfig:
+    """Configuration class for VAP (Voice Activity Projection) model.
+    
+    This class holds all the hyperparameters and configuration options
+    required to build and train the VAP model and its variants.
+    """
     sample_rate: int = 16000
     frame_hz: float = 10.0
     bin_times: List[float] = field(default_factory=lambda: BIN_TIMES)
@@ -49,6 +54,15 @@ class VapConfig:
 
     @staticmethod
     def add_argparse_args(parser, fields_added=[]):
+        """Add VapConfig attributes as command-line arguments to an argparse parser.
+        
+        Args:
+            parser: The argparse.ArgumentParser instance.
+            fields_added (list): A list to keep track of added field names.
+            
+        Returns:
+            tuple: A tuple containing the updated parser and the fields_added list.
+        """
         for k, v in VapConfig.__dataclass_fields__.items():
             if k == "bin_times":
                 parser.add_argument(
@@ -61,6 +75,14 @@ class VapConfig:
 
     @staticmethod
     def args_to_conf(args):
+        """Convert parsed command-line arguments back into a VapConfig instance.
+        
+        Args:
+            args: The parsed arguments from argparse.
+            
+        Returns:
+            VapConfig: A new instance of VapConfig populated with the parsed values.
+        """
         return VapConfig(
             **{
                 k.replace("vap_", ""): v

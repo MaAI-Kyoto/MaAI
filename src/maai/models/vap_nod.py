@@ -10,7 +10,18 @@ from ..modules import GPT, GPTStereo
 from ..objective import ObjectiveVAP
 
 class VapGPT_nod(nn.Module):
+    """Voice Activity Projection with Nodding prediction (VAP-Nod) model.
+    
+    This model predicts both backchannels and nodding behaviors (e.g., short nod,
+    long nod) during a conversation.
+    """
     def __init__(self, conf: Optional[VapConfig] = None):
+        """Initialize the VapGPT_nod model.
+        
+        Args:
+            conf (Optional[VapConfig]): Configuration object.
+                If None, default VapConfig is used.
+        """
         super().__init__()
         if conf is None:
             conf = VapConfig()
@@ -62,6 +73,11 @@ class VapGPT_nod(nn.Module):
         self.bc_head = nn.Linear(conf.dim, 1)
 
     def load_encoder(self, cpc_model):
+        """Load and build the audio encoders for both speakers.
+        
+        Args:
+            cpc_model: Pre-trained CPC model to be used as feature extractor.
+        """
         self.encoder1 = build_audio_encoder(self.conf, cpc_model=cpc_model)
         self.encoder1 = self.encoder1.eval()
         self.encoder2 = build_audio_encoder(self.conf, cpc_model=cpc_model)
@@ -78,9 +94,25 @@ class VapGPT_nod(nn.Module):
 
     @property
     def horizon_time(self):
+        """Get the horizon time for the projection in seconds.
+        
+        Returns:
+            float: Horizon time for the objective.
+        """
         return self.objective.horizon_time
 
     def encode_audio(self, audio1: torch.Tensor, audio2: torch.Tensor) -> Tuple[Tensor, Tensor]:
+        """Encode the raw audio inputs into feature representations.
+        
+        Note: Channel swap is applied for temporal consistency.
+        
+        Args:
+            audio1 (torch.Tensor): Audio waveform for speaker 1 (User).
+            audio2 (torch.Tensor): Audio waveform for speaker 2 (System).
+            
+        Returns:
+            Tuple[Tensor, Tensor]: Encoded features for the two speakers.
+        """
         
         # Channel swap for temporal consistency
         x1 = self.encoder1(audio2)  # speaker 1 (User)
@@ -93,6 +125,15 @@ class VapGPT_nod(nn.Module):
         return x1, x2
 
     def vad_loss(self, vad_output, vad):
+        """Compute the Voice Activity Detection (VAD) loss.
+        
+        Args:
+            vad_output: Predicted VAD logits.
+            vad: Ground truth VAD labels.
+            
+        Returns:
+            Tensor: Binary cross-entropy loss between predictions and targets.
+        """
         return F.binary_cross_entropy_with_logits(vad_output, vad)
     
     def forward(
@@ -102,7 +143,7 @@ class VapGPT_nod(nn.Module):
         cache: Optional[dict] = None,
     ) -> Tuple[dict, dict]:
         """
-        Forward pass for the VapGPT model.
+        Forward pass for the VapGPT_nod model.
 
         Args:
             x1 (Tensor): Input audio embedded tensor for speaker 1.

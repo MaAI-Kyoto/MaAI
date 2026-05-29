@@ -55,6 +55,14 @@ def _format_frame_rate(frame_rate: float) -> str:
 
 
 def resolve_encoder_type(model_type: str = "normal") -> str:
+    """Resolve the encoder type based on the provided model type.
+    
+    Args:
+        model_type (str): The type of model (e.g., 'normal', 'normal-ver2').
+        
+    Returns:
+        str: The corresponding encoder type ('cpc' or 'mimi').
+    """
     try:
         return MODEL_TYPE_TO_ENCODER_TYPE[model_type]
     except KeyError as exc:
@@ -65,6 +73,21 @@ def resolve_encoder_type(model_type: str = "normal") -> str:
 
 
 def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, language: str = "jp", device: str = "cpu", cache_dir: str = None, force_download: bool = False, model_type: str = "normal"):
+    """Load a pretrained VAP model from the Hugging Face hub.
+    
+    Args:
+        mode (str): The operational mode of the model (e.g., 'vap', 'vap_mc', 'bc', 'nod').
+        frame_rate (float): The frame rate expected by the model.
+        context_len_sec (float): The context length in seconds.
+        language (str): The language identifier for the model (e.g., 'jp', 'en').
+        device (str): The device to load the model onto ('cpu', 'cuda').
+        cache_dir (str, optional): Directory to cache the downloaded model.
+        force_download (bool): If True, forces download even if cached.
+        model_type (str): The general model architecture type.
+        
+    Returns:
+        Dict[str, Any]: The loaded state dictionary of the model.
+    """
     frame_rate_label = _format_frame_rate(frame_rate)
     encoder_type = resolve_encoder_type(model_type)
     encoder_suffix = ""
@@ -244,6 +267,11 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
     return sd
 
 def get_available_models():
+    """Retrieve a dictionary of available pre-trained models from the Hugging Face hub.
+    
+    Returns:
+        Dict[str, List[str]]: A mapping of repository IDs to their available model files.
+    """
     available_models = {}
     for repo_id in repo_ids.values():
         files = list_repo_files(repo_id)
@@ -259,7 +287,15 @@ BYTE_ORDER = 'little'
 #
 
 def conv_2int16_2_byte(val1, val2):
+    """Convert two integers into a combined byte array using 2 bytes each.
     
+    Args:
+        val1 (int): First integer.
+        val2 (int): Second integer.
+        
+    Returns:
+        bytes: Combined byte array.
+    """
     b1 = val1.to_bytes(2, BYTE_ORDER)
     b2 = val2.to_bytes(2, BYTE_ORDER)
     
@@ -289,7 +325,15 @@ def conv_2int16array_2_bytearray(arr1, arr2):
 #
 
 def conv_2float_2_byte(val1, val2):
+    """Convert two double-precision floats into a combined byte array.
     
+    Args:
+        val1 (float): First float.
+        val2 (float): Second float.
+        
+    Returns:
+        bytes: Combined byte array.
+    """
     b1 = struct.pack('<d', val1)
     b2 = struct.pack('<d', val2)
     
@@ -332,7 +376,15 @@ def conv_floatarray_2_byte(arr):
 #
 
 def conv_byte_2_2float(b1, b2):
+    """Convert two double-precision byte blocks back into floats.
     
+    Args:
+        b1 (bytes): First byte block.
+        b2 (bytes): Second byte block.
+        
+    Returns:
+        Tuple[float, float]: The decoded floats.
+    """
     val1 = struct.unpack('<d', b1)[0]
     val2 = struct.unpack('<d', b2)[0]
     
@@ -376,7 +428,14 @@ def conv_bytearray_2_floatarray_short(barr):
 # VAP result -> Byte
 #
 def conv_vapresult_2_bytearray(vap_result):
+    """Serialize a VAP result dictionary into a byte array.
     
+    Args:
+        vap_result (Dict[str, Any]): VAP result data.
+        
+    Returns:
+        bytes: The serialized byte array.
+    """
     b = b''
     #print(type(vap_result['t']))
     b += struct.pack('<d', vap_result['t'])
@@ -402,7 +461,14 @@ def conv_vapresult_2_bytearray(vap_result):
 # Byte -> VAP result
 #
 def conv_bytearray_2_vapresult(barr):
+    """Deserialize a byte array back into a VAP result dictionary.
     
+    Args:
+        barr (bytes): Serialized byte array.
+        
+    Returns:
+        Dict[str, Any]: The decoded VAP result data.
+    """
     idx = 0
     t = struct.unpack('<d', barr[idx:8])[0]
     idx += 8

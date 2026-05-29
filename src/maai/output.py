@@ -187,13 +187,12 @@ def _get_bar_for_value(key: str, value: Any, bar_length: int = 30, bar_type: str
 
 
 class ConsoleBar:
-    """
-    maai.get_result()の内容をバーグラフで可視化するクラス。
+    """Renders the output of `maai.get_result()` as bar graphs in the console.
 
-    ``Maai`` の単一モデル結果と、``MaaiMultiple`` の「サブモデル名 ->
-    そのモデル固有の結果 dict」を含む結合結果の双方に対応する。
-    結合結果のときは、共通フィールド (``t``, ``x1``, ``x2``) を上部に
-    1 度だけ表示し、続けてサブモデルごとにヘッダ付きでセクションを描画する。
+    It supports both a single `Maai` model result and combined results from `MaaiMultiple`
+    that map a "sub-model name" to its specific result dict.
+    In the case of combined results, common fields (`t`, `x1`, `x2`) are displayed
+    once at the top, followed by sections for each sub-model with headers.
     """
     def __init__(self, bar_length: int = 30, bar_type: str = "normal"):
         self.bar_length = bar_length
@@ -204,6 +203,11 @@ class ConsoleBar:
     # entry point
     # --------------------------------------------------------------
     def update(self, result: Dict[str, Any]):
+        """Update the console output with the new model results.
+        
+        Args:
+            result (Dict[str, Any]): Dictionary containing model outputs (e.g., p_now, p_future, vad).
+        """
         if self._first:
             sys.stdout.write("\x1b[2J")  # 初期クリア
             self._first = False
@@ -468,7 +472,15 @@ class ConsoleBar:
             print("-" * (self.bar_length + 30))
 
 class TcpReceiver:
+    """Receives VAP results over a TCP connection from a remote server."""
     def __init__(self, ip, port, mode):
+        """Initialize the TcpReceiver.
+        
+        Args:
+            ip (str): IP address to connect to.
+            port (int): Port to connect to.
+            mode (str): Mode for decoding the results (e.g., 'vap', 'bc_2type', 'nod').
+        """
         self.ip = ip
         self.port = port
         self.mode = mode
@@ -528,7 +540,15 @@ class TcpReceiver:
         return self.result_queue.get()
 
 class TcpTransmitter:
+    """Transmits VAP results over a TCP connection to connected clients."""
     def __init__(self, ip, port, mode):
+        """Initialize the TcpTransmitter.
+        
+        Args:
+            ip (str): IP address to bind to.
+            port (int): Port to bind to.
+            mode (str): Mode for encoding the results (e.g., 'vap', 'bc_2type', 'nod').
+        """
         self.ip = ip
         self.port = port
         self.mode = mode
@@ -576,7 +596,10 @@ class TcpTransmitter:
 
 # 新規追加: GUIでバーグラフを表示するクラス
 class GuiBar:
-    """matplotlibを用いて結果をバーグラフでGUI表示するクラス"""
+    """Displays the result as a bar graph in a GUI using matplotlib.
+    
+    Requires matplotlib and seaborn to be installed.
+    """
     def __init__(self, bar_type: str = "normal"):
         try:
             import matplotlib.pyplot as plt
@@ -597,7 +620,11 @@ class GuiBar:
         sns.set_theme(style="whitegrid")
 
     def update(self, result: Dict[str, Any]):
-        """resultのキーと値をバーグラフで更新表示する"""
+        """Update the bar graph with the new dictionary of results.
+        
+        Args:
+            result (Dict[str, Any]): The result dictionary containing keys and numeric values.
+        """
         labels = []
         values = []
         for key, value in result.items():
@@ -665,6 +692,16 @@ class GuiPlot:
         use_fixed_draw_rate: bool = True,
         window_title: str = "MAAI Plot",
     ) -> None:
+        """Initialize the GuiPlot tool for visualizing MAAI model metrics in real-time.
+        
+        Args:
+            shown_context_sec (int): Number of seconds to display on the x-axis history.
+            frame_rate (float): The model's frame rate in Hz.
+            sample_rate (int): Audio sampling rate.
+            figsize (tuple): Initial figure size.
+            use_fixed_draw_rate (bool): Limit redraw frequency to prevent UI blocking.
+            window_title (str): Title of the GUI window.
+        """
         _ensure_gui_plot_qt_owner()
 
         def _boot() -> None:
