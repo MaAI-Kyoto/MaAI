@@ -33,9 +33,7 @@ https://github.com/ErikEkstedt/VoiceActivityProjection
 
 <br>
 
-__デモ動画（YouTube）__ (https://www.youtube.com/watch?v=-uwB6yl2WtI)
-
-[![Demo video](http://img.youtube.com/vi/-uwB6yl2WtI/0.jpg)](https://www.youtube.com/watch?v=-uwB6yl2WtI)
+https://github.com/user-attachments/assets/e7d1b266-0613-4a46-8718-1808a3682bd3
 
 <br>
 
