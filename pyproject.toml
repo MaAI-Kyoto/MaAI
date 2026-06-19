@@ -52,4 +52,4 @@ Homepage = "https://github.com/MaAI-Kyoto/MaAI"
 docs = [
     "mkdocs-material",
     "mkdocstrings[python]",
-]
+]
