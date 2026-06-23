@@ -15,7 +15,8 @@ requires-python = ">=3.10"
 dependencies = [
     "torch>=2.6.0",
     "transformers==5.5.3",
-    "onnxruntime-gpu>=1.20.0",
+    "onnxruntime-gpu>=1.20.0; sys_platform != 'darwin'",
+    "onnxruntime>=1.20.0; sys_platform == 'darwin'",
     "numpy",
     "einops>=0.7.0",
     "soundfile",
@@ -27,7 +28,7 @@ dependencies = [
     "fastapi>=0.111.0",
     "huggingface-hub",
     "pyqt5==5.15.11",
-    "pyqt5-qt5==5.15.2",
+    "pyqt5-qt5==5.15.19",
     "pyqt5-sip==12.17.0",
     "pyqtgraph>=0.14.0",
 ]
@@ -51,4 +52,4 @@ Homepage = "https://github.com/MaAI-Kyoto/MaAI"
 docs = [
     "mkdocs-material",
     "mkdocstrings[python]",
-]
+]
