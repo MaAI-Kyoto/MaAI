@@ -421,7 +421,7 @@ class Maai():
             pass
         if wait and self._worker_thread is not None and self._worker_thread.is_alive():
             self._worker_thread.join(timeout=timeout)
-        
+
         # Best-effort queue cleanup
         try:
             self._mic1_queue.queue.clear()
@@ -430,7 +430,7 @@ class Maai():
             pass
 
         self.reset_runtime_state()
-    
+
     def process(self, x1, x2):
         """Process a chunk of audio for both channels.
         
@@ -1042,8 +1042,8 @@ class MaaiMultiple:
                 # apply it inside encode_audio). nod_para applies projections
                 # internally inside its forward, so leave it alone.
                 if sub.mode != "nod_para" and hasattr(sub.vap, "decrease_dimension"):
-                    e1 = sub.vap.decrease_dimension(e1)
-                    e2 = sub.vap.decrease_dimension(e2)
+                    e1 = torch.relu(sub.vap.decrease_dimension(e1))
+                    e2 = torch.relu(sub.vap.decrease_dimension(e2))
 
                 if self.use_kv_cache:
                     out, sub.vap_cache = sub.vap.forward(e1, e2, cache=sub.vap_cache)

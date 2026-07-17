@@ -322,11 +322,9 @@ class VapGPT_nod_para(nn.Module):
         cross_out = out["x"]
         if self.gpt_output_dropout is not None:
             cross_out = self.gpt_output_dropout(cross_out)
-            o1 = {**o1, "x": self.gpt_output_dropout(o1["x"])}
-            o2 = {**o2, "x": self.gpt_output_dropout(o2["x"])}
 
-        v1 = self.va_classifier(o1["x"])
-        v2 = self.va_classifier(o2["x"])
+        v1 = self.va_classifier(out["x1"])
+        v2 = self.va_classifier(out["x2"])
         vad = torch.cat((v1, v2), dim=-1)
         logits = self.vap_head(cross_out)
         bc = self.bc_head(cross_out)

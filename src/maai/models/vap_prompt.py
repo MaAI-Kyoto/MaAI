@@ -134,8 +134,8 @@ class VapGPT_prompt(nn.Module):
         x2 = self.encoder2(audio2)  # speaker 2
 
         if hasattr(self, "decrease_dimension"):
-            x1 = self.decrease_dimension(x1)
-            x2 = self.decrease_dimension(x2)
+            x1 = torch.relu(self.decrease_dimension(x1))
+            x2 = torch.relu(self.decrease_dimension(x2))
         
         return x1, x2
 
