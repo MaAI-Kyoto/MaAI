@@ -119,7 +119,6 @@ class VapGPT(nn.Module):
         x2 = self.encoder2(audio2)  # speaker 2
 
         if hasattr(self, "decrease_dimension"):
-            # Match training VapGPT (Downloads/vap/model.py): Linear then ReLU.
             x1 = torch.relu(self.decrease_dimension(x1))
             x2 = torch.relu(self.decrease_dimension(x2))
         
@@ -178,7 +177,7 @@ class VapGPT(nn.Module):
             "cross2_c": (out["past_k2_c"], out["past_v2_c"]),
         }
 
-        # Outputs — VAD uses post-cross speaker streams (same as training VapGPT).
+        # Outputs
         vad1 = self.va_classifier(out["x1"])
         vad2 = self.va_classifier(out["x2"])
         logits = self.vap_head(out["x"])
