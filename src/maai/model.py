@@ -60,6 +60,9 @@ class Maai():
         local_model = None,
         return_p_bins: bool = False,
         listener_style = None,
+        use_vap_onnx: bool = False,
+        vap_onnx_path: str | None = None,
+        vap_onnx_meta_path: str | None = None,
     ):
         """Initialize the Maai instance.
         
@@ -91,6 +94,10 @@ class Maai():
             use_kv_cache (bool): Whether to use KV caching during inference.
             local_model (str | None): Path to a local custom model file.
             return_p_bins (bool): Whether to return probability bins in 'vap' mode.
+            listener_style: Optional FiLM condition vector for nod_para.
+            use_vap_onnx (bool): Use ONNX for VAP transformer (mode='vap'/'vap_mc').
+            vap_onnx_path (str | None): Path to VAP streaming ONNX model.
+            vap_onnx_meta_path (str | None): Path to VAP ONNX meta JSON.
         """
 
         self.return_p_bins = bool(return_p_bins)
@@ -325,6 +332,23 @@ class Maai():
 
         self.vap.to(self.device)
         self.vap = self.vap.eval()
+
+        self._vap_onnx = None
+        self._use_vap_onnx = bool(use_vap_onnx)
+        if self._use_vap_onnx:
+            if mode not in ("vap", "vap_mc"):
+                raise ValueError("use_vap_onnx is only supported for mode='vap' or 'vap_mc'.")
+            if not use_kv_cache:
+                raise ValueError("use_vap_onnx requires use_kv_cache=True.")
+            if not vap_onnx_path or not vap_onnx_meta_path:
+                raise ValueError("use_vap_onnx requires vap_onnx_path and vap_onnx_meta_path.")
+            from .vap_export import VapOnnxSession
+
+            self._vap_onnx = VapOnnxSession(
+                str(vap_onnx_path),
+                str(vap_onnx_meta_path),
+                self.vap,
+            )
         
         self.mode = mode
         self.model_type = model_type
@@ -596,7 +620,10 @@ class Maai():
             # User KV cache
             elif self.use_kv_cache:
 
-                out, self.vap_cache = self.vap.forward(e1, e2, cache=self.vap_cache)
+                if self._vap_onnx is not None:
+                    out, self.vap_cache = self._vap_onnx.forward(e1, e2, cache=self.vap_cache)
+                else:
+                    out, self.vap_cache = self.vap.forward(e1, e2, cache=self.vap_cache)
 
                 ## Trim all cache data in self.vap_cache so that the second-to-last dimension is self.audio_context_len - 1
                 if self.vap_cache is not None:
