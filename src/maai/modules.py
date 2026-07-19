@@ -240,12 +240,114 @@ class MultiHeadAttentionAlibi(MultiHeadAttention):
         return qk
 
 
+class FiLM(nn.Module):
+    """Feature-wise Linear Modulation. x = x * (1 + gamma(s)) + beta(s).
+
+    gamma, beta are produced from the conditioning vector s (B, cond_dim).
+    Ported from the research VAP-Nodding repo (vap.modules.FiLM) so exported
+    FiLM checkpoints load 1:1. The final projection's weights/bias are
+    zero-initialized so that, at start of training, the layer is the identity.
+    """
+
+    def __init__(self, cond_dim: int, feat_dim: int, hidden: int = 0):
+        super().__init__()
+        if hidden > 0:
+            self.proj = nn.Sequential(
+                nn.Linear(cond_dim, hidden),
+                nn.GELU(),
+                nn.Linear(hidden, 2 * feat_dim),
+            )
+            last = self.proj[-1]
+        else:
+            self.proj = nn.Linear(cond_dim, 2 * feat_dim)
+            last = self.proj
+        nn.init.zeros_(last.weight)
+        if last.bias is not None:
+            nn.init.zeros_(last.bias)
+        self.feat_dim = feat_dim
+
+    def forward(self, x: torch.Tensor, cond: Optional[torch.Tensor]) -> torch.Tensor:
+        if cond is None:
+            return x
+        gb = self.proj(cond)
+        g, b = gb.chunk(2, dim=-1)
+        # broadcast over the sequence dim
+        return x * (1.0 + g.unsqueeze(-2)) + b.unsqueeze(-2)
+
+
+class AdaLNZero(nn.Module):
+    """AdaLN-Zero style modulation for a single sub-block.
+
+    Produces (gamma_ln, beta_ln, alpha_gate) from cond. Caller applies them as:
+        z = LN(x) * (1 + gamma_ln) + beta_ln
+        sub_out = sublayer(z)
+        x = x + alpha_gate * sub_out
+
+    Ported from the research repo (vap.modules.AdaLNZero). Zero-init of the
+    projection weight + gamma/beta bias, with alpha_gate bias = 1, makes the
+    layer identical to a vanilla Pre-LN block at start of training.
+    """
+
+    def __init__(self, cond_dim: int, feat_dim: int, hidden: int = 0):
+        super().__init__()
+        out_dim = 3 * feat_dim  # gamma_ln, beta_ln, alpha_gate
+        if hidden > 0:
+            self.proj = nn.Sequential(
+                nn.Linear(cond_dim, hidden),
+                nn.GELU(),
+                nn.Linear(hidden, out_dim),
+            )
+            last = self.proj[-1]
+        else:
+            self.proj = nn.Linear(cond_dim, out_dim)
+            last = self.proj
+        nn.init.zeros_(last.weight)
+        if last.bias is not None:
+            nn.init.zeros_(last.bias)
+            with torch.no_grad():
+                last.bias[2 * feat_dim : 3 * feat_dim].fill_(1.0)
+        self.feat_dim = feat_dim
+
+    def modulate(
+        self, x_ln: torch.Tensor, cond: Optional[torch.Tensor]
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+        if cond is None:
+            return x_ln, None
+        g, b, a = self.proj(cond).chunk(3, dim=-1)
+        return x_ln * (1.0 + g.unsqueeze(-2)) + b.unsqueeze(-2), a.unsqueeze(-2)
+
+
+class CondPreNorm(nn.Module):
+    """LayerNorm applied to the listener-style conditioning vector at entry.
+
+    Ported from the research repo (vap.modules.CondPreNorm). Identity when
+    cond is None.
+    """
+
+    def __init__(self, cond_dim: int):
+        super().__init__()
+        self.ln = nn.LayerNorm(cond_dim)
+
+    def forward(self, s: Optional[torch.Tensor]) -> Optional[torch.Tensor]:
+        if s is None:
+            return None
+        return self.ln(s)
+
+
 class TransformerLayer(nn.Module):
     """Transformer Layer using pre-layer-normalization and ALiBi attention.
     
     Using pre-layer-normalization: https://arxiv.org/pdf/2002.04745.pdf
     Inspiration: https://nn.labml.ai/transformers/models.html
     AliBI Attention: https://ofir.io/train_short_test_long.pdf
+
+    Optional FiLM/AdaLN-Zero conditioning (cond), ported from the research
+    VAP-Nodding repo so exported listener-style checkpoints load 1:1:
+      film_mode == "post_ffn":
+          x = x + dropout(FFN(LN(x)))  ->  x = FiLM(x, cond)
+      film_mode == "adaln_zero":
+          each sub-block modulates its LN output and gates its output.
+    film_mode == "none" (default) is byte-identical to the original layer.
     """
 
     def __init__(
@@ -256,7 +358,10 @@ class TransformerLayer(nn.Module):
         ffn_activation: str = "GELU",
         dropout: float = 0.1,
         cross_attention: bool = False,
-        context_limit: int = -1
+        context_limit: int = -1,
+        film_mode: str = "none",
+        cond_dim: int = 0,
+        film_hidden: int = 0,
     ):
         super().__init__()
         self.dim = dim
@@ -281,6 +386,18 @@ class TransformerLayer(nn.Module):
                 dim=dim, num_heads=num_heads, dropout=dropout, context_limit=context_limit
             )
 
+        # Conditioning modules (only allocated when enabled).
+        self.film_mode = str(film_mode)
+        self.cond_dim = int(cond_dim)
+        self.film_hidden = int(film_hidden)
+        if self.film_mode == "post_ffn" and self.cond_dim > 0:
+            self.film = FiLM(self.cond_dim, dim, hidden=self.film_hidden)
+        elif self.film_mode == "adaln_zero" and self.cond_dim > 0:
+            self.adaln_attn = AdaLNZero(self.cond_dim, dim, hidden=self.film_hidden)
+            self.adaln_ffn = AdaLNZero(self.cond_dim, dim, hidden=self.film_hidden)
+            if cross_attention:
+                self.adaln_cross = AdaLNZero(self.cond_dim, dim, hidden=self.film_hidden)
+
     def forward(
         self,
         x: torch.Tensor,
@@ -290,34 +407,70 @@ class TransformerLayer(nn.Module):
         past_v: Optional[torch.Tensor] = None,
         past_k_c: Optional[torch.Tensor] = None,
         past_v_c: Optional[torch.Tensor] = None,
+        cond: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor], torch.Tensor, torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]]:
         """
         Using pre-layer-normalization: https://arxiv.org/pdf/2002.04745.pdf
         """
 
+        use_adaln = (
+            self.film_mode == "adaln_zero"
+            and cond is not None
+            and hasattr(self, "adaln_attn")
+        )
+
         # Self-attention
-        z = self.ln_self_attn(x)
+        if use_adaln:
+            z, alpha_attn = self.adaln_attn.modulate(self.ln_self_attn(x), cond)
+        else:
+            z = self.ln_self_attn(x)
+            alpha_attn = None
         self_attn, self_attn_weights, k, v = self.mha(
             Q=z, K=z, V=z, mask=mask, past_k=past_k, past_v=past_v
         )
 
-        # Residual
-        x = x + self.dropout(self_attn)
+        # Residual (with optional gate)
+        if alpha_attn is None:
+            x = x + self.dropout(self_attn)
+        else:
+            x = x + alpha_attn * self.dropout(self_attn)
 
         # Cross-attention
         cross_attn_weights = None
         k_c = None
         v_c = None
         if self.cross_attention and src is not None:
-            z = self.ln_src_attn(x)
+            if use_adaln and hasattr(self, "adaln_cross"):
+                z, alpha_cross = self.adaln_cross.modulate(self.ln_src_attn(x), cond)
+            else:
+                z = self.ln_src_attn(x)
+                alpha_cross = None
             # https://nn.labml.ai/transformers/models.html#section-16
             # Don't normalize src... why?
             cross_attn, cross_attn_weights, k_c, v_c = self.mha_cross(
                 Q=z, K=src, V=src, mask=mask, past_k=past_k_c, past_v=past_v_c
             )
-            x = x + self.dropout(cross_attn)
+            if alpha_cross is None:
+                x = x + self.dropout(cross_attn)
+            else:
+                x = x + alpha_cross * self.dropout(cross_attn)
 
-        x = x + self.dropout(self.ffnetwork(self.ln_ffnetwork(x)))
+        # FFN
+        if use_adaln:
+            z, alpha_ffn = self.adaln_ffn.modulate(self.ln_ffnetwork(x), cond)
+        else:
+            z = self.ln_ffnetwork(x)
+            alpha_ffn = None
+        ffn_out = self.ffnetwork(z)
+        if alpha_ffn is None:
+            x = x + self.dropout(ffn_out)
+        else:
+            x = x + alpha_ffn * self.dropout(ffn_out)
+
+        # post_ffn FiLM on the residual stream after the FFN residual add
+        if self.film_mode == "post_ffn" and cond is not None and hasattr(self, "film"):
+            x = self.film(x, cond)
+
         return x, self_attn_weights, cross_attn_weights, k, v, k_c, v_c
 
 
@@ -336,16 +489,18 @@ class TransformerStereoLayer(TransformerLayer):
         past_v1_c: Optional[torch.Tensor] = None,
         past_k2_c: Optional[torch.Tensor] = None,
         past_v2_c: Optional[torch.Tensor] = None,
+        cond_x1: Optional[torch.Tensor] = None,
+        cond_x2: Optional[torch.Tensor] = None,
     ):
         # sa1w: self-attention-weights 1
         # ca1w: cross-attention-weights 1
         z1, sa1w, ca1w, k1, v1, k1_c, v1_c = super().forward(
             x=x1, src=x2, mask=mask, past_k=past_k1, past_v=past_v1,
-            past_k_c=past_k1_c, past_v_c=past_v1_c
+            past_k_c=past_k1_c, past_v_c=past_v1_c, cond=cond_x1
         )
         z2, sa2w, ca2w, k2, v2, k2_c, v2_c = super().forward(
             x=x2, src=x1, mask=mask, past_k=past_k2, past_v=past_v2,
-            past_k_c=past_k2_c, past_v_c=past_v2_c
+            past_k_c=past_k2_c, past_v_c=past_v2_c, cond=cond_x2
         )
         return z1, z2, [sa1w, ca1w, sa2w, ca2w], k1, v1, k2, v2, k1_c, v1_c, k2_c, v2_c
 
@@ -365,6 +520,9 @@ class GPT(nn.Module):
         activation: str = "GELU",
         dropout: float = 0.1,
         context_limit: int = -1,
+        film_mode: str = "none",
+        cond_dim: int = 0,
+        film_hidden: int = 0,
     ):
         super().__init__()
         self.dim = dim
@@ -374,9 +532,15 @@ class GPT(nn.Module):
         self.activation = activation
         self.dropout = dropout
         self.context_limit = context_limit
+        self.film_mode = str(film_mode)
+        self.cond_dim = int(cond_dim)
+        self.film_hidden = int(film_hidden)
 
         self._build_layers()
         self.apply(self._init_weights)
+        # AdaLN/FiLM final projections must stay zero-initialized (identity at
+        # start); _init_weights re-normals every Linear, so re-zero them.
+        self._reset_film_zero_init()
 
     def _build_layers(self):
         layers = []
@@ -388,7 +552,10 @@ class GPT(nn.Module):
                     num_heads=self.num_heads,
                     ffn_activation=self.activation,
                     dropout=self.dropout,
-                    context_limit=self.context_limit
+                    context_limit=self.context_limit,
+                    film_mode=self.film_mode,
+                    cond_dim=self.cond_dim,
+                    film_hidden=self.film_hidden,
                 )
             )
         self.layers = nn.ModuleList(layers)
@@ -402,11 +569,32 @@ class GPT(nn.Module):
             torch.nn.init.zeros_(module.bias)
             torch.nn.init.ones_(module.weight)
 
+    def _reset_film_zero_init(self):
+        """Re-zero every FiLM/AdaLNZero final projection (identity at start)."""
+        for m in self.modules():
+            if isinstance(m, FiLM):
+                proj = m.proj
+                last = proj[-1] if isinstance(proj, nn.Sequential) else proj
+                if isinstance(last, nn.Linear):
+                    nn.init.zeros_(last.weight)
+                    if last.bias is not None:
+                        nn.init.zeros_(last.bias)
+            elif isinstance(m, AdaLNZero):
+                proj = m.proj
+                last = proj[-1] if isinstance(proj, nn.Sequential) else proj
+                if isinstance(last, nn.Linear):
+                    nn.init.zeros_(last.weight)
+                    if last.bias is not None:
+                        nn.init.zeros_(last.bias)
+                        with torch.no_grad():
+                            last.bias[2 * m.feat_dim : 3 * m.feat_dim].fill_(1.0)
+
     def forward(
         self,
         x: torch.Tensor,
         attention: bool = False,
         past_kv: Optional[Tuple[list, list]] = None,
+        cond: Optional[torch.Tensor] = None,
     ) -> Dict[str, torch.Tensor]:
         all_attention = []
 
@@ -420,7 +608,7 @@ class GPT(nn.Module):
         for i, layer in enumerate(self.layers):
             pk = past_k[i]
             pv = past_v[i]
-            x, self_attn_weights, _, k, v, _, _ = layer(x, past_k=pk, past_v=pv)
+            x, self_attn_weights, _, k, v, _, _ = layer(x, past_k=pk, past_v=pv, cond=cond)
             new_past_k.append(k)
             new_past_v.append(v)
             if attention:
@@ -448,7 +636,10 @@ class GPTStereo(GPT):
                     ffn_activation=self.activation,
                     dropout=self.dropout,
                     cross_attention=True,
-                    context_limit=self.context_limit
+                    context_limit=self.context_limit,
+                    film_mode=self.film_mode,
+                    cond_dim=self.cond_dim,
+                    film_hidden=self.film_hidden,
                 )
             )
         self.layers = nn.ModuleList(layers)
@@ -465,6 +656,8 @@ class GPTStereo(GPT):
         past_kv2: Optional[Tuple[list, list]] = None,
         past_kv1_c: Optional[Tuple[list, list]] = None,
         past_kv2_c: Optional[Tuple[list, list]] = None,
+        cond_x1: Optional[torch.Tensor] = None,
+        cond_x2: Optional[torch.Tensor] = None,
     ) -> Dict[str, torch.Tensor]:
 
         self_attn_a = []
@@ -501,6 +694,8 @@ class GPTStereo(GPT):
                 past_v1_c=past_v1_c[i],
                 past_k2_c=past_k2_c[i],
                 past_v2_c=past_v2_c[i],
+                cond_x1=cond_x1,
+                cond_x2=cond_x2,
             )
             new_pk1.append(k1)
             new_pv1.append(v1)
