@@ -93,7 +93,7 @@ while True:
 
 - [VAPモデル](readme/vap_JP.md)
 - [ノイズロバストVAPモデル（<b>推奨</b>）](readme/vap_mc_JP.md)
-- [1チャンネルVAPモデル]  (準備中)
+- [1チャンネルVAPモデル](readme/vap_mono_JP.md)
 
 ### 相槌
 

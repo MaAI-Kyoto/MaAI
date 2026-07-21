@@ -327,11 +327,15 @@ class ConsoleBar:
         # vad → vad(x1)/vad(x2) 展開（呼び出し側 dict は変更しない）
         local: Dict[str, Any] = dict(result)
         if "vad" in local:
-            try:
-                local["vad(x1)"] = local["vad"][0]
-                local["vad(x2)"] = local["vad"][1]
-            except Exception:
-                pass
+            if isinstance(local["vad"], (list, tuple)):
+                try:
+                    local["vad(x1)"] = local["vad"][0]
+                    local["vad(x2)"] = local["vad"][1]
+                except Exception:
+                    pass
+            else:
+                # vap_mono: スカラー vad は ch1 のみ
+                local["vad(x1)"] = local["vad"]
 
         skip_nod_para: set = set()
         if is_nod_para:
@@ -490,6 +494,8 @@ class TcpReceiver:
     def _bytearray_2_vapresult(self, data: bytes) -> Dict[str, Any]:
         if self.mode in ['vap', 'vap_mc', 'vap_prompt']:
             vap_result = util.conv_bytearray_2_vapresult(data)
+        elif self.mode == 'vap_mono':
+            vap_result = util.conv_bytearray_2_vapresult_mono(data)
         elif self.mode == 'bc_2type':
             vap_result = util.conv_bytearray_2_vapresult_bc_2type(data)
         elif self.mode == 'nod':
@@ -557,6 +563,8 @@ class TcpTransmitter:
     def _vapresult_2_bytearray(self, result_dict: Dict[str, Any]) -> bytes:
         if self.mode in ['vap', 'vap_mc']:
             data_sent = util.conv_vapresult_2_bytearray(result_dict)
+        elif self.mode == 'vap_mono':
+            data_sent = util.conv_vapresult_2_bytearray_mono(result_dict)
         elif self.mode == 'bc_2type':
             data_sent = util.conv_vapresult_2_bytearray_bc_2type(result_dict)
         elif self.mode == 'nod':
@@ -979,6 +987,28 @@ class GuiPlot:
                     pass
                 self.curves[key] = c
                 self.data_buffer[key] = list(buf)
+            elif key in ("p_now", "p_future") and isinstance(
+                val, (int, float, np.floating, np.integer)
+            ):
+                # vap_mono: スカラー値は単一カーブ(0–1)で描画
+                t = "p_now (short-term)" if key == "p_now" else "p_future (long-term)"
+                self._cfg(p, t)
+                p.setYRange(0.0, 1.0, padding=0.0)
+                buf = np.zeros(self.MAX_CONTEXT_LEN, dtype=float)
+                r, g, b = (245, 189, 0) if key == "p_now" else (245, 120, 0)
+                c = p.plot(
+                    self._x_ctx,
+                    buf,
+                    pen=pg.mkPen((r, g, b), width=1.5),
+                    fillLevel=0.0,
+                    brush=self._pg.mkBrush(r, g, b, 90),
+                )
+                try:
+                    c.setClipToView(True)
+                except Exception:
+                    pass
+                self.curves[key] = c
+                self.data_buffer[key] = list(buf)
             elif key in ("p_now", "p_future"):
                 t = "p_now (short-term)" if key == "p_now" else "p_future (long-term)"
                 self._cfg(p, t)
@@ -1008,6 +1038,22 @@ class GuiPlot:
                 except Exception:
                     pass
                 self.curves[key] = {"hi": hi_c, "lo": lo_c}
+                self.data_buffer[key] = list(buf)
+            elif key == "vad" and isinstance(
+                val, (int, float, np.floating, np.integer)
+            ):
+                # vap_mono: ch1 のみのスカラー vad を単一カーブ(0–1)で描画
+                self._cfg(p, "Voice Activity Detection (VAD)")
+                p.setYRange(0.0, 1.0, padding=0.0)
+                buf = np.zeros(self.MAX_CONTEXT_LEN, dtype=float)
+                c = p.plot(
+                    self._x_ctx,
+                    buf,
+                    pen=pg.mkPen((245, 189, 0), width=1.5),
+                    fillLevel=0.0,
+                    brush=self._pg.mkBrush(245, 189, 0, 90),
+                )
+                self.curves[key] = c
                 self.data_buffer[key] = list(buf)
             elif key == "vad":
                 self._cfg(p, "Voice Activity Detection (VAD)")
@@ -1104,7 +1150,8 @@ class GuiPlot:
                 self.curves[key] = c
                 self.data_buffer[key] = list(buf)
             elif key == "p_bins":
-                arr = np.asarray(val, dtype=float)
+                # vap_mono の 1 次元ビン列は 1 行として描画
+                arr = np.atleast_2d(np.asarray(val, dtype=float))
                 self.data_buffer[key] = arr
                 self.curves[key] = None
                 self._draw_p_bins_pg(p, arr, result.get("bin_times"))
@@ -1201,9 +1248,27 @@ class GuiPlot:
                 if draw:
                     x = np.linspace(-self.shown_context_sec, 0.0, len(buf))
                     arr = np.asarray(buf, dtype=float)
-                    _, hi, lo = self._split_hi_lo(x, arr, 0.5)
-                    self.curves[key]["hi"].setData(x, hi)
-                    self.curves[key]["lo"].setData(x, lo)
+                    if isinstance(self.curves[key], dict):
+                        _, hi, lo = self._split_hi_lo(x, arr, 0.5)
+                        self.curves[key]["hi"].setData(x, hi)
+                        self.curves[key]["lo"].setData(x, lo)
+                    else:
+                        # vap_mono: 単一カーブ
+                        self.curves[key].setData(x, arr)
+            elif key == "vad" and key in self.curves and not isinstance(self.curves[key], tuple):
+                # vap_mono: スカラー vad を単一カーブで描画
+                buf = self.data_buffer[key]
+                try:
+                    fv = float(np.asarray(val).reshape(-1)[0])
+                except Exception:
+                    fv = 0.0
+                buf = buf + [float(max(0.0, min(1.0, fv)))]
+                if len(buf) > self.MAX_CONTEXT_LEN:
+                    buf = buf[-self.MAX_CONTEXT_LEN :]
+                self.data_buffer[key] = buf
+                if draw:
+                    x = np.linspace(-self.shown_context_sec, 0.0, len(buf))
+                    self.curves[key].setData(x, np.asarray(buf, dtype=float))
             elif key == "vad" and key in self.curves:
                 b1, b2 = self.data_buffer[key]
                 vad1, vad2 = result[key]
@@ -1285,7 +1350,7 @@ class GuiPlot:
                     x = np.linspace(-self.shown_context_sec, 0.0, len(buf))
                     self.curves[key].setData(x, np.clip(np.asarray(buf, dtype=float), 0.0, 1.0))
             elif key == "p_bins" and key in self.plots:
-                arr = np.asarray(val, dtype=float)
+                arr = np.atleast_2d(np.asarray(val, dtype=float))
                 self.data_buffer[key] = arr
                 if draw:
                     self._draw_p_bins_pg(self.plots[key], arr, result.get("bin_times"))

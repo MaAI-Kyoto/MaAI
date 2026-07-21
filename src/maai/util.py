@@ -96,7 +96,8 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
     elif encoder_type != "cpc":
         raise ValueError(f"Unsupported encoder_type for pretrained model lookup: {encoder_type}")
     
-    if mode == "vap":
+    # vap_mono runs the same model / checkpoints as vap
+    if mode in ("vap", "vap_mono"):
         if language == "jp":
             repo_id = repo_ids["vap_jp"]
             file_path = f"vap{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
@@ -253,7 +254,7 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
         )
 
     else:
-        supported_modes = ["vap", "vap_mc", "bc", "bc_2type", "nod", "vap_prompt", "nod_para"]
+        supported_modes = ["vap", "vap_mono", "vap_mc", "bc", "bc_2type", "nod", "vap_prompt", "nod_para"]
         raise ValueError(f"Invalid mode: {mode}. Supported modes are: {supported_modes}")
 
     try:
@@ -506,7 +507,46 @@ def conv_bytearray_2_vapresult(barr):
         'p_future': p_future,
         'vad': vad
     }
-    
+
+    return result_vap
+
+#
+# VAP result (mono) -> Byte
+#
+def conv_vapresult_2_bytearray_mono(vap_result):
+    """Serialize a mono VAP result dictionary into a byte array.
+
+    Scalar ``p_now`` / ``p_future`` / ``vad`` values are wrapped into
+    length-1 arrays so the wire format stays identical to the stereo one.
+
+    Args:
+        vap_result (Dict[str, Any]): Mono VAP result data.
+
+    Returns:
+        bytes: The serialized byte array.
+    """
+    wrapped = dict(vap_result)
+    wrapped['p_now'] = [vap_result['p_now']]
+    wrapped['p_future'] = [vap_result['p_future']]
+    wrapped['vad'] = [vap_result['vad']]
+    return conv_vapresult_2_bytearray(wrapped)
+
+#
+# Byte -> VAP result (mono)
+#
+def conv_bytearray_2_vapresult_mono(barr):
+    """Deserialize a byte array back into a mono VAP result dictionary.
+
+    Args:
+        barr (bytes): Serialized byte array.
+
+    Returns:
+        Dict[str, Any]: The decoded mono VAP result data with scalar
+        ``p_now`` / ``p_future`` / ``vad``.
+    """
+    result_vap = conv_bytearray_2_vapresult(barr)
+    for k in ('p_now', 'p_future', 'vad'):
+        result_vap[k] = result_vap[k][0]
     return result_vap
 
 #

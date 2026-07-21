@@ -99,7 +99,7 @@ The turn-taking model uses the original VAP as is and predicts which participant
 
 - [VAP Model](readme/vap.md)
 - [Noise-Robust VAP Model (<b>Recommended</b>)](readme/vap_mc.md)
-- [Single-Channel VAP Model] (In Preparation ...)
+- [Single-Channel VAP Model](readme/vap_mono.md)
 
 ### Backchannel
 

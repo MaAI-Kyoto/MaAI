@@ -7,9 +7,10 @@ import queue
 import copy
 import os
 
-from .input import Base
+from .input import Base, Zero
 from .util import load_vap_model, resolve_encoder_type
 from .models.vap import VapGPT
+from .models.vap_mono import VapGPT_mono
 from .models.vap_bc import VapGPT_bc
 from .models.vap_bc_2type import VapGPT_bc_2type
 from .models.vap_nod import VapGPT_nod
@@ -34,7 +35,7 @@ class Maai():
         mode,
         lang: str,
         audio_ch1: Base,
-        audio_ch2: Base,
+        audio_ch2: Base = None,
         frame_rate: float = 10,
         context_len_sec: int = 20,
         device: str = "cpu",
@@ -67,6 +68,7 @@ class Maai():
             lang (str): Language setting (e.g., 'jp', 'en').
             audio_ch1 (Base): Audio input source for channel 1.
             audio_ch2 (Base): Audio input source for channel 2.
+                Not used in 'vap_mono' mode (silence is fed internally).
             frame_rate (float): Frame rate for processing audio.
             context_len_sec (int): Audio context length in seconds.
             device (str): Device to run the model on ('cpu', 'cuda').
@@ -91,6 +93,17 @@ class Maai():
             local_model (str | None): Path to a local custom model file.
             return_p_bins (bool): Whether to return probability bins in 'vap' mode.
         """
+
+        if mode == "vap_mono":
+            if audio_ch2 is None:
+                audio_ch2 = Zero()
+            elif not isinstance(audio_ch2, Zero):
+                raise ValueError(
+                    "mode='vap_mono' takes a single input channel; "
+                    "audio_ch2 must be omitted (or a MaaiInput.Zero)."
+                )
+        elif audio_ch2 is None:
+            raise ValueError(f"audio_ch2 is required for mode '{mode}'.")
 
         self.return_p_bins = bool(return_p_bins)
 
@@ -136,7 +149,10 @@ class Maai():
         
         if mode in ["vap", "vap_mc"]:
             self.vap = VapGPT(conf)
-        
+
+        elif mode == "vap_mono":
+            self.vap = VapGPT_mono(conf)
+
         elif mode == "bc":
             self.vap = VapGPT_bc(conf)
         
@@ -586,6 +602,14 @@ class Maai():
                     "p_bins_now": out['p_bins_now'],
                     "p_bins_future": out['p_bins_future'],
                 },
+                "vap_mono": lambda: {
+                    "p_now": out['p_now'],
+                    "p_future": out['p_future'],
+                    "vad": out['vad'],
+                    "p_bins": out['p_bins'],
+                    "p_bins_now": out['p_bins_now'],
+                    "p_bins_future": out['p_bins_future'],
+                },
                 "vap_prompt": lambda: {
                     "p_now": out['p_now'],
                     "p_future": out['p_future'],
@@ -619,7 +643,7 @@ class Maai():
             # Get mode-specific outputs
             if self.mode in mode_outputs:
                 _out = mode_outputs[self.mode]()
-                if not self.return_p_bins and self.mode in ("vap", "vap_mc"):
+                if not self.return_p_bins and self.mode in ("vap", "vap_mc", "vap_mono"):
                     for _k in ("p_bins", "p_bins_now", "p_bins_future"):
                         _out.pop(_k, None)
                 result_dict.update(_out)
@@ -1085,7 +1109,7 @@ class MaaiMultiple:
 
     @staticmethod
     def _extract_outputs(mode: str, out: dict, return_p_bins: bool) -> dict:
-        if mode in ("vap", "vap_mc"):
+        if mode in ("vap", "vap_mc", "vap_mono"):
             d = {
                 "p_now": out["p_now"],
                 "p_future": out["p_future"],
