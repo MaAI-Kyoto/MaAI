@@ -770,14 +770,14 @@ class NodParaOnnxSession:
         meta_path: str,
         nod_ref: "VapGPT_nod_para",
         *,
-        providers: Optional[List[str]] = None,
+        runtime_device: Optional[str] = None,
+        providers: Optional[List] = None,
         cpu_intra_threads: Optional[int] = None,
         cpu_inter_threads: Optional[int] = None,
     ):
         import json
-        import onnxruntime as ort
 
-        from .vap import vap_max_past_len
+        from .vap import create_ort_inference_session, vap_max_past_len
 
         with open(meta_path, "r", encoding="utf-8") as f:
             self.meta = json.load(f)
@@ -793,17 +793,20 @@ class NodParaOnnxSession:
         self.max_past = int(
             self.meta.get("max_past_len", vap_max_past_len(float(self.meta.get("frame_hz", 12.5)), 20.0))
         )
+        self.runtime_device = str(runtime_device or "cpu")
 
-        so = ort.SessionOptions()
-        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        if cpu_intra_threads is not None:
-            so.intra_op_num_threads = max(1, int(cpu_intra_threads))
-        if cpu_inter_threads is not None:
-            so.inter_op_num_threads = max(1, int(cpu_inter_threads))
-        self.session = ort.InferenceSession(
+        self.session = create_ort_inference_session(
             onnx_path,
-            sess_options=so,
-            providers=providers or ["CPUExecutionProvider"],
+            runtime_device=self.runtime_device,
+            providers=providers,
+            cpu_intra_threads=cpu_intra_threads,
+            cpu_inter_threads=cpu_inter_threads,
+        )
+        self.active_providers = list(self.session.get_providers())
+        self.use_cuda = "CUDAExecutionProvider" in self.active_providers
+        print(
+            f"[NodParaOnnxSession] providers={self.active_providers} "
+            f"requested_device={self.runtime_device}"
         )
         self.nod_ref = nod_ref
         actual_in = [x.name for x in self.session.get_inputs()]
@@ -865,11 +868,6 @@ class NodParaOnnxSession:
             task_gpt_layers=self.task_gpt_layers,
             max_past=self.max_past,
         )
-        for key, (ks, vs) in new_cache.items():
-            new_cache[key] = (
-                [k.to(device=device, dtype=dtype) for k in ks],
-                [v.to(device=device, dtype=dtype) for v in vs],
-            )
         ret = nod_para_outputs_from_tensors(
             self.nod_ref,
             vad,

@@ -356,6 +356,75 @@ def vap_outputs_from_logits_vad(
     }
 
 
+def _ort_provider_name(p: Any) -> str:
+    return p[0] if isinstance(p, (tuple, list)) else str(p)
+
+
+def build_ort_providers(
+    runtime_device: Optional[str] = None,
+    providers: Optional[Sequence[Any]] = None,
+) -> List[Any]:
+    """Build ORT provider list. Prefers CUDA when ``runtime_device`` starts with ``cuda``."""
+    if providers is not None:
+        return list(providers)
+    import onnxruntime as ort
+
+    avail = set(ort.get_available_providers())
+    device = str(runtime_device or "cpu").strip().lower()
+    if device.startswith("cuda") and "CUDAExecutionProvider" in avail:
+        device_id = 0
+        if ":" in device:
+            try:
+                device_id = int(device.split(":", 1)[1])
+            except ValueError:
+                device_id = 0
+        return [
+            ("CUDAExecutionProvider", {"device_id": device_id}),
+            "CPUExecutionProvider",
+        ]
+    return ["CPUExecutionProvider"]
+
+
+def create_ort_inference_session(
+    onnx_path: str,
+    *,
+    runtime_device: Optional[str] = None,
+    providers: Optional[Sequence[Any]] = None,
+    cpu_intra_threads: Optional[int] = None,
+    cpu_inter_threads: Optional[int] = None,
+):
+    """Create ORT session; fall back to CPU if CUDA session init fails (e.g. int8)."""
+    import onnxruntime as ort
+
+    so = ort.SessionOptions()
+    so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    wanted = build_ort_providers(runtime_device=runtime_device, providers=providers)
+    use_cuda = any(_ort_provider_name(p) == "CUDAExecutionProvider" for p in wanted)
+    if not use_cuda:
+        if cpu_intra_threads is not None:
+            so.intra_op_num_threads = max(1, int(cpu_intra_threads))
+        if cpu_inter_threads is not None:
+            so.inter_op_num_threads = max(1, int(cpu_inter_threads))
+    try:
+        return ort.InferenceSession(onnx_path, sess_options=so, providers=wanted)
+    except Exception as exc:
+        if not use_cuda:
+            raise
+        print(
+            f"[ONNX] CUDA EP failed for {onnx_path} ({exc!r}); falling back to CPU. "
+            "INT8 MatMul models often need CPU — use fp32 ONNX for CUDA."
+        )
+        so_cpu = ort.SessionOptions()
+        so_cpu.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        if cpu_intra_threads is not None:
+            so_cpu.intra_op_num_threads = max(1, int(cpu_intra_threads))
+        if cpu_inter_threads is not None:
+            so_cpu.inter_op_num_threads = max(1, int(cpu_inter_threads))
+        return ort.InferenceSession(
+            onnx_path, sess_options=so_cpu, providers=["CPUExecutionProvider"]
+        )
+
+
 class VapOnnxSession:
     """ORT session for VAP transformer step; ObjectiveVAP aggregates stay in Torch."""
 
@@ -365,12 +434,12 @@ class VapOnnxSession:
         meta_path: str,
         vap_ref: VapGPT,
         *,
-        providers: Optional[List[str]] = None,
+        runtime_device: Optional[str] = None,
+        providers: Optional[List[Any]] = None,
         cpu_intra_threads: Optional[int] = None,
         cpu_inter_threads: Optional[int] = None,
     ):
         import json
-        import onnxruntime as ort
 
         with open(meta_path, "r", encoding="utf-8") as f:
             self.meta = json.load(f)
@@ -382,17 +451,20 @@ class VapOnnxSession:
         self.head_dim = int(self.meta["head_dim"])
         self.dim = int(self.meta["dim"])
         self.max_past = int(self.meta.get("max_past_len", vap_max_past_len(12.5, 20.0)))
+        self.runtime_device = str(runtime_device or "cpu")
 
-        so = ort.SessionOptions()
-        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        if cpu_intra_threads is not None:
-            so.intra_op_num_threads = max(1, int(cpu_intra_threads))
-        if cpu_inter_threads is not None:
-            so.inter_op_num_threads = max(1, int(cpu_inter_threads))
-        self.session = ort.InferenceSession(
+        self.session = create_ort_inference_session(
             onnx_path,
-            sess_options=so,
-            providers=providers or ["CPUExecutionProvider"],
+            runtime_device=self.runtime_device,
+            providers=providers,
+            cpu_intra_threads=cpu_intra_threads,
+            cpu_inter_threads=cpu_inter_threads,
+        )
+        self.active_providers = list(self.session.get_providers())
+        self.use_cuda = "CUDAExecutionProvider" in self.active_providers
+        print(
+            f"[VapOnnxSession] providers={self.active_providers} "
+            f"requested_device={self.runtime_device}"
         )
         self.vap_ref = vap_ref
         actual_in = [x.name for x in self.session.get_inputs()]
@@ -411,6 +483,8 @@ class VapOnnxSession:
     ) -> Tuple[dict, dict]:
         device = x1.device
         dtype = x1.dtype
+        # session.run uses host numpy. Keep KV on CPU between steps; CUDA EP still
+        # executes MatMul on GPU after ORT's H2D copy.
         flat = cache_dict_to_flat(
             cache,
             channel_layers=self.channel_layers,
@@ -438,11 +512,6 @@ class VapOnnxSession:
             cross_layers=self.cross_layers,
             max_past=self.max_past,
         )
-        for key, (ks, vs) in new_cache.items():
-            new_cache[key] = (
-                [k.to(device=device, dtype=dtype) for k in ks],
-                [v.to(device=device, dtype=dtype) for v in vs],
-            )
         ret = vap_outputs_from_logits_vad(self.vap_ref, logits, vad)
         return ret, new_cache
 

@@ -198,12 +198,14 @@ class BcOnnxSession:
         meta_path: str,
         bc_ref: VapGPT_bc,
         *,
-        providers: Optional[List[str]] = None,
+        runtime_device: Optional[str] = None,
+        providers: Optional[List] = None,
         cpu_intra_threads: Optional[int] = None,
         cpu_inter_threads: Optional[int] = None,
     ):
         import json
-        import onnxruntime as ort
+
+        from .vap import create_ort_inference_session
 
         with open(meta_path, "r", encoding="utf-8") as f:
             self.meta = json.load(f)
@@ -215,17 +217,20 @@ class BcOnnxSession:
         self.head_dim = int(self.meta["head_dim"])
         self.dim = int(self.meta["dim"])
         self.max_past = int(self.meta.get("max_past_len", vap_max_past_len(10.0, 20.0)))
+        self.runtime_device = str(runtime_device or "cpu")
 
-        so = ort.SessionOptions()
-        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        if cpu_intra_threads is not None:
-            so.intra_op_num_threads = max(1, int(cpu_intra_threads))
-        if cpu_inter_threads is not None:
-            so.inter_op_num_threads = max(1, int(cpu_inter_threads))
-        self.session = ort.InferenceSession(
+        self.session = create_ort_inference_session(
             onnx_path,
-            sess_options=so,
-            providers=providers or ["CPUExecutionProvider"],
+            runtime_device=self.runtime_device,
+            providers=providers,
+            cpu_intra_threads=cpu_intra_threads,
+            cpu_inter_threads=cpu_inter_threads,
+        )
+        self.active_providers = list(self.session.get_providers())
+        self.use_cuda = "CUDAExecutionProvider" in self.active_providers
+        print(
+            f"[BcOnnxSession] providers={self.active_providers} "
+            f"requested_device={self.runtime_device}"
         )
         self.bc_ref = bc_ref
         actual_in = [x.name for x in self.session.get_inputs()]
@@ -273,10 +278,5 @@ class BcOnnxSession:
             cross_layers=self.cross_layers,
             max_past=self.max_past,
         )
-        for key, (ks, vs) in new_cache.items():
-            new_cache[key] = (
-                [k.to(device=device, dtype=dtype) for k in ks],
-                [v.to(device=device, dtype=dtype) for v in vs],
-            )
         ret = bc_outputs_from_logits(bc_logit, bc_detect_logit)
         return ret, new_cache

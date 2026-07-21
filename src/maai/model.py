@@ -344,6 +344,7 @@ class Maai():
         self._bc_onnx = None
         self._nod_onnx = None
         _tf_threads = dict(
+            runtime_device=self.device,
             cpu_intra_threads=transformer_onnx_cpu_intra_threads,
             cpu_inter_threads=transformer_onnx_cpu_inter_threads,
         )
