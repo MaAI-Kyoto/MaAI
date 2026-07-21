@@ -42,9 +42,12 @@ mic = MaaiInput.Mic()
 maai = Maai(
     mode="vap_mono",
     lang="jp",
-    frame_rate=10,
+    frame_rate=12.5,
     audio_ch1=mic,   # audio_ch2 is not needed
     device="cpu",
+    model_type="normal-ver2",
+    use_mimi_onnx=True,
+    mimi_onnx_precision="fp32",
 )
 maai.start()
 
