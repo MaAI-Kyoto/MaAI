@@ -823,44 +823,86 @@ class NodParaOnnxSession:
         x2: Tensor,
         cache: Optional[dict] = None,
     ) -> Tuple[dict, dict]:
+        from .vap import run_transformer_onnx_with_iobinding
+
         device = x1.device
         dtype = x1.dtype
-        flat = nod_para_cache_dict_to_flat(
-            cache,
-            channel_layers=self.channel_layers,
-            cross_layers=self.cross_layers,
-            task_gpt_layers=self.task_gpt_layers,
-            batch=int(x1.shape[0]),
-            num_heads=self.num_heads,
-            head_dim=self.head_dim,
-            device=torch.device("cpu"),
-            dtype=torch.float32,
-        )
-        feeds = {
-            "x1_raw": x1.detach().float().cpu().numpy(),
-            "x2_raw": x2.detach().float().cpu().numpy(),
-        }
-        past_start = 2
-        if self.use_cond:
-            cond = self.nod_ref._build_cond(device, dtype)
-            if cond is None:
-                raise RuntimeError("NodPara ONNX expects FiLM cond but _build_cond returned None.")
-            feeds["cond"] = cond.detach().float().cpu().numpy()
-            past_start = 3
-        for name, t in zip(self.input_names[past_start:], flat):
-            feeds[name] = t.detach().float().cpu().numpy()
+        past_start = 3 if self.use_cond else 2
+        if self.use_cuda:
+            flat = nod_para_cache_dict_to_flat(
+                cache,
+                channel_layers=self.channel_layers,
+                cross_layers=self.cross_layers,
+                task_gpt_layers=self.task_gpt_layers,
+                batch=int(x1.shape[0]),
+                num_heads=self.num_heads,
+                head_dim=self.head_dim,
+                device=torch.device("cuda"),
+                dtype=torch.float32,
+            )
+            feeds_t: Dict[str, Tensor] = {"x1_raw": x1, "x2_raw": x2}
+            if self.use_cond:
+                cond = self.nod_ref._build_cond(device, dtype)
+                if cond is None:
+                    raise RuntimeError(
+                        "NodPara ONNX expects FiLM cond but _build_cond returned None."
+                    )
+                feeds_t["cond"] = cond
+            outs = run_transformer_onnx_with_iobinding(
+                self.session,
+                input_names=self.input_names,
+                output_names=self.output_names,
+                feeds_tensors=feeds_t,
+                past_in=flat,
+                past_in_start=past_start,
+            )
+            vad = outs[0].to(device=device, dtype=dtype)
+            vap_logits = outs[1].to(device=device, dtype=dtype)
+            bc_logit = outs[2].to(device=device, dtype=dtype)
+            bc_detect_logit = outs[3].to(device=device, dtype=dtype)
+            nod_timing_logit = outs[4].to(device=device, dtype=dtype)
+            nod_rep_logits = outs[5].to(device=device, dtype=dtype)
+            nod_range = outs[6].to(device=device, dtype=dtype)
+            nod_speed = outs[7].to(device=device, dtype=dtype)
+            nod_swing_bin = outs[8].to(device=device, dtype=dtype)
+            past_out = outs[9:]
+        else:
+            flat = nod_para_cache_dict_to_flat(
+                cache,
+                channel_layers=self.channel_layers,
+                cross_layers=self.cross_layers,
+                task_gpt_layers=self.task_gpt_layers,
+                batch=int(x1.shape[0]),
+                num_heads=self.num_heads,
+                head_dim=self.head_dim,
+                device=torch.device("cpu"),
+                dtype=torch.float32,
+            )
+            feeds = {
+                "x1_raw": x1.detach().float().cpu().numpy(),
+                "x2_raw": x2.detach().float().cpu().numpy(),
+            }
+            if self.use_cond:
+                cond = self.nod_ref._build_cond(device, dtype)
+                if cond is None:
+                    raise RuntimeError(
+                        "NodPara ONNX expects FiLM cond but _build_cond returned None."
+                    )
+                feeds["cond"] = cond.detach().float().cpu().numpy()
+            for name, t in zip(self.input_names[past_start:], flat):
+                feeds[name] = t.detach().float().cpu().numpy()
 
-        outs = self.session.run(self.output_names, feeds)
-        vad = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
-        vap_logits = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
-        bc_logit = torch.from_numpy(outs[2]).to(device=device, dtype=dtype)
-        bc_detect_logit = torch.from_numpy(outs[3]).to(device=device, dtype=dtype)
-        nod_timing_logit = torch.from_numpy(outs[4]).to(device=device, dtype=dtype)
-        nod_rep_logits = torch.from_numpy(outs[5]).to(device=device, dtype=dtype)
-        nod_range = torch.from_numpy(outs[6]).to(device=device, dtype=dtype)
-        nod_speed = torch.from_numpy(outs[7]).to(device=device, dtype=dtype)
-        nod_swing_bin = torch.from_numpy(outs[8]).to(device=device, dtype=dtype)
-        past_out = [torch.from_numpy(o) for o in outs[9:]]
+            outs = self.session.run(self.output_names, feeds)
+            vad = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
+            vap_logits = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
+            bc_logit = torch.from_numpy(outs[2]).to(device=device, dtype=dtype)
+            bc_detect_logit = torch.from_numpy(outs[3]).to(device=device, dtype=dtype)
+            nod_timing_logit = torch.from_numpy(outs[4]).to(device=device, dtype=dtype)
+            nod_rep_logits = torch.from_numpy(outs[5]).to(device=device, dtype=dtype)
+            nod_range = torch.from_numpy(outs[6]).to(device=device, dtype=dtype)
+            nod_speed = torch.from_numpy(outs[7]).to(device=device, dtype=dtype)
+            nod_swing_bin = torch.from_numpy(outs[8]).to(device=device, dtype=dtype)
+            past_out = [torch.from_numpy(o) for o in outs[9:]]
         new_cache = flat_to_nod_para_cache_dict(
             past_out,
             channel_layers=self.channel_layers,

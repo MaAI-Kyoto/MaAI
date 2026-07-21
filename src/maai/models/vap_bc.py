@@ -247,31 +247,58 @@ class BcOnnxSession:
         x2: Tensor,
         cache: Optional[dict] = None,
     ) -> Tuple[dict, dict]:
-        from .vap import cache_dict_to_flat, flat_to_cache_dict
+        from .vap import (
+            cache_dict_to_flat,
+            flat_to_cache_dict,
+            run_transformer_onnx_with_iobinding,
+        )
 
         device = x1.device
         dtype = x1.dtype
-        flat = cache_dict_to_flat(
-            cache,
-            channel_layers=self.channel_layers,
-            cross_layers=self.cross_layers,
-            batch=int(x1.shape[0]),
-            num_heads=self.num_heads,
-            head_dim=self.head_dim,
-            device=torch.device("cpu"),
-            dtype=torch.float32,
-        )
-        feeds = {
-            "x1": x1.detach().float().cpu().numpy(),
-            "x2": x2.detach().float().cpu().numpy(),
-        }
-        for name, t in zip(self.input_names[2:], flat):
-            feeds[name] = t.detach().float().cpu().numpy()
+        if self.use_cuda:
+            flat = cache_dict_to_flat(
+                cache,
+                channel_layers=self.channel_layers,
+                cross_layers=self.cross_layers,
+                batch=int(x1.shape[0]),
+                num_heads=self.num_heads,
+                head_dim=self.head_dim,
+                device=torch.device("cuda"),
+                dtype=torch.float32,
+            )
+            outs = run_transformer_onnx_with_iobinding(
+                self.session,
+                input_names=self.input_names,
+                output_names=self.output_names,
+                feeds_tensors={"x1": x1, "x2": x2},
+                past_in=flat,
+                past_in_start=2,
+            )
+            bc_logit = outs[0].to(device=device, dtype=dtype)
+            bc_detect_logit = outs[1].to(device=device, dtype=dtype)
+            past_out = outs[2:]
+        else:
+            flat = cache_dict_to_flat(
+                cache,
+                channel_layers=self.channel_layers,
+                cross_layers=self.cross_layers,
+                batch=int(x1.shape[0]),
+                num_heads=self.num_heads,
+                head_dim=self.head_dim,
+                device=torch.device("cpu"),
+                dtype=torch.float32,
+            )
+            feeds = {
+                "x1": x1.detach().float().cpu().numpy(),
+                "x2": x2.detach().float().cpu().numpy(),
+            }
+            for name, t in zip(self.input_names[2:], flat):
+                feeds[name] = t.detach().float().cpu().numpy()
 
-        outs = self.session.run(self.output_names, feeds)
-        bc_logit = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
-        bc_detect_logit = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
-        past_out = [torch.from_numpy(o) for o in outs[2:]]
+            outs = self.session.run(self.output_names, feeds)
+            bc_logit = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
+            bc_detect_logit = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
+            past_out = [torch.from_numpy(o) for o in outs[2:]]
         new_cache = flat_to_cache_dict(
             past_out,
             channel_layers=self.channel_layers,

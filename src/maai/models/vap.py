@@ -322,6 +322,111 @@ def flat_to_cache_dict(
     }
 
 
+def _as_cuda_f32_contig(t: Tensor) -> Tensor:
+    if t.device.type != "cuda" or t.dtype != torch.float32:
+        t = t.to(device="cuda", dtype=torch.float32)
+    if not t.is_contiguous():
+        t = t.contiguous()
+    return t
+
+
+def _bind_cuda_input(io, name: str, t: Tensor, keep_alive: List[Any]) -> Tensor:
+    """Bind a CUDA float32 tensor (or empty OrtValue) as an ORT input."""
+    import numpy as np
+    import onnxruntime as ort
+
+    t = _as_cuda_f32_contig(t)
+    if t.numel() == 0:
+        # Empty CUDA torch tensors often have null data_ptr; use OrtValue instead.
+        ov = ort.OrtValue.ortvalue_from_numpy(
+            np.zeros(tuple(t.shape), dtype=np.float32), "cuda", 0
+        )
+        keep_alive.append(ov)
+        io.bind_ortvalue_input(name, ov)
+        return t
+    io.bind_input(
+        name,
+        "cuda",
+        0,
+        np.float32,
+        tuple(t.shape),
+        int(t.data_ptr()),
+    )
+    keep_alive.append(t)
+    return t
+
+
+def _bind_cuda_output(io, name: str, shape: Sequence[int]) -> Tensor:
+    import numpy as np
+
+    t = torch.empty(tuple(int(s) for s in shape), device="cuda", dtype=torch.float32)
+    io.bind_output(
+        name,
+        "cuda",
+        0,
+        np.float32,
+        tuple(t.shape),
+        int(t.data_ptr()),
+    )
+    return t
+
+
+def run_transformer_onnx_with_iobinding(
+    session,
+    *,
+    input_names: Sequence[str],
+    output_names: Sequence[str],
+    feeds_tensors: Dict[str, Tensor],
+    past_in: Sequence[Tensor],
+    past_in_start: int,
+) -> List[Tensor]:
+    """Run transformer ONNX via CUDA IO Binding; keep KV on GPU between steps.
+
+    ``feeds_tensors`` maps non-past input names (e.g. x1/x2/cond) to CUDA tensors.
+    ``past_in`` is the flat past list aligned with ``input_names[past_in_start:]``.
+    Returns all outputs as CUDA float32 tensors (heads + past).
+    """
+    if not past_in:
+        raise ValueError("past_in must not be empty")
+    q = int(next(iter(feeds_tensors.values())).shape[1])
+    t_in = int(past_in[0].shape[-2])
+    t_out = t_in + q
+    b = int(past_in[0].shape[0])
+    h = int(past_in[0].shape[1])
+    d = int(past_in[0].shape[-1])
+
+    keep_alive: List[Any] = []
+    io = session.io_binding()
+    for name in input_names[:past_in_start]:
+        _bind_cuda_input(io, name, feeds_tensors[name], keep_alive)
+    for name, t in zip(input_names[past_in_start:], past_in):
+        _bind_cuda_input(io, name, t, keep_alive)
+
+    # Head outputs: bind without fixed buffer (shapes vary by model); copy via get_outputs.
+    # Past outs: preallocate exact [B,H,T_out,D] CUDA buffers (no H2D/D2H).
+    n_past = len(input_names) - past_in_start
+    n_heads = len(output_names) - n_past
+    head_names = list(output_names[:n_heads])
+    past_out_names = list(output_names[n_heads:])
+    for name in head_names:
+        io.bind_output(name, "cuda", 0)
+    past_bufs = [
+        _bind_cuda_output(io, name, (b, h, t_out, d)) for name in past_out_names
+    ]
+
+    session.run_with_iobinding(io)
+    io.synchronize_outputs()
+    head_ovs = io.get_outputs()[:n_heads]
+    # OrtValue.numpy() is D2H; heads are tiny and ObjectiveVAP ends in .tolist() anyway.
+    heads = [
+        torch.from_numpy(ov.numpy()).to(device="cuda", dtype=torch.float32)
+        for ov in head_ovs
+    ]
+    # past_bufs were written in-place on GPU
+    _ = keep_alive  # lifetime through run
+    return heads + past_bufs
+
+
 def vap_outputs_from_logits_vad(
     vap: "VapGPT",
     logits: Tensor,
@@ -483,29 +588,51 @@ class VapOnnxSession:
     ) -> Tuple[dict, dict]:
         device = x1.device
         dtype = x1.dtype
-        # session.run uses host numpy. Keep KV on CPU between steps; CUDA EP still
-        # executes MatMul on GPU after ORT's H2D copy.
-        flat = cache_dict_to_flat(
-            cache,
-            channel_layers=self.channel_layers,
-            cross_layers=self.cross_layers,
-            batch=int(x1.shape[0]),
-            num_heads=self.num_heads,
-            head_dim=self.head_dim,
-            device=torch.device("cpu"),
-            dtype=torch.float32,
-        )
-        feeds = {
-            "x1": x1.detach().float().cpu().numpy(),
-            "x2": x2.detach().float().cpu().numpy(),
-        }
-        for name, t in zip(self.input_names[2:], flat):
-            feeds[name] = t.detach().float().cpu().numpy()
+        if self.use_cuda:
+            flat = cache_dict_to_flat(
+                cache,
+                channel_layers=self.channel_layers,
+                cross_layers=self.cross_layers,
+                batch=int(x1.shape[0]),
+                num_heads=self.num_heads,
+                head_dim=self.head_dim,
+                device=torch.device("cuda"),
+                dtype=torch.float32,
+            )
+            outs = run_transformer_onnx_with_iobinding(
+                self.session,
+                input_names=self.input_names,
+                output_names=self.output_names,
+                feeds_tensors={"x1": x1, "x2": x2},
+                past_in=flat,
+                past_in_start=2,
+            )
+            logits = outs[0].to(device=device, dtype=dtype)
+            vad = outs[1].to(device=device, dtype=dtype)
+            past_out = outs[2:]
+        else:
+            # session.run uses host numpy.
+            flat = cache_dict_to_flat(
+                cache,
+                channel_layers=self.channel_layers,
+                cross_layers=self.cross_layers,
+                batch=int(x1.shape[0]),
+                num_heads=self.num_heads,
+                head_dim=self.head_dim,
+                device=torch.device("cpu"),
+                dtype=torch.float32,
+            )
+            feeds = {
+                "x1": x1.detach().float().cpu().numpy(),
+                "x2": x2.detach().float().cpu().numpy(),
+            }
+            for name, t in zip(self.input_names[2:], flat):
+                feeds[name] = t.detach().float().cpu().numpy()
 
-        outs = self.session.run(self.output_names, feeds)
-        logits = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
-        vad = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
-        past_out = [torch.from_numpy(o) for o in outs[2:]]
+            outs = self.session.run(self.output_names, feeds)
+            logits = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
+            vad = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
+            past_out = [torch.from_numpy(o) for o in outs[2:]]
         new_cache = flat_to_cache_dict(
             past_out,
             channel_layers=self.channel_layers,
