@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 import torch.nn.functional as F
 
 from .config import VapConfig
+from .vap import vap_max_past_len
 from ..encoder import build_audio_encoder
 from ..modules import GPT, GPTStereo
 from ..objective import ObjectiveVAP
@@ -171,10 +172,111 @@ class VapGPT_bc(nn.Module):
             "cross2_c": (out["past_k2_c"], out["past_v2_c"]),
         }
 
-        p_bc = self.bc_head(out["x"]).sigmoid().to("cpu").tolist()[0][-1][0]
-        p_bc_detect = self.bc_detect_head(out["x"]).sigmoid().to("cpu").tolist()[0][-1][0]
-        print(f"p_bc: {p_bc:.4f}, p_bc_detect: {p_bc_detect:.4f}")
+        bc_logit = self.bc_head(out["x"])
+        bc_detect_logit = self.bc_detect_head(out["x"])
+        p_bc = float(bc_logit.sigmoid().to("cpu").tolist()[0][-1][0])
+        p_bc_detect = float(bc_detect_logit.sigmoid().to("cpu").tolist()[0][-1][0])
 
         ret = {"p_bc": p_bc, "p_bc_detect": p_bc_detect}
 
+        return ret, new_cache
+
+
+def bc_outputs_from_logits(bc_logit: Tensor, bc_detect_logit: Tensor) -> dict:
+    """Match ``VapGPT_bc.forward`` post-head sigmoid (ONNX runtime path)."""
+    p_bc = float(bc_logit.sigmoid().to("cpu").tolist()[0][-1][0])
+    p_bc_detect = float(bc_detect_logit.sigmoid().to("cpu").tolist()[0][-1][0])
+    return {"p_bc": p_bc, "p_bc_detect": p_bc_detect}
+
+
+class BcOnnxSession:
+    """ORT session for BC transformer step; sigmoid stays in Torch."""
+
+    def __init__(
+        self,
+        onnx_path: str,
+        meta_path: str,
+        bc_ref: VapGPT_bc,
+        *,
+        providers: Optional[List[str]] = None,
+        cpu_intra_threads: Optional[int] = None,
+        cpu_inter_threads: Optional[int] = None,
+    ):
+        import json
+        import onnxruntime as ort
+
+        with open(meta_path, "r", encoding="utf-8") as f:
+            self.meta = json.load(f)
+        self.input_names: List[str] = list(self.meta["input_names"])
+        self.output_names: List[str] = list(self.meta["output_names"])
+        self.channel_layers = int(self.meta["channel_layers"])
+        self.cross_layers = int(self.meta["cross_layers"])
+        self.num_heads = int(self.meta["num_heads"])
+        self.head_dim = int(self.meta["head_dim"])
+        self.dim = int(self.meta["dim"])
+        self.max_past = int(self.meta.get("max_past_len", vap_max_past_len(10.0, 20.0)))
+
+        so = ort.SessionOptions()
+        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        if cpu_intra_threads is not None:
+            so.intra_op_num_threads = max(1, int(cpu_intra_threads))
+        if cpu_inter_threads is not None:
+            so.inter_op_num_threads = max(1, int(cpu_inter_threads))
+        self.session = ort.InferenceSession(
+            onnx_path,
+            sess_options=so,
+            providers=providers or ["CPUExecutionProvider"],
+        )
+        self.bc_ref = bc_ref
+        actual_in = [x.name for x in self.session.get_inputs()]
+        actual_out = [x.name for x in self.session.get_outputs()]
+        if actual_in != self.input_names or actual_out != self.output_names:
+            raise RuntimeError(
+                f"ONNX IO mismatch: in={actual_in} vs {self.input_names}; "
+                f"out={actual_out} vs {self.output_names}"
+            )
+
+    def forward(
+        self,
+        x1: Tensor,
+        x2: Tensor,
+        cache: Optional[dict] = None,
+    ) -> Tuple[dict, dict]:
+        from .vap import cache_dict_to_flat, flat_to_cache_dict
+
+        device = x1.device
+        dtype = x1.dtype
+        flat = cache_dict_to_flat(
+            cache,
+            channel_layers=self.channel_layers,
+            cross_layers=self.cross_layers,
+            batch=int(x1.shape[0]),
+            num_heads=self.num_heads,
+            head_dim=self.head_dim,
+            device=torch.device("cpu"),
+            dtype=torch.float32,
+        )
+        feeds = {
+            "x1": x1.detach().float().cpu().numpy(),
+            "x2": x2.detach().float().cpu().numpy(),
+        }
+        for name, t in zip(self.input_names[2:], flat):
+            feeds[name] = t.detach().float().cpu().numpy()
+
+        outs = self.session.run(self.output_names, feeds)
+        bc_logit = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
+        bc_detect_logit = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
+        past_out = [torch.from_numpy(o) for o in outs[2:]]
+        new_cache = flat_to_cache_dict(
+            past_out,
+            channel_layers=self.channel_layers,
+            cross_layers=self.cross_layers,
+            max_past=self.max_past,
+        )
+        for key, (ks, vs) in new_cache.items():
+            new_cache[key] = (
+                [k.to(device=device, dtype=dtype) for k in ks],
+                [v.to(device=device, dtype=dtype) for v in vs],
+            )
+        ret = bc_outputs_from_logits(bc_logit, bc_detect_logit)
         return ret, new_cache

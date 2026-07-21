@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 import torch.nn.functional as F
 
 from .config import VapConfig
@@ -226,3 +226,223 @@ class VapGPT(nn.Module):
         }
 
         return ret, new_cache
+
+def vap_max_past_len(frame_hz: float, context_len_sec: float) -> int:
+    """Match ``Maai.process`` trim: keep last ``audio_context_len - 1`` frames."""
+    ctx = int(round(float(context_len_sec) * float(frame_hz)))
+    return max(1, ctx - 1)
+
+
+def _empty_past(
+    batch: int,
+    num_heads: int,
+    head_dim: int,
+    device: torch.device,
+    dtype: torch.dtype,
+) -> Tensor:
+    return torch.zeros((batch, num_heads, 0, head_dim), device=device, dtype=dtype)
+
+
+def _trim_kv(t: Tensor, max_past: int) -> Tensor:
+    if t.shape[-2] > max_past:
+        return t[..., -max_past:, :].contiguous()
+    return t.contiguous()
+
+
+def cache_dict_to_flat(
+    cache: Optional[dict],
+    *,
+    channel_layers: int,
+    cross_layers: int,
+    batch: int,
+    num_heads: int,
+    head_dim: int,
+    device: torch.device,
+    dtype: torch.dtype,
+) -> List[Tensor]:
+    """Convert Maai ``vap_cache`` dict to flat past tensor list (T may be 0)."""
+    cache = cache or {}
+    flat: List[Tensor] = []
+
+    def layer_pair(key: str, n_layers: int) -> None:
+        kv = cache.get(key)
+        if kv is None:
+            ks = [None] * n_layers
+            vs = [None] * n_layers
+        else:
+            ks, vs = kv
+        for i in range(n_layers):
+            k = ks[i]
+            v = vs[i]
+            if k is None:
+                k = _empty_past(batch, num_heads, head_dim, device, dtype)
+            if v is None:
+                v = _empty_past(batch, num_heads, head_dim, device, dtype)
+            flat.append(k)
+            flat.append(v)
+
+    layer_pair("ar1", channel_layers)
+    layer_pair("ar2", channel_layers)
+    layer_pair("cross1", cross_layers)
+    layer_pair("cross2", cross_layers)
+    layer_pair("cross1_c", cross_layers)
+    layer_pair("cross2_c", cross_layers)
+    return flat
+
+
+def flat_to_cache_dict(
+    flat: Sequence[Tensor],
+    *,
+    channel_layers: int,
+    cross_layers: int,
+    max_past: Optional[int] = None,
+) -> dict:
+    """Convert flat past list to Maai cache dict; optional trim like ``Maai.process``."""
+    it = iter(flat)
+
+    def take_layers(n: int) -> Tuple[list, list]:
+        ks, vs = [], []
+        for _ in range(n):
+            k = next(it)
+            v = next(it)
+            if max_past is not None:
+                k = _trim_kv(k, max_past)
+                v = _trim_kv(v, max_past)
+            ks.append(k)
+            vs.append(v)
+        return ks, vs
+
+    return {
+        "ar1": take_layers(channel_layers),
+        "ar2": take_layers(channel_layers),
+        "cross1": take_layers(cross_layers),
+        "cross2": take_layers(cross_layers),
+        "cross1_c": take_layers(cross_layers),
+        "cross2_c": take_layers(cross_layers),
+    }
+
+
+def vap_outputs_from_logits_vad(
+    vap: "VapGPT",
+    logits: Tensor,
+    vad: Tensor,
+) -> dict:
+    """Match ``VapGPT.forward`` post-head aggregates (ObjectiveVAP stays in Torch)."""
+    probs = logits.softmax(dim=-1)
+    p_bins_tensor = vap.objective.probs_speaker_bin_aggregate(
+        probs, from_bin=0, to_bin=vap.objective.n_bins - 1
+    )
+    i0, i1 = vap.BINS_P_NOW[0], vap.BINS_P_NOW[-1]
+    j0, j1 = vap.BINS_PFUTURE[0], vap.BINS_PFUTURE[-1]
+    p_bins_now_t = p_bins_tensor[:, :, :, i0 : i1 + 1].sum(dim=-1)
+    p_bins_future_t = p_bins_tensor[:, :, :, j0 : j1 + 1].sum(dim=-1)
+    p_now = vap.objective.probs_next_speaker_aggregate(
+        probs, from_bin=vap.BINS_P_NOW[0], to_bin=vap.BINS_P_NOW[-1]
+    )
+    p_future = vap.objective.probs_next_speaker_aggregate(
+        probs, from_bin=vap.BINS_PFUTURE[0], to_bin=vap.BINS_PFUTURE[1]
+    )
+    vad_sig = vad.sigmoid()
+    return {
+        "p_now": p_now.to("cpu").tolist()[0][-1],
+        "p_future": p_future.to("cpu").tolist()[0][-1],
+        "vad": [
+            vad_sig.to("cpu").tolist()[0][-1][0],
+            vad_sig.to("cpu").tolist()[0][-1][1],
+        ],
+        "p_bins": p_bins_tensor.to("cpu").tolist()[0][-1],
+        "p_bins_now": (p_bins_now_t * 0.5).to("cpu").tolist()[0][-1],
+        "p_bins_future": (p_bins_future_t * 0.5).to("cpu").tolist()[0][-1],
+    }
+
+
+class VapOnnxSession:
+    """ORT session for VAP transformer step; ObjectiveVAP aggregates stay in Torch."""
+
+    def __init__(
+        self,
+        onnx_path: str,
+        meta_path: str,
+        vap_ref: VapGPT,
+        *,
+        providers: Optional[List[str]] = None,
+        cpu_intra_threads: Optional[int] = None,
+        cpu_inter_threads: Optional[int] = None,
+    ):
+        import json
+        import onnxruntime as ort
+
+        with open(meta_path, "r", encoding="utf-8") as f:
+            self.meta = json.load(f)
+        self.input_names: List[str] = list(self.meta["input_names"])
+        self.output_names: List[str] = list(self.meta["output_names"])
+        self.channel_layers = int(self.meta["channel_layers"])
+        self.cross_layers = int(self.meta["cross_layers"])
+        self.num_heads = int(self.meta["num_heads"])
+        self.head_dim = int(self.meta["head_dim"])
+        self.dim = int(self.meta["dim"])
+        self.max_past = int(self.meta.get("max_past_len", vap_max_past_len(12.5, 20.0)))
+
+        so = ort.SessionOptions()
+        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        if cpu_intra_threads is not None:
+            so.intra_op_num_threads = max(1, int(cpu_intra_threads))
+        if cpu_inter_threads is not None:
+            so.inter_op_num_threads = max(1, int(cpu_inter_threads))
+        self.session = ort.InferenceSession(
+            onnx_path,
+            sess_options=so,
+            providers=providers or ["CPUExecutionProvider"],
+        )
+        self.vap_ref = vap_ref
+        actual_in = [x.name for x in self.session.get_inputs()]
+        actual_out = [x.name for x in self.session.get_outputs()]
+        if actual_in != self.input_names or actual_out != self.output_names:
+            raise RuntimeError(
+                f"ONNX IO mismatch: in={actual_in} vs {self.input_names}; "
+                f"out={actual_out} vs {self.output_names}"
+            )
+
+    def forward(
+        self,
+        x1: Tensor,
+        x2: Tensor,
+        cache: Optional[dict] = None,
+    ) -> Tuple[dict, dict]:
+        device = x1.device
+        dtype = x1.dtype
+        flat = cache_dict_to_flat(
+            cache,
+            channel_layers=self.channel_layers,
+            cross_layers=self.cross_layers,
+            batch=int(x1.shape[0]),
+            num_heads=self.num_heads,
+            head_dim=self.head_dim,
+            device=torch.device("cpu"),
+            dtype=torch.float32,
+        )
+        feeds = {
+            "x1": x1.detach().float().cpu().numpy(),
+            "x2": x2.detach().float().cpu().numpy(),
+        }
+        for name, t in zip(self.input_names[2:], flat):
+            feeds[name] = t.detach().float().cpu().numpy()
+
+        outs = self.session.run(self.output_names, feeds)
+        logits = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
+        vad = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
+        past_out = [torch.from_numpy(o) for o in outs[2:]]
+        new_cache = flat_to_cache_dict(
+            past_out,
+            channel_layers=self.channel_layers,
+            cross_layers=self.cross_layers,
+            max_past=self.max_past,
+        )
+        for key, (ks, vs) in new_cache.items():
+            new_cache[key] = (
+                [k.to(device=device, dtype=dtype) for k in ks],
+                [v.to(device=device, dtype=dtype) for v in vs],
+            )
+        ret = vap_outputs_from_logits_vad(self.vap_ref, logits, vad)
+        return ret, new_cache
+

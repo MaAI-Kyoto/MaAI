@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from .config import VapConfig
 from ..encoder import build_audio_encoder
@@ -566,4 +566,320 @@ class VapGPT_nod_para(nn.Module):
             "nod_swing_up_pred": nod_swing_up_pred,
         }
 
+        return ret, new_cache
+
+
+NOD_PARA_CACHE_KEYS: Tuple[str, ...] = (
+    "ar1",
+    "ar2",
+    "cross1",
+    "cross2",
+    "cross1_c",
+    "cross2_c",
+    "arp1",
+    "arp2",
+    "tg_pkv1",
+    "tg_pkv2",
+    "tg_pkv1c",
+    "tg_pkv2c",
+)
+
+
+def nod_para_layer_counts(model: "VapGPT_nod_para") -> Tuple[int, int, int]:
+    channel_layers = int(model.ar_channel.num_layers)
+    cross_layers = int(model.ar.num_layers)
+    task_gpt_layers = int(model.task_gpts["0"].num_layers)
+    return channel_layers, cross_layers, task_gpt_layers
+
+
+def nod_para_cache_dict_to_flat(
+    cache: Optional[dict],
+    *,
+    channel_layers: int,
+    cross_layers: int,
+    task_gpt_layers: int,
+    batch: int,
+    num_heads: int,
+    head_dim: int,
+    device: torch.device,
+    dtype: torch.dtype,
+) -> List[Tensor]:
+    from .vap import _empty_past
+
+    cache = cache or {}
+    flat: List[Tensor] = []
+    layer_counts = {
+        "ar1": channel_layers,
+        "ar2": channel_layers,
+        "cross1": cross_layers,
+        "cross2": cross_layers,
+        "cross1_c": cross_layers,
+        "cross2_c": cross_layers,
+        "arp1": channel_layers,
+        "arp2": channel_layers,
+        "tg_pkv1": task_gpt_layers,
+        "tg_pkv2": task_gpt_layers,
+        "tg_pkv1c": task_gpt_layers,
+        "tg_pkv2c": task_gpt_layers,
+    }
+    for key in NOD_PARA_CACHE_KEYS:
+        n_layers = layer_counts[key]
+        kv = cache.get(key)
+        if kv is None:
+            ks = [None] * n_layers
+            vs = [None] * n_layers
+        else:
+            ks, vs = kv
+        for i in range(n_layers):
+            k = ks[i]
+            v = vs[i]
+            if k is None:
+                k = _empty_past(batch, num_heads, head_dim, device, dtype)
+            if v is None:
+                v = _empty_past(batch, num_heads, head_dim, device, dtype)
+            flat.append(k)
+            flat.append(v)
+    return flat
+
+
+def flat_to_nod_para_cache_dict(
+    flat: Sequence[Tensor],
+    *,
+    channel_layers: int,
+    cross_layers: int,
+    task_gpt_layers: int,
+    max_past: Optional[int] = None,
+) -> dict:
+    from .vap import _trim_kv
+
+    it = iter(flat)
+    layer_counts = {
+        "ar1": channel_layers,
+        "ar2": channel_layers,
+        "cross1": cross_layers,
+        "cross2": cross_layers,
+        "cross1_c": cross_layers,
+        "cross2_c": cross_layers,
+        "arp1": channel_layers,
+        "arp2": channel_layers,
+        "tg_pkv1": task_gpt_layers,
+        "tg_pkv2": task_gpt_layers,
+        "tg_pkv1c": task_gpt_layers,
+        "tg_pkv2c": task_gpt_layers,
+    }
+    out: dict = {}
+
+    def take_layers(n: int) -> Tuple[list, list]:
+        ks, vs = [], []
+        for _ in range(n):
+            k = next(it)
+            v = next(it)
+            if max_past is not None:
+                k = _trim_kv(k, max_past)
+                v = _trim_kv(v, max_past)
+            ks.append(k)
+            vs.append(v)
+        return ks, vs
+
+    for key in NOD_PARA_CACHE_KEYS:
+        out[key] = take_layers(layer_counts[key])
+    return out
+
+
+def nod_para_outputs_from_tensors(
+    model: "VapGPT_nod_para",
+    vad: Tensor,
+    vap_logits: Tensor,
+    bc_logit: Tensor,
+    bc_detect_logit: Tensor,
+    nod_timing_logit: Tensor,
+    nod_rep_logits: Tensor,
+    nod_range: Tensor,
+    nod_speed: Tensor,
+    nod_swing_bin: Tensor,
+) -> dict:
+    """Match ``VapGPT_nod_para.forward`` post-head aggregates (ONNX runtime path)."""
+    probs = vap_logits.softmax(dim=-1)
+    p_now = model.objective.probs_next_speaker_aggregate(
+        probs, from_bin=model.BINS_P_NOW[0], to_bin=model.BINS_P_NOW[-1]
+    )
+    p_future = model.objective.probs_next_speaker_aggregate(
+        probs, from_bin=model.BINS_PFUTURE[0], to_bin=model.BINS_PFUTURE[-1]
+    )
+    p_now = p_now.to("cpu").tolist()[0][-1]
+    p_now = [p_now[1], p_now[0]]
+    p_future = p_future.to("cpu").tolist()[0][-1]
+    p_future = [p_future[1], p_future[0]]
+
+    vad1 = float(vad[..., 0].sigmoid().to("cpu").tolist()[0][-1])
+    vad2 = float(vad[..., 1].sigmoid().to("cpu").tolist()[0][-1])
+    p_bc = float(bc_logit.sigmoid().to("cpu").tolist()[0][-1][0])
+    p_nod = float(nod_timing_logit.sigmoid().to("cpu").tolist()[0][-1][0])
+
+    if model.nod_count_binary:
+        p_multi = float(nod_rep_logits.sigmoid().to("cpu").tolist()[0][-1][0])
+        nod_repetitions = [1.0 - p_multi, p_multi]
+        nod_repetitions_pred = int(
+            p_multi >= float(model.nod_repetitions_thresholds.get("t0", 0.5))
+        )
+    else:
+        nc = nod_rep_logits.softmax(dim=-1).to("cpu").tolist()[0][-1]
+        nod_repetitions = [float(nc[i]) for i in range(len(nc))]
+        nod_repetitions_pred = model._apply_repetitions_thresholds(
+            nod_repetitions, model.nod_repetitions_thresholds
+        )
+
+    st = model.nod_param_stats
+    nod_range_z = float(nod_range.to("cpu").tolist()[0][-1][0])
+    nod_speed_z = float(nod_speed.to("cpu").tolist()[0][-1][0])
+    nod_range_val = model.denormalize(
+        nod_range_z,
+        float(st.get("range_mean", 0.0)),
+        float(st.get("range_std", 1.0)),
+    )
+    nod_speed_val = model.denormalize(
+        nod_speed_z,
+        float(st.get("speed_mean", 0.0)),
+        float(st.get("speed_std", 1.0)),
+    )
+
+    nod_swing_up_prob = float(nod_swing_bin.sigmoid().to("cpu").tolist()[0][-1][0])
+    nod_swing_up_pred = int(nod_swing_up_prob >= float(model.nod_swing_up_threshold))
+
+    return {
+        "p_now": p_now,
+        "p_future": p_future,
+        "vad": [vad2, vad1],
+        "p_bc": p_bc,
+        "p_nod": p_nod,
+        "nod_repetitions": nod_repetitions,
+        "nod_repetitions_pred": nod_repetitions_pred,
+        "nod_range": nod_range_val,
+        "nod_speed": nod_speed_val,
+        "nod_swing_up": nod_swing_up_prob,
+        "nod_swing_up_pred": nod_swing_up_pred,
+    }
+
+
+class NodParaOnnxSession:
+    """ORT session for nod_para transformer step; aggregates stay in Torch."""
+
+    def __init__(
+        self,
+        onnx_path: str,
+        meta_path: str,
+        nod_ref: "VapGPT_nod_para",
+        *,
+        providers: Optional[List[str]] = None,
+        cpu_intra_threads: Optional[int] = None,
+        cpu_inter_threads: Optional[int] = None,
+    ):
+        import json
+        import onnxruntime as ort
+
+        from .vap import vap_max_past_len
+
+        with open(meta_path, "r", encoding="utf-8") as f:
+            self.meta = json.load(f)
+        self.input_names: List[str] = list(self.meta["input_names"])
+        self.output_names: List[str] = list(self.meta["output_names"])
+        self.channel_layers = int(self.meta["channel_layers"])
+        self.cross_layers = int(self.meta["cross_layers"])
+        self.task_gpt_layers = int(self.meta["task_gpt_layers"])
+        self.num_heads = int(self.meta["num_heads"])
+        self.head_dim = int(self.meta["head_dim"])
+        self.dim = int(self.meta["dim"])
+        self.use_cond = bool(self.meta.get("use_cond", False))
+        self.max_past = int(
+            self.meta.get("max_past_len", vap_max_past_len(float(self.meta.get("frame_hz", 12.5)), 20.0))
+        )
+
+        so = ort.SessionOptions()
+        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        if cpu_intra_threads is not None:
+            so.intra_op_num_threads = max(1, int(cpu_intra_threads))
+        if cpu_inter_threads is not None:
+            so.inter_op_num_threads = max(1, int(cpu_inter_threads))
+        self.session = ort.InferenceSession(
+            onnx_path,
+            sess_options=so,
+            providers=providers or ["CPUExecutionProvider"],
+        )
+        self.nod_ref = nod_ref
+        actual_in = [x.name for x in self.session.get_inputs()]
+        actual_out = [x.name for x in self.session.get_outputs()]
+        if actual_in != self.input_names or actual_out != self.output_names:
+            raise RuntimeError(
+                f"ONNX IO mismatch: in={actual_in} vs {self.input_names}; "
+                f"out={actual_out} vs {self.output_names}"
+            )
+
+    def forward(
+        self,
+        x1: Tensor,
+        x2: Tensor,
+        cache: Optional[dict] = None,
+    ) -> Tuple[dict, dict]:
+        device = x1.device
+        dtype = x1.dtype
+        flat = nod_para_cache_dict_to_flat(
+            cache,
+            channel_layers=self.channel_layers,
+            cross_layers=self.cross_layers,
+            task_gpt_layers=self.task_gpt_layers,
+            batch=int(x1.shape[0]),
+            num_heads=self.num_heads,
+            head_dim=self.head_dim,
+            device=torch.device("cpu"),
+            dtype=torch.float32,
+        )
+        feeds = {
+            "x1_raw": x1.detach().float().cpu().numpy(),
+            "x2_raw": x2.detach().float().cpu().numpy(),
+        }
+        past_start = 2
+        if self.use_cond:
+            cond = self.nod_ref._build_cond(device, dtype)
+            if cond is None:
+                raise RuntimeError("NodPara ONNX expects FiLM cond but _build_cond returned None.")
+            feeds["cond"] = cond.detach().float().cpu().numpy()
+            past_start = 3
+        for name, t in zip(self.input_names[past_start:], flat):
+            feeds[name] = t.detach().float().cpu().numpy()
+
+        outs = self.session.run(self.output_names, feeds)
+        vad = torch.from_numpy(outs[0]).to(device=device, dtype=dtype)
+        vap_logits = torch.from_numpy(outs[1]).to(device=device, dtype=dtype)
+        bc_logit = torch.from_numpy(outs[2]).to(device=device, dtype=dtype)
+        bc_detect_logit = torch.from_numpy(outs[3]).to(device=device, dtype=dtype)
+        nod_timing_logit = torch.from_numpy(outs[4]).to(device=device, dtype=dtype)
+        nod_rep_logits = torch.from_numpy(outs[5]).to(device=device, dtype=dtype)
+        nod_range = torch.from_numpy(outs[6]).to(device=device, dtype=dtype)
+        nod_speed = torch.from_numpy(outs[7]).to(device=device, dtype=dtype)
+        nod_swing_bin = torch.from_numpy(outs[8]).to(device=device, dtype=dtype)
+        past_out = [torch.from_numpy(o) for o in outs[9:]]
+        new_cache = flat_to_nod_para_cache_dict(
+            past_out,
+            channel_layers=self.channel_layers,
+            cross_layers=self.cross_layers,
+            task_gpt_layers=self.task_gpt_layers,
+            max_past=self.max_past,
+        )
+        for key, (ks, vs) in new_cache.items():
+            new_cache[key] = (
+                [k.to(device=device, dtype=dtype) for k in ks],
+                [v.to(device=device, dtype=dtype) for v in vs],
+            )
+        ret = nod_para_outputs_from_tensors(
+            self.nod_ref,
+            vad,
+            vap_logits,
+            bc_logit,
+            bc_detect_logit,
+            nod_timing_logit,
+            nod_rep_logits,
+            nod_range,
+            nod_speed,
+            nod_swing_bin,
+        )
         return ret, new_cache

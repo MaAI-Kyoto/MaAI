@@ -60,9 +60,11 @@ class Maai():
         local_model = None,
         return_p_bins: bool = False,
         listener_style = None,
-        use_vap_onnx: bool = False,
-        vap_onnx_path: str | None = None,
-        vap_onnx_meta_path: str | None = None,
+        use_transformer_onnx: bool = False,
+        transformer_onnx_path: str | None = None,
+        transformer_onnx_meta_path: str | None = None,
+        transformer_onnx_cpu_intra_threads: int | None = None,
+        transformer_onnx_cpu_inter_threads: int | None = None,
     ):
         """Initialize the Maai instance.
         
@@ -95,9 +97,14 @@ class Maai():
             local_model (str | None): Path to a local custom model file.
             return_p_bins (bool): Whether to return probability bins in 'vap' mode.
             listener_style: Optional FiLM condition vector for nod_para.
-            use_vap_onnx (bool): Use ONNX for VAP transformer (mode='vap'/'vap_mc').
-            vap_onnx_path (str | None): Path to VAP streaming ONNX model.
-            vap_onnx_meta_path (str | None): Path to VAP ONNX meta JSON.
+            use_transformer_onnx (bool): Use ONNX for the mode's transformer
+                (vap/vap_mc, bc, or nod_para). Shared across modes.
+            transformer_onnx_path (str | None): Path to streaming transformer ONNX.
+            transformer_onnx_meta_path (str | None): Path to transformer ONNX meta JSON.
+            transformer_onnx_cpu_intra_threads (int | None): ORT intra-op threads for
+                the transformer session (None = ORT default).
+            transformer_onnx_cpu_inter_threads (int | None): ORT inter-op threads for
+                the transformer session (None = ORT default).
         """
 
         self.return_p_bins = bool(return_p_bins)
@@ -334,21 +341,52 @@ class Maai():
         self.vap = self.vap.eval()
 
         self._vap_onnx = None
-        self._use_vap_onnx = bool(use_vap_onnx)
-        if self._use_vap_onnx:
-            if mode not in ("vap", "vap_mc"):
-                raise ValueError("use_vap_onnx is only supported for mode='vap' or 'vap_mc'.")
+        self._bc_onnx = None
+        self._nod_onnx = None
+        _tf_threads = dict(
+            cpu_intra_threads=transformer_onnx_cpu_intra_threads,
+            cpu_inter_threads=transformer_onnx_cpu_inter_threads,
+        )
+        if use_transformer_onnx:
             if not use_kv_cache:
-                raise ValueError("use_vap_onnx requires use_kv_cache=True.")
-            if not vap_onnx_path or not vap_onnx_meta_path:
-                raise ValueError("use_vap_onnx requires vap_onnx_path and vap_onnx_meta_path.")
-            from .vap_export import VapOnnxSession
+                raise ValueError("use_transformer_onnx requires use_kv_cache=True.")
+            if not transformer_onnx_path or not transformer_onnx_meta_path:
+                raise ValueError(
+                    "use_transformer_onnx requires transformer_onnx_path and "
+                    "transformer_onnx_meta_path."
+                )
+            if mode in ("vap", "vap_mc"):
+                from .models.vap import VapOnnxSession
 
-            self._vap_onnx = VapOnnxSession(
-                str(vap_onnx_path),
-                str(vap_onnx_meta_path),
-                self.vap,
-            )
+                self._vap_onnx = VapOnnxSession(
+                    str(transformer_onnx_path),
+                    str(transformer_onnx_meta_path),
+                    self.vap,
+                    **_tf_threads,
+                )
+            elif mode == "bc":
+                from .models.vap_bc import BcOnnxSession
+
+                self._bc_onnx = BcOnnxSession(
+                    str(transformer_onnx_path),
+                    str(transformer_onnx_meta_path),
+                    self.vap,
+                    **_tf_threads,
+                )
+            elif mode == "nod_para":
+                from .models.vap_nod_para import NodParaOnnxSession
+
+                self._nod_onnx = NodParaOnnxSession(
+                    str(transformer_onnx_path),
+                    str(transformer_onnx_meta_path),
+                    self.vap,
+                    **_tf_threads,
+                )
+            else:
+                raise ValueError(
+                    "use_transformer_onnx is only supported for mode="
+                    "'vap', 'vap_mc', 'bc', or 'nod_para'."
+                )
         
         self.mode = mode
         self.model_type = model_type
@@ -622,6 +660,10 @@ class Maai():
 
                 if self._vap_onnx is not None:
                     out, self.vap_cache = self._vap_onnx.forward(e1, e2, cache=self.vap_cache)
+                elif self._bc_onnx is not None:
+                    out, self.vap_cache = self._bc_onnx.forward(e1, e2, cache=self.vap_cache)
+                elif self._nod_onnx is not None:
+                    out, self.vap_cache = self._nod_onnx.forward(e1, e2, cache=self.vap_cache)
                 else:
                     out, self.vap_cache = self.vap.forward(e1, e2, cache=self.vap_cache)
 
@@ -819,6 +861,8 @@ class MaaiMultiple:
         mimi_local_onnx_int8_meta_path: str | None = None,
         mimi_onnx_cpu_intra_threads: int | None = None,
         mimi_onnx_cpu_inter_threads: int | None = None,
+        transformer_onnx_cpu_intra_threads: int | None = None,
+        transformer_onnx_cpu_inter_threads: int | None = None,
         cache_dir: str = None,
         force_download: bool = False,
         use_kv_cache: bool = True,
@@ -847,6 +891,8 @@ class MaaiMultiple:
             mimi_local_onnx_int8_meta_path=mimi_local_onnx_int8_meta_path,
             mimi_onnx_cpu_intra_threads=mimi_onnx_cpu_intra_threads,
             mimi_onnx_cpu_inter_threads=mimi_onnx_cpu_inter_threads,
+            transformer_onnx_cpu_intra_threads=transformer_onnx_cpu_intra_threads,
+            transformer_onnx_cpu_inter_threads=transformer_onnx_cpu_inter_threads,
             cache_dir=cache_dir,
             force_download=force_download,
             use_kv_cache=use_kv_cache,
@@ -865,13 +911,23 @@ class MaaiMultiple:
                 )
             seen_labels.add(label)
             self.labels.append(label)
+            sub_kwargs = dict(shared_kwargs)
+            for _tk in (
+                "transformer_onnx_cpu_intra_threads",
+                "transformer_onnx_cpu_inter_threads",
+            ):
+                if _tk in cfg:
+                    sub_kwargs[_tk] = cfg[_tk]
             sub = Maai(
                 mode=cfg["mode"],
                 lang=cfg["lang"],
                 local_model=cfg.get("local_model"),
                 return_p_bins=cfg.get("return_p_bins", False),
                 listener_style=cfg.get("listener_style"),
-                **shared_kwargs,
+                use_transformer_onnx=bool(cfg.get("use_transformer_onnx", False)),
+                transformer_onnx_path=cfg.get("transformer_onnx_path"),
+                transformer_onnx_meta_path=cfg.get("transformer_onnx_meta_path"),
+                **sub_kwargs,
             )
             self.sub_maais.append(sub)
 
@@ -920,6 +976,20 @@ class MaaiMultiple:
         # Threading.
         self._stop_event = threading.Event()
         self._worker_thread: threading.Thread | None = None
+
+        # Run sub-model transformers in parallel when there is more than one.
+        # Each sub has its own ORT session / KV cache, so this is safe; keep
+        # per-session intra-op threads small (transformer_onnx_cpu_intra_threads)
+        # to avoid oversubscription.
+        if len(self.sub_maais) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+
+            self._sub_executor = ThreadPoolExecutor(
+                max_workers=len(self.sub_maais),
+                thread_name_prefix="maai-multi-sub",
+            )
+        else:
+            self._sub_executor = None
 
         self.reset_runtime_state()
 
@@ -1101,44 +1171,64 @@ class MaaiMultiple:
                 "x2": x2_dist.copy(),
             }
 
-            for label, sub in zip(self.labels, self.sub_maais):
-                # Reproduce the per-mode swap that lives in each model's
-                # encode_audio: bc/bc_2type/nod/nod_para want the swapped
-                # (user, system) ordering, the others want the natural one.
-                if sub.mode in self._SWAP_MODES:
-                    e1_shared, e2_shared = eB_in, eA_in
-                else:
-                    e1_shared, e2_shared = eA_in, eB_in
-
-                # Apply the model-specific downsampling layer
-                if self.encoder_type == "mimi":
+            def _run_sub(label: str, sub: "Maai") -> tuple[str, dict]:
+                # inference_mode is thread-local, so re-enter it in workers.
+                with torch.inference_mode():
+                    # Reproduce the per-mode swap that lives in each model's
+                    # encode_audio: bc/bc_2type/nod/nod_para want the swapped
+                    # (user, system) ordering, the others want the natural one.
                     if sub.mode in self._SWAP_MODES:
-                        n1, n2 = input_num_samples_B, input_num_samples_A
+                        e1_shared, e2_shared = eB_in, eA_in
                     else:
-                        n1, n2 = input_num_samples_A, input_num_samples_B
-                    e1 = sub.vap.encoder1.forward_specific(e1_shared, input_num_samples=n1)
-                    e2 = sub.vap.encoder2.forward_specific(e2_shared, input_num_samples=n2)
-                else:
-                    e1 = sub.vap.encoder1.forward_specific(e1_shared)
-                    e2 = sub.vap.encoder2.forward_specific(e2_shared)
+                        e1_shared, e2_shared = eA_in, eB_in
 
-                # Apply each sub-model's decrease_dimension here (most models
-                # apply it inside encode_audio). nod_para applies projections
-                # internally inside its forward, so leave it alone.
-                if sub.mode != "nod_para" and hasattr(sub.vap, "decrease_dimension"):
-                    e1 = torch.relu(sub.vap.decrease_dimension(e1))
-                    e2 = torch.relu(sub.vap.decrease_dimension(e2))
+                    # Apply the model-specific downsampling layer
+                    if self.encoder_type == "mimi":
+                        if sub.mode in self._SWAP_MODES:
+                            n1, n2 = input_num_samples_B, input_num_samples_A
+                        else:
+                            n1, n2 = input_num_samples_A, input_num_samples_B
+                        e1 = sub.vap.encoder1.forward_specific(e1_shared, input_num_samples=n1)
+                        e2 = sub.vap.encoder2.forward_specific(e2_shared, input_num_samples=n2)
+                    else:
+                        e1 = sub.vap.encoder1.forward_specific(e1_shared)
+                        e2 = sub.vap.encoder2.forward_specific(e2_shared)
 
-                if self.use_kv_cache:
-                    out, sub.vap_cache = sub.vap.forward(e1, e2, cache=sub.vap_cache)
-                    if sub.vap_cache is not None:
-                        sub.vap_cache = self._trim_kv_cache(sub.vap_cache, self.audio_context_len)
-                else:
-                    out, _ = sub.vap.forward(e1, e2, cache=None)
+                    # Apply each sub-model's decrease_dimension here (most models
+                    # apply it inside encode_audio). nod_para applies projections
+                    # internally inside its forward, so leave it alone.
+                    if sub.mode != "nod_para" and hasattr(sub.vap, "decrease_dimension"):
+                        e1 = torch.relu(sub.vap.decrease_dimension(e1))
+                        e2 = torch.relu(sub.vap.decrease_dimension(e2))
 
-                results_combined[label] = self._extract_outputs(
-                    sub.mode, out, sub.return_p_bins
-                )
+                    if self.use_kv_cache:
+                        if sub._vap_onnx is not None:
+                            out, sub.vap_cache = sub._vap_onnx.forward(e1, e2, cache=sub.vap_cache)
+                        elif sub._bc_onnx is not None:
+                            out, sub.vap_cache = sub._bc_onnx.forward(e1, e2, cache=sub.vap_cache)
+                        elif sub._nod_onnx is not None:
+                            out, sub.vap_cache = sub._nod_onnx.forward(e1, e2, cache=sub.vap_cache)
+                        else:
+                            out, sub.vap_cache = sub.vap.forward(e1, e2, cache=sub.vap_cache)
+                        if sub.vap_cache is not None:
+                            sub.vap_cache = self._trim_kv_cache(sub.vap_cache, self.audio_context_len)
+                    else:
+                        out, _ = sub.vap.forward(e1, e2, cache=None)
+
+                    return label, self._extract_outputs(sub.mode, out, sub.return_p_bins)
+
+            if self._sub_executor is not None:
+                futures = [
+                    self._sub_executor.submit(_run_sub, label, sub)
+                    for label, sub in zip(self.labels, self.sub_maais)
+                ]
+                for fut in futures:
+                    label, extracted = fut.result()
+                    results_combined[label] = extracted
+            else:
+                for label, sub in zip(self.labels, self.sub_maais):
+                    _, extracted = _run_sub(label, sub)
+                    results_combined[label] = extracted
 
             self.result_dict_queue.put(results_combined)
 
