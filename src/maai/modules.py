@@ -436,7 +436,20 @@ class GPT(nn.Module):
 
 
 class GPTStereo(GPT):
-    """GPT model adapted for stereo processing using cross-attention towers."""
+    """GPT model adapted for stereo processing using cross-attention towers.
+
+    Args:
+        combinator (bool): Whether to build the :class:`Combinator` that merges
+            both towers into ``out["x"]``. Models that only use the per-channel
+            outputs ``x1`` / ``x2`` (e.g. the VAD model) pass ``False``; then
+            ``out["x"]`` is ``None`` and no combinator parameters are created.
+    """
+
+    def __init__(self, *args, combinator: bool = True, **kwargs):
+        # Set before nn.Module.__init__ because GPT.__init__ calls _build_layers().
+        self.use_combinator = combinator
+        super().__init__(*args, **kwargs)
+
     def _build_layers(self):
         layers = []
         for _ in range(self.num_layers):
@@ -454,7 +467,10 @@ class GPTStereo(GPT):
         self.layers = nn.ModuleList(layers)
 
         # Combine output from both 'towers'
-        self.combinator = Combinator(dim=self.dim, activation="GELU")
+        if getattr(self, "use_combinator", True):
+            self.combinator = Combinator(dim=self.dim, activation="GELU")
+        else:
+            self.combinator = None
 
     def forward(
         self,
@@ -517,7 +533,7 @@ class GPTStereo(GPT):
                 self_attn_b.append(attn_list[2])
                 cross_attn_b.append(attn_list[3])
 
-        x = self.combinator(x1, x2)
+        x = self.combinator(x1, x2) if self.combinator is not None else None
         ret = {
             "x": x,
             "x1": x1,

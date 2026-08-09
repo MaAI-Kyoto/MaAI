@@ -496,6 +496,10 @@ class TcpReceiver:
             vap_result = util.conv_bytearray_2_vapresult(data)
         elif self.mode == 'vap_mono':
             vap_result = util.conv_bytearray_2_vapresult_mono(data)
+        elif self.mode == 'vad':
+            vap_result = util.conv_bytearray_2_vapresult_vad(data)
+        elif self.mode == 'vad_mono':
+            vap_result = util.conv_bytearray_2_vapresult_vad_mono(data)
         elif self.mode == 'bc_2type':
             vap_result = util.conv_bytearray_2_vapresult_bc_2type(data)
         elif self.mode == 'nod':
@@ -565,6 +569,10 @@ class TcpTransmitter:
             data_sent = util.conv_vapresult_2_bytearray(result_dict)
         elif self.mode == 'vap_mono':
             data_sent = util.conv_vapresult_2_bytearray_mono(result_dict)
+        elif self.mode == 'vad':
+            data_sent = util.conv_vapresult_2_bytearray_vad(result_dict)
+        elif self.mode == 'vad_mono':
+            data_sent = util.conv_vapresult_2_bytearray_vad_mono(result_dict)
         elif self.mode == 'bc_2type':
             data_sent = util.conv_vapresult_2_bytearray_bc_2type(result_dict)
         elif self.mode == 'nod':

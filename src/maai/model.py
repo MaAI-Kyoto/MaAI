@@ -11,6 +11,7 @@ from .input import Base, Zero
 from .util import load_vap_model, resolve_encoder_type
 from .models.vap import VapGPT
 from .models.vap_mono import VapGPT_mono
+from .models.vad import VadGPT, VadGPT_mono
 from .models.vap_bc import VapGPT_bc
 from .models.vap_bc_2type import VapGPT_bc_2type
 from .models.vap_nod import VapGPT_nod
@@ -94,12 +95,12 @@ class Maai():
             return_p_bins (bool): Whether to return probability bins in 'vap' mode.
         """
 
-        if mode == "vap_mono":
+        if mode in ("vap_mono", "vad_mono"):
             if audio_ch2 is None:
                 audio_ch2 = Zero()
             elif not isinstance(audio_ch2, Zero):
                 raise ValueError(
-                    "mode='vap_mono' takes a single input channel; "
+                    f"mode='{mode}' takes a single input channel; "
                     "audio_ch2 must be omitted (or a MaaiInput.Zero)."
                 )
         elif audio_ch2 is None:
@@ -152,6 +153,12 @@ class Maai():
 
         elif mode == "vap_mono":
             self.vap = VapGPT_mono(conf)
+
+        elif mode == "vad":
+            self.vap = VadGPT(conf)
+
+        elif mode == "vad_mono":
+            self.vap = VadGPT_mono(conf)
 
         elif mode == "bc":
             self.vap = VapGPT_bc(conf)
@@ -609,6 +616,12 @@ class Maai():
                     "p_bins": out['p_bins'],
                     "p_bins_now": out['p_bins_now'],
                     "p_bins_future": out['p_bins_future'],
+                },
+                "vad": lambda: {
+                    "vad": out['vad'],
+                },
+                "vad_mono": lambda: {
+                    "vad": out['vad'],
                 },
                 "vap_prompt": lambda: {
                     "p_now": out['p_now'],
@@ -1122,6 +1135,8 @@ class MaaiMultiple:
                 for k in ("p_bins", "p_bins_now", "p_bins_future"):
                     d.pop(k, None)
             return d
+        if mode in ("vad", "vad_mono"):
+            return {"vad": out["vad"]}
         if mode == "vap_prompt":
             return {
                 "p_now": out["p_now"],

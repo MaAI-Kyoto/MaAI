@@ -101,6 +101,12 @@ The turn-taking model uses the original VAP as is and predicts which participant
 - [Noise-Robust VAP Model (<b>Recommended</b>)](readme/vap_mc.md)
 - [Single-Channel VAP Model](readme/vap_mono.md)
 
+### Voice Activity Detection
+
+The voice activity detection model detects whether each participant is speaking at the current moment. It processes both channels jointly, so it can tell who is actually talking even when one speaker's voice leaks into the other's microphone.
+
+- [VAD Model (single-channel version also available)](readme/vad.md)
+
 ### Backchannel
 
 Backchannels are short listener responses such as `yeah` and `oh`, that are also related to turn-taking.

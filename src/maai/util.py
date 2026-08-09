@@ -42,6 +42,8 @@ repo_ids = {
     "vap_nod_para_jp": "maai-kyoto/vap_nod_para_jp",
     "vap_prompt_jp": "maai-kyoto/vap_prompt_jp",
     # "vap_nod_jp_only_timing": "maai-kyoto/vap_nod_jp_only_timing",
+
+    "vad_jp": "maai-kyoto/vad_jp",
 }
 
 # Streaming Mimi ONNX weights (same hub pattern as VAP checkpoints).
@@ -183,6 +185,16 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             supported_languages = ["jp", "en", "ch", "tri", "jp_kyoto", "en_kyoto", "ch_kyoto", "tri_kyoto", "fr"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
     
+    # vad_mono runs the same model / checkpoints as vad
+    elif mode in ("vad", "vad_mono"):
+        if language == "jp":
+            repo_id = repo_ids["vad_jp"]
+            file_path = f"vad{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        else:
+            supported_languages = ["jp"]
+            raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
     elif mode == "bc":
         if language == "jp":
             repo_id = repo_ids["vap_bc_jp"]
@@ -254,7 +266,7 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
         )
 
     else:
-        supported_modes = ["vap", "vap_mono", "vap_mc", "bc", "bc_2type", "nod", "vap_prompt", "nod_para"]
+        supported_modes = ["vap", "vap_mono", "vap_mc", "vad", "vad_mono", "bc", "bc_2type", "nod", "vap_prompt", "nod_para"]
         raise ValueError(f"Invalid mode: {mode}. Supported modes are: {supported_modes}")
 
     try:
@@ -547,6 +559,107 @@ def conv_bytearray_2_vapresult_mono(barr):
     result_vap = conv_bytearray_2_vapresult(barr)
     for k in ('p_now', 'p_future', 'vad'):
         result_vap[k] = result_vap[k][0]
+    return result_vap
+
+#
+# VAD result -> Byte
+#
+def conv_vapresult_2_bytearray_vad(vap_result):
+    """Serialize a VAD result dictionary into a byte array.
+
+    Args:
+        vap_result (Dict[str, Any]): VAD result data.
+
+    Returns:
+        bytes: The serialized byte array.
+    """
+    b = b''
+    b += struct.pack('<d', vap_result['t'])
+
+    b += len(vap_result['x1']).to_bytes(4, BYTE_ORDER)
+    b += conv_floatarray_2_byte(vap_result['x1'])
+
+    b += len(vap_result['x2']).to_bytes(4, BYTE_ORDER)
+    b += conv_floatarray_2_byte(vap_result['x2'])
+
+    b += len(vap_result['vad']).to_bytes(4, BYTE_ORDER)
+    b += conv_floatarray_2_byte(vap_result['vad'])
+
+    return b
+
+#
+# Byte -> VAD result
+#
+def conv_bytearray_2_vapresult_vad(barr):
+    """Deserialize a byte array back into a VAD result dictionary.
+
+    Args:
+        barr (bytes): Serialized byte array.
+
+    Returns:
+        Dict[str, Any]: The decoded VAD result data.
+    """
+    idx = 0
+    t = struct.unpack('<d', barr[idx:8])[0]
+    idx += 8
+
+    len_x1 = struct.unpack('<I', barr[idx:idx+4])[0]
+    idx += 4
+    x1 = conv_bytearray_2_floatarray(barr[idx:idx+8*len_x1])
+    idx += 8*len_x1
+
+    len_x2 = struct.unpack('<I', barr[idx:idx+4])[0]
+    idx += 4
+    x2 = conv_bytearray_2_floatarray(barr[idx:idx+8*len_x2])
+    idx += 8*len_x2
+
+    len_vad = struct.unpack('<I', barr[idx:idx+4])[0]
+    idx += 4
+    vad = conv_bytearray_2_floatarray(barr[idx:idx+8*len_vad])
+    idx += 8*len_vad
+
+    result_vap = {
+        't': t,
+        'x1': x1,
+        'x2': x2,
+        'vad': vad
+    }
+
+    return result_vap
+
+#
+# VAD result (mono) -> Byte
+#
+def conv_vapresult_2_bytearray_vad_mono(vap_result):
+    """Serialize a mono VAD result dictionary into a byte array.
+
+    The scalar ``vad`` value is wrapped into a length-1 array so the wire
+    format stays identical to the two-channel one.
+
+    Args:
+        vap_result (Dict[str, Any]): Mono VAD result data.
+
+    Returns:
+        bytes: The serialized byte array.
+    """
+    wrapped = dict(vap_result)
+    wrapped['vad'] = [vap_result['vad']]
+    return conv_vapresult_2_bytearray_vad(wrapped)
+
+#
+# Byte -> VAD result (mono)
+#
+def conv_bytearray_2_vapresult_vad_mono(barr):
+    """Deserialize a byte array back into a mono VAD result dictionary.
+
+    Args:
+        barr (bytes): Serialized byte array.
+
+    Returns:
+        Dict[str, Any]: The decoded mono VAD result data with a scalar ``vad``.
+    """
+    result_vap = conv_bytearray_2_vapresult_vad(barr)
+    result_vap['vad'] = result_vap['vad'][0]
     return result_vap
 
 #
