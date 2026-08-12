@@ -44,6 +44,7 @@ repo_ids = {
     # "vap_nod_jp_only_timing": "maai-kyoto/vap_nod_jp_only_timing",
 
     "vad_jp": "maai-kyoto/vad_jp",
+    "vad_ch": "maai-kyoto/vad_ch",
 }
 
 # Streaming Mimi ONNX weights (same hub pattern as VAP checkpoints).
@@ -191,8 +192,12 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             repo_id = repo_ids["vad_jp"]
             file_path = f"vad{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
 
+        elif language == "ch":
+            repo_id = repo_ids["vad_ch"]
+            file_path = f"vad{encoder_suffix}_state_dict_ch_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
         else:
-            supported_languages = ["jp"]
+            supported_languages = ["jp", "ch"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
     elif mode == "bc":

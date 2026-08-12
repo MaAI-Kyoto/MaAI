@@ -39,9 +39,11 @@ nav:
     - util: api/util.md
     - models:
       - config: api/models/config.md
+      - vad: api/models/vad.md
       - vap: api/models/vap.md
       - vap_bc: api/models/vap_bc.md
       - vap_bc_2type: api/models/vap_bc_2type.md
+      - vap_mono: api/models/vap_mono.md
       - vap_nod: api/models/vap_nod.md
       - vap_nod_para: api/models/vap_nod_para.md
       - vap_prompt: api/models/vap_prompt.md
