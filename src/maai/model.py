@@ -873,18 +873,8 @@ class MaaiMultiple:
         # Threading.
         self._stop_event = threading.Event()
         self._worker_thread: threading.Thread | None = None
-
-        # Run sub-model transformers in parallel when there is more than one.
-        # Each sub has its own KV cache, so this is safe.
-        if len(self.sub_maais) > 1:
-            from concurrent.futures import ThreadPoolExecutor
-
-            self._sub_executor = ThreadPoolExecutor(
-                max_workers=len(self.sub_maais),
-                thread_name_prefix="maai-multi-sub",
-            )
-        else:
-            self._sub_executor = None
+        self._sub_executor = None
+        self._ensure_sub_executor()
 
         self.reset_runtime_state()
 
@@ -896,6 +886,20 @@ class MaaiMultiple:
                     source._subscriber_queues.remove(q)
         except Exception:
             pass
+
+    def _ensure_sub_executor(self) -> None:
+        """Create the sub-model pool if missing. Recreated after ``stop()`` on ``start()``."""
+        if len(self.sub_maais) <= 1:
+            self._sub_executor = None
+            return
+        if self._sub_executor is not None:
+            return
+        from concurrent.futures import ThreadPoolExecutor
+
+        self._sub_executor = ThreadPoolExecutor(
+            max_workers=len(self.sub_maais),
+            thread_name_prefix="maai-multi-sub",
+        )
 
     def reset_runtime_state(self):
         self.current_x1_audio = []
@@ -939,6 +943,7 @@ class MaaiMultiple:
 
     def start(self):
         self.reset_runtime_state()
+        self._ensure_sub_executor()
 
         self.mic1.start()
         self.mic2.start()
