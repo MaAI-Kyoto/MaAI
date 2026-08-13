@@ -37,10 +37,12 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 
 | lang | model_type | frame_rate |
 | ---- | ---------- | ---------- |
-| jp | `normal` (CPC encoder) | 50 |
+| jp | `normal` (CPC encoder) | 10, 20, 50 |
 | jp | `normal-ver2` (Mimi encoder) | 12.5 |
+| ch | `normal` (CPC encoder) | 10, 20, 50 |
+| ch | `normal-ver2` (Mimi encoder) | 12.5 |
 
-Note that, unlike the VAP models, the 50 Hz model is the CPC-based one (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`).
+Note that the 10/20/50 Hz models are the CPC-based ones (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`).
 
 ## Usage Example
 
