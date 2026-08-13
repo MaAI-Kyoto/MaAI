@@ -52,6 +52,24 @@ class VapConfig:
     nod_head_mlp_hidden: int = 128
     nod_task_gpt_layers: int = 2
 
+    # 回数予測の出力形式: 1=binary(1回 vs 2回以上), 0=3クラス
+    nod_count_binary: int = 0
+
+    # ===== FiLM (listener-style) conditioning =====
+    # 既定はすべて off。film 付き .pt をロードする際に model_config から上書きする。
+    nod_film_enable: int = 0
+    nod_film_target_ar_channel: int = 0
+    nod_film_target_ar_channel_x2: int = 0
+    nod_film_target_ar_cross: int = 0
+    nod_film_target_ar_cross_x2: int = 0
+    nod_film_target_heads: int = 0
+    nod_film_heads_scope: str = "all"
+    nod_film_cond_dim: int = 0
+    nod_film_hidden: int = 0
+    nod_film_block_style: str = "post_ffn"
+    nod_film_cond_norm: int = 0
+    nod_film_cond_zscore: int = 0
+
     @staticmethod
     def add_argparse_args(parser, fields_added=[]):
         """Add VapConfig attributes as command-line arguments to an argparse parser.

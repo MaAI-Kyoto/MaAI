@@ -61,6 +61,7 @@ class Maai():
         use_kv_cache: bool = True,
         local_model = None,
         return_p_bins: bool = False,
+        listener_style = None,
     ):
         """Initialize the Maai instance.
         
@@ -93,6 +94,7 @@ class Maai():
             use_kv_cache (bool): Whether to use KV caching during inference.
             local_model (str | None): Path to a local custom model file.
             return_p_bins (bool): Whether to return probability bins in 'vap' mode.
+            listener_style: Optional FiLM condition vector for nod_para.
         """
 
         if mode in ("vap_mono", "vad_mono"):
@@ -148,6 +150,36 @@ class Maai():
         #     conf.cross_layers = 6
         #     conf.num_heads = 8
         
+        # nod_para + ローカル .pt: model_config を先読みして FiLM / トポロジを構築する。
+        # 415MB を二度読みしないよう、読み込んだ生 dict は保持して後段で再利用する。
+        self._preloaded_local_raw = None
+        if mode == "nod_para" and local_model is not None:
+            try:
+                _raw = torch.load(local_model, map_location="cpu", weights_only=False)
+            except TypeError:
+                _raw = torch.load(local_model, map_location="cpu")
+            self._preloaded_local_raw = _raw
+            _mc = _raw.get("model_config") if isinstance(_raw, dict) else None
+            if isinstance(_mc, dict):
+                _cfg_keys = [
+                    "nod_film_enable", "nod_film_target_ar_channel",
+                    "nod_film_target_ar_channel_x2", "nod_film_target_ar_cross",
+                    "nod_film_target_ar_cross_x2", "nod_film_target_heads",
+                    "nod_film_heads_scope", "nod_film_cond_dim", "nod_film_hidden",
+                    "nod_film_block_style", "nod_film_cond_norm", "nod_film_cond_zscore",
+                    "nod_count_binary", "dim", "channel_layers", "cross_layers",
+                    "num_heads", "nod_task_gpt_layers", "nod_head_mlp_hidden",
+                ]
+                for _k in _cfg_keys:
+                    if _k in _mc and hasattr(conf, _k):
+                        setattr(conf, _k, _mc[_k])
+                if _mc.get("nod_film_enable"):
+                    print(
+                        f"[Maai] FiLM nod_para checkpoint: cond_dim="
+                        f"{_mc.get('nod_film_cond_dim')}, block={_mc.get('nod_film_block_style')}, "
+                        f"count_binary={_mc.get('nod_count_binary')}"
+                    )
+
         if mode in ["vap", "vap_mc"]:
             self.vap = VapGPT(conf)
 
@@ -213,7 +245,11 @@ class Maai():
                 sd = sd["state_dict"]
         else:
             print("Loading model from local file:", local_model)
-            raw = torch.load(local_model, map_location="cpu")
+            raw = (
+                self._preloaded_local_raw
+                if self._preloaded_local_raw is not None
+                else torch.load(local_model, map_location="cpu")
+            )
             if isinstance(raw, dict):
                 nod_param_stats_from_file = raw.get("nod_param_stats")
                 nod_count_thresholds_from_file = raw.get(
@@ -239,7 +275,17 @@ class Maai():
                 else:
                     remapped_sd[_k] = _v
             sd = remapped_sd
-        self.vap.load_state_dict(sd, strict=False)
+        _load_result = self.vap.load_state_dict(sd, strict=False)
+        if mode == "nod_para" and getattr(self.vap, "use_film", False):
+            _missing = [k for k in _load_result.missing_keys if not k.startswith("encoder")]
+            _unexpected = [
+                k for k in _load_result.unexpected_keys
+                if not (k.startswith("encoder") or k.startswith("zero_shot"))
+            ]
+            if _missing:
+                print(f"[Maai][FiLM] Warning: {len(_missing)} non-encoder keys missing from checkpoint: {_missing[:8]}")
+            if _unexpected:
+                print(f"[Maai][FiLM] Note: {len(_unexpected)} checkpoint keys unused: {_unexpected[:8]}")
 
         if (
             mode == "nod_para"
@@ -261,6 +307,17 @@ class Maai():
                     )
             if "t_swing" in nod_count_thresholds_from_file:
                 self.vap.nod_swing_up_threshold = float(nod_count_thresholds_from_file["t_swing"])
+            if "t_nod" in nod_count_thresholds_from_file and hasattr(self.vap, "nod_timing_threshold"):
+                self.vap.nod_timing_threshold = float(nod_count_thresholds_from_file["t_nod"])
+
+        # 固定リスナースタイル条件ベクトル（FiLM 有効時のみ有効）
+        if mode == "nod_para" and hasattr(self.vap, "set_listener_style"):
+            try:
+                self.vap.set_listener_style(listener_style)
+                if listener_style is not None and getattr(self.vap, "use_film", False):
+                    print(f"[Maai][FiLM] listener_style set: {list(self.vap.listener_style.cpu().numpy())}")
+            except Exception as _ex:
+                print(f"[Maai][FiLM] Warning: failed to set listener_style: {_ex!r}")
 
         if conf.encoder_type == "cpc" and 'encoder.downsample.1.weight' in sd:
             self.vap.encoder1.downsample[1].weight = nn.Parameter(sd['encoder.downsample.1.weight'])
@@ -737,8 +794,8 @@ class MaaiMultiple:
     All sub-models must share the same encoder configuration:
     ``model_type``, ``frame_rate``, ``context_len_sec``, ``device`` and the
     ``mimi_*`` parameters. Per-model differences allowed in ``configs`` are
-    ``mode``, ``lang``, ``local_model``, ``return_p_bins`` and an optional
-    ``label`` used as the result key.
+    ``mode``, ``lang``, ``local_model``, ``return_p_bins``, ``listener_style``
+    and an optional ``label`` used as the result key.
 
     Each call to :meth:`get_result` returns a single ``dict`` whose top level
     contains shared fields ``t``, ``x1``, ``x2`` plus one nested ``dict``
@@ -824,6 +881,7 @@ class MaaiMultiple:
                 lang=cfg["lang"],
                 local_model=cfg.get("local_model"),
                 return_p_bins=cfg.get("return_p_bins", False),
+                listener_style=cfg.get("listener_style"),
                 **shared_kwargs,
             )
             self.sub_maais.append(sub)

@@ -2,18 +2,16 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import Tensor
 from typing import Dict, List, Optional, Tuple
 
 from .config import VapConfig
 from ..encoder import build_audio_encoder
-from ..modules import GPT, GPTStereo
+from ..modules import GPT, GPTStereo, FiLM, CondPreNorm
 from ..objective import ObjectiveVAP
 
 # 推論固定トポロジ（grid_config_12.5hz_taskGPT_mimi_realtime 相当）
 _NOD_PARA_ACTIVE_PARAM_TASKS = frozenset({"repetitions", "range", "speed", "swing_binary"})
-_NOD_REPETITIONS_BINARY = 0  # 0=3-class repetitions, 1=binary
 _GPT_OUTPUT_DROPOUT = 0.2
 _TASK_GPT_OUTPUT_DROPOUT = 0.0
 _NOD_HEAD_DROPOUT = 0.3
@@ -54,12 +52,19 @@ def _build_mlp(
 
 
 class VapGPT_nod_para(nn.Module):
-    """Voice Activity Projection with parameterized Nodding prediction.
-    
-    This model predicts detailed parameters for nodding behaviors such as
-    repetitions, range, speed, and swing directions, in addition to standard
-    voice activity and backchannels.
+    """Streaming (KV-cached) nod_para model with optional FiLM/AdaLN-Zero
+    listener-style conditioning.
+
+    FiLM support mirrors the research VAP-Nodding repo so exported
+    ``film_inject_*`` checkpoints load 1:1. When ``conf.nod_film_enable == 0``
+    (default) the model is byte-identical to the original non-film nod_para.
+
+    The listener-style conditioning is a fixed per-session vector set via
+    :meth:`set_listener_style`. It is z-scored with the checkpoint's train
+    stats (``film_cond_mean``/``film_cond_std`` buffers) then passed through
+    ``cond_pre_norm`` and distributed to the AdaLN blocks / head FiLMs.
     """
+
     BINS_P_NOW: List[int] = [0, 1]
     BINS_PFUTURE: List[int] = [2, 3]
 
@@ -87,6 +92,50 @@ class VapGPT_nod_para(nn.Module):
         # 閾値探索で得た推論時しきい値（.pt に含まれる場合は外部から上書き）
         self.nod_repetitions_thresholds: Dict[str, float] = {"t0": 1.0, "t1": 1.0, "t2": 1.0}
         self.nod_swing_up_threshold: float = 0.5
+        # 頷きタイミング閾値（.pt の t_nod。下流のタイミング判定用に保持）
+        self.nod_timing_threshold: float = 0.5
+
+        # 回数予測の出力形式: 1=binary(1回 vs 2回以上), 0=3クラス
+        self.nod_count_binary = int(getattr(conf, "nod_count_binary", 0)) == 1
+
+        # ---- FiLM (listener-style) conditioning setup ----
+        self.use_film = int(getattr(conf, "nod_film_enable", 0)) == 1
+        self.film_target_ar_channel = int(getattr(conf, "nod_film_target_ar_channel", 0)) == 1
+        self.film_target_ar_channel_x2 = int(getattr(conf, "nod_film_target_ar_channel_x2", 0)) == 1
+        self.film_target_ar_cross = int(getattr(conf, "nod_film_target_ar_cross", 0)) == 1
+        self.film_target_ar_cross_x2 = int(getattr(conf, "nod_film_target_ar_cross_x2", 0)) == 1
+        self.film_target_heads = int(getattr(conf, "nod_film_target_heads", 0)) == 1
+        self.film_heads_scope = str(getattr(conf, "nod_film_heads_scope", "all")).lower()
+        self.film_cond_dim = int(getattr(conf, "nod_film_cond_dim", 0)) if self.use_film else 0
+        self.film_hidden = int(getattr(conf, "nod_film_hidden", 0))
+        self.film_block_style = str(getattr(conf, "nod_film_block_style", "post_ffn"))
+        self.film_cond_zscore = (
+            int(getattr(conf, "nod_film_cond_zscore", 0)) == 1
+            and self.use_film
+            and self.film_cond_dim > 0
+        )
+        if self.film_cond_zscore:
+            self.register_buffer(
+                "film_cond_mean", torch.zeros(self.film_cond_dim), persistent=True
+            )
+            self.register_buffer(
+                "film_cond_std", torch.ones(self.film_cond_dim), persistent=True
+            )
+        if self.use_film and int(getattr(conf, "nod_film_cond_norm", 0)) == 1 and self.film_cond_dim > 0:
+            self.cond_pre_norm = CondPreNorm(self.film_cond_dim)
+        else:
+            self.cond_pre_norm = None
+
+        # Fixed per-session listener-style vector (raw, pre z-score). None = off.
+        self.register_buffer(
+            "listener_style", torch.zeros(self.film_cond_dim) if self.film_cond_dim > 0 else torch.zeros(1),
+            persistent=False,
+        )
+        self._listener_style_set = False
+
+        _ar_channel_film = self.film_block_style if (self.use_film and self.film_target_ar_channel) else "none"
+        _ar_cross_film = self.film_block_style if (self.use_film and self.film_target_ar_cross) else "none"
+        _cond_dim_layers = self.film_cond_dim if self.use_film else 0
 
         self.objective = ObjectiveVAP(bin_times=conf.bin_times, frame_hz=conf.frame_hz)
 
@@ -97,6 +146,9 @@ class VapGPT_nod_para(nn.Module):
             num_heads=conf.num_heads,
             dropout=conf.dropout,
             context_limit=conf.context_limit,
+            film_mode=_ar_channel_film,
+            cond_dim=_cond_dim_layers,
+            film_hidden=self.film_hidden,
         )
         self.ar = GPTStereo(
             dim=conf.dim,
@@ -105,6 +157,9 @@ class VapGPT_nod_para(nn.Module):
             num_heads=conf.num_heads,
             dropout=conf.dropout,
             context_limit=conf.context_limit,
+            film_mode=_ar_cross_film,
+            cond_dim=_cond_dim_layers,
+            film_hidden=self.film_hidden,
         )
 
         self.gpt_output_dropout = (
@@ -114,6 +169,7 @@ class VapGPT_nod_para(nn.Module):
             nn.Dropout(_TASK_GPT_OUTPUT_DROPOUT) if _TASK_GPT_OUTPUT_DROPOUT > 0 else None
         )
 
+        # param 側 A: timing(ar_channel) と同位置の FiLM/AdaLN を独立に持つ
         self.ar_channel_param = GPT(
             dim=conf.dim,
             dff_k=3,
@@ -121,7 +177,11 @@ class VapGPT_nod_para(nn.Module):
             num_heads=conf.num_heads,
             dropout=conf.dropout,
             context_limit=conf.context_limit,
+            film_mode=_ar_channel_film,
+            cond_dim=_cond_dim_layers,
+            film_hidden=self.film_hidden,
         )
+        # param 側 B: timing(ar) と同位置の FiLM/AdaLN を独立に持つ
         self.task_gpts = nn.ModuleDict(
             {
                 "0": GPTStereo(
@@ -131,6 +191,9 @@ class VapGPT_nod_para(nn.Module):
                     num_heads=conf.num_heads,
                     dropout=conf.dropout,
                     context_limit=conf.context_limit,
+                    film_mode=_ar_cross_film,
+                    cond_dim=_cond_dim_layers,
+                    film_hidden=self.film_hidden,
                 )
             }
         )
@@ -163,7 +226,7 @@ class VapGPT_nod_para(nn.Module):
                 return _build_mlp(in_d, mlp_h, out_d, mlp_n, head_do)
             return nn.Linear(in_d, out_d)
 
-        nod_repetitions_out = 1 if _NOD_REPETITIONS_BINARY == 1 else 3
+        nod_repetitions_out = 1 if self.nod_count_binary else 3
         in_d = base_head_input_dim
         self.nod_repetitions_head = (
             _para_head(conf.nod_head_mlp_repetitions, in_d, nod_repetitions_out)
@@ -183,6 +246,27 @@ class VapGPT_nod_para(nn.Module):
         )
         self.nod_swing_up_value_head = None
         self.nod_swing_up_continuous_head = None
+
+        # ---- C: 各 nod ヘッド直前 FiLM ----
+        self.film_heads = nn.ModuleDict()
+        if self.use_film and self.film_target_heads and self.film_cond_dim > 0:
+            scope = self.film_heads_scope
+            timing_targets = {"nod_timing"} if scope in ("all", "timing") else set()
+            params_targets = (
+                {"count", "range", "speed", "swing_binary"}
+                if scope in ("all", "params") else set()
+            )
+            if "nod_timing" in timing_targets and self.nod_head is not None:
+                self.film_heads["nod_timing"] = FiLM(self.film_cond_dim, timing_in, hidden=self.film_hidden)
+            head_in_map = {
+                "count": (in_d, self.nod_repetitions_head),
+                "range": (in_d, self.nod_range_head),
+                "speed": (in_d, self.nod_speed_head),
+                "swing_binary": (in_d, self.nod_swing_up_binary_head),
+            }
+            for task_name, (feat_in, head_mod) in head_in_map.items():
+                if task_name in params_targets and head_mod is not None:
+                    self.film_heads[task_name] = FiLM(self.film_cond_dim, feat_in, hidden=self.film_hidden)
 
         self.encoder1 = None
         self.encoder2 = None
@@ -212,6 +296,37 @@ class VapGPT_nod_para(nn.Module):
         if self.conf.freeze_encoder == 1:
             self.encoder1.freeze()
             self.encoder2.freeze()
+
+    def set_listener_style(self, vec) -> None:
+        """Set the fixed per-session listener-style conditioning vector (raw,
+        pre z-score). Pass ``None`` to disable conditioning for this session."""
+        if not self.use_film or self.film_cond_dim <= 0:
+            self._listener_style_set = False
+            return
+        if vec is None:
+            self._listener_style_set = False
+            return
+        t = torch.as_tensor(vec, dtype=torch.float32).view(-1)
+        if t.numel() != self.film_cond_dim:
+            raise ValueError(
+                f"listener_style must have {self.film_cond_dim} elements, got {t.numel()}"
+            )
+        self.listener_style = t.to(self.listener_style.device)
+        self._listener_style_set = True
+
+    def _build_cond(self, device, dtype) -> Optional[Tensor]:
+        """Return the (1, cond_dim) conditioning vector after z-score +
+        cond_pre_norm, or None when conditioning is inactive."""
+        if not self.use_film or not self._listener_style_set or self.film_cond_dim <= 0:
+            return None
+        ls = self.listener_style.to(device=device, dtype=dtype).view(1, -1)
+        if self.film_cond_zscore:
+            mean = self.film_cond_mean.to(device=device, dtype=dtype).view(1, -1)
+            std = self.film_cond_std.to(device=device, dtype=dtype).view(1, -1)
+            ls = (ls - mean) / torch.clamp(std, min=1e-8)
+        if self.cond_pre_norm is not None:
+            ls = self.cond_pre_norm(ls)
+        return ls
 
     @property
     def horizon_time(self):
@@ -302,14 +417,22 @@ class VapGPT_nod_para(nn.Module):
         if self.decrease_dimension is None:
             raise RuntimeError("Call load_encoder before forward.")
 
+        # ---- listener-style conditioning ----
+        cond = self._build_cond(x1.device, x1.dtype)
+        cond_ar_channel = cond if self.film_target_ar_channel else None
+        cond_ar_channel_x2 = cond if (self.film_target_ar_channel and self.film_target_ar_channel_x2) else None
+        cond_ar_cross = cond if self.film_target_ar_cross else None
+        cond_ar_cross_x2 = cond if (self.film_target_ar_cross and self.film_target_ar_cross_x2) else None
+        cond_heads = cond if self.film_target_heads else None
+
         x1_raw, x2_raw = x1, x2
         x1 = torch.relu(self.decrease_dimension(x1_raw))
         x2 = torch.relu(self.decrease_dimension(x2_raw))
         task_x1 = torch.relu(self.decrease_dimension_param(x1_raw))
         task_x2 = torch.relu(self.decrease_dimension_param(x2_raw))
 
-        o1 = self.ar_channel(x1, past_kv=cache.get("ar1"))
-        o2 = self.ar_channel(x2, past_kv=cache.get("ar2"))
+        o1 = self.ar_channel(x1, past_kv=cache.get("ar1"), cond=cond_ar_channel)
+        o2 = self.ar_channel(x2, past_kv=cache.get("ar2"), cond=cond_ar_channel_x2)
         out = self.ar(
             o1["x"],
             o2["x"],
@@ -317,6 +440,8 @@ class VapGPT_nod_para(nn.Module):
             past_kv2=cache.get("cross2"),
             past_kv1_c=cache.get("cross1_c"),
             past_kv2_c=cache.get("cross2_c"),
+            cond_x1=cond_ar_cross,
+            cond_x2=cond_ar_cross_x2,
         )
 
         cross_out = out["x"]
@@ -325,14 +450,16 @@ class VapGPT_nod_para(nn.Module):
 
         v1 = self.va_classifier(out["x1"])
         v2 = self.va_classifier(out["x2"])
-        vad = torch.cat((v1, v2), dim=-1)
         logits = self.vap_head(cross_out)
         bc = self.bc_head(cross_out)
-        bc_detect = self.bc_detect_head(cross_out)
-        nod_t = self.nod_head(cross_out)
+        # C: nod_head（タイミング）直前 FiLM
+        _nod_in = cross_out
+        if cond_heads is not None and "nod_timing" in self.film_heads:
+            _nod_in = self.film_heads["nod_timing"](_nod_in, cond_heads)
+        nod_t = self.nod_head(_nod_in)
 
-        p1 = self.ar_channel_param(task_x1, past_kv=cache.get("arp1"))
-        p2 = self.ar_channel_param(task_x2, past_kv=cache.get("arp2"))
+        p1 = self.ar_channel_param(task_x1, past_kv=cache.get("arp1"), cond=cond_ar_channel)
+        p2 = self.ar_channel_param(task_x2, past_kv=cache.get("arp2"), cond=cond_ar_channel_x2)
         tg = self.task_gpts["0"](
             p1["x"],
             p2["x"],
@@ -340,6 +467,8 @@ class VapGPT_nod_para(nn.Module):
             past_kv2=cache.get("tg_pkv2"),
             past_kv1_c=cache.get("tg_pkv1c"),
             past_kv2_c=cache.get("tg_pkv2c"),
+            cond_x1=cond_ar_cross,
+            cond_x2=cond_ar_cross_x2,
         )
         tg_x = tg["x"]
         if self.task_gpt_output_dropout is not None:
@@ -350,21 +479,23 @@ class VapGPT_nod_para(nn.Module):
         def _sel(task: str) -> Tensor:
             return nod_param_bases[task]
 
-        nod_repetitions_out_dim = 1 if _NOD_REPETITIONS_BINARY == 1 else 3
+        nod_repetitions_out_dim = 1 if self.nod_count_binary else 3
 
-        def _head_or_zeros(module: Optional[nn.Module], task: str, out_dim: int) -> Tensor:
+        def _head_or_zeros(module: Optional[nn.Module], task: str, film_key: str, out_dim: int) -> Tensor:
             xb = _sel(task)
+            if cond_heads is not None and film_key in self.film_heads:
+                xb = self.film_heads[film_key](xb, cond_heads)
             if module is None:
                 return xb.new_zeros(*xb.shape[:-1], out_dim)
             return module(xb)
 
         nod_rep_logits = _head_or_zeros(
-            self.nod_repetitions_head, "repetitions", nod_repetitions_out_dim
+            self.nod_repetitions_head, "repetitions", "count", nod_repetitions_out_dim
         )
-        nod_range = _head_or_zeros(self.nod_range_head, "range", 1)
-        nod_speed = _head_or_zeros(self.nod_speed_head, "speed", 1)
+        nod_range = _head_or_zeros(self.nod_range_head, "range", "range", 1)
+        nod_speed = _head_or_zeros(self.nod_speed_head, "speed", "speed", 1)
         nod_swing_bin = _head_or_zeros(
-            self.nod_swing_up_binary_head, "swing_binary", 1
+            self.nod_swing_up_binary_head, "swing_binary", "swing_binary", 1
         )
 
         new_cache = {
@@ -400,11 +531,17 @@ class VapGPT_nod_para(nn.Module):
         p_bc = float(bc.sigmoid().to("cpu").tolist()[0][-1][0])
         p_nod = float(nod_t.sigmoid().to("cpu").tolist()[0][-1][0])
 
-        nc = nod_rep_logits.softmax(dim=-1).to("cpu").tolist()[0][-1]
-        nod_repetitions = [float(nc[i]) for i in range(len(nc))]
-        nod_repetitions_pred = self._apply_repetitions_thresholds(
-            nod_repetitions, self.nod_repetitions_thresholds
-        )
+        if self.nod_count_binary:
+            # binary: sigmoid(logit) = P(2回以上)。[P(1回), P(2回以上)] として返す。
+            p_multi = float(nod_rep_logits.sigmoid().to("cpu").tolist()[0][-1][0])
+            nod_repetitions = [1.0 - p_multi, p_multi]
+            nod_repetitions_pred = int(p_multi >= float(self.nod_repetitions_thresholds.get("t0", 0.5)))
+        else:
+            nc = nod_rep_logits.softmax(dim=-1).to("cpu").tolist()[0][-1]
+            nod_repetitions = [float(nc[i]) for i in range(len(nc))]
+            nod_repetitions_pred = self._apply_repetitions_thresholds(
+                nod_repetitions, self.nod_repetitions_thresholds
+            )
 
         st = self.nod_param_stats
         nod_range_z = float(nod_range.to("cpu").tolist()[0][-1][0])
