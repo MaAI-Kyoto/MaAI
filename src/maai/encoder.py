@@ -422,6 +422,9 @@ class EncoderMimi(nn.Module):
         freeze: bool = True,
         mimi_model_name: str = "kyutai/mimi",
         context_samples: int = 320,
+        load_hf_weights: bool = True,
+        output_dim: int = 512,
+        frame_hz_mimi: float | None = None,
     ):
         """Initialize the Mimi Encoder.
         
@@ -430,16 +433,11 @@ class EncoderMimi(nn.Module):
             freeze (bool): Whether to freeze the encoder weights.
             mimi_model_name (str): Identifier of the Mimi model.
             context_samples (int): Number of overlap context samples.
+            load_hf_weights (bool): If False, skip HF ``from_pretrained`` (ONNX runtime).
+            output_dim (int): Feature dim when ``load_hf_weights`` is False.
+            frame_hz_mimi (float | None): Native Mimi frame rate when skipping HF.
         """
         super().__init__()
-
-        try:
-            from transformers import MimiConfig, MimiModel
-            from transformers.models.mimi.modeling_mimi import MimiConv1dPaddingCache
-        except ModuleNotFoundError as exc:
-            raise ModuleNotFoundError(
-                "Mimi encoder requires transformers with Mimi support."
-            ) from exc
 
         try:
             import torchaudio
@@ -447,17 +445,7 @@ class EncoderMimi(nn.Module):
             torchaudio = None
 
         self._torchaudio = torchaudio
-        self._MimiConv1dPaddingCache = MimiConv1dPaddingCache
         self.sample_rate = 24000
-
-        config = MimiConfig.from_pretrained(mimi_model_name)
-        config.use_causal_conv = True
-        self.model = MimiModel.from_pretrained(mimi_model_name, config=config)
-        self.model.eval()
-
-        self.frame_hz_mimi = float(
-            getattr(getattr(self.model, "quantizer", None), "frame_rate", 12.5)
-        )
         self.frame_hz = float(frame_hz)
         self.context_samples = int(context_samples)
         self._audio_resampler = _CausalStreamingResampler(
@@ -474,12 +462,41 @@ class EncoderMimi(nn.Module):
         self._mimi_streaming_past_group_sizes: Optional[list[int]] = None
         self._mimi_zero_flat_past: Optional[tuple[torch.Tensor, ...]] = None
         self._mimi_onnx_pad_seeded: bool = False
+        self.mimi_model_name = str(mimi_model_name)
 
-        self.output_dim = 512
-        if hasattr(self.model, "config") and hasattr(self.model.config, "hidden_size"):
-            self.output_dim = self.model.config.hidden_size
-        elif hasattr(self.model, "config") and hasattr(self.model.config, "dimension"):
-            self.output_dim = self.model.config.dimension
+        if load_hf_weights:
+            try:
+                from transformers import MimiConfig, MimiModel
+                from transformers.models.mimi.modeling_mimi import MimiConv1dPaddingCache
+            except ModuleNotFoundError as exc:
+                raise ModuleNotFoundError(
+                    "Mimi encoder requires transformers with Mimi support."
+                ) from exc
+
+            self._MimiConv1dPaddingCache = MimiConv1dPaddingCache
+            config = MimiConfig.from_pretrained(mimi_model_name)
+            config.use_causal_conv = True
+            self.model = MimiModel.from_pretrained(mimi_model_name, config=config)
+            self.model.eval()
+
+            self.frame_hz_mimi = float(
+                getattr(getattr(self.model, "quantizer", None), "frame_rate", 12.5)
+            )
+            self.output_dim = 512
+            if hasattr(self.model, "config") and hasattr(self.model.config, "hidden_size"):
+                self.output_dim = self.model.config.hidden_size
+            elif hasattr(self.model, "config") and hasattr(self.model.config, "dimension"):
+                self.output_dim = self.model.config.dimension
+            self._fix_mimi_padding_buffers()
+        else:
+            # ONNX runtime path: no HF weights; shapes come from ONNX meta.
+            self._MimiConv1dPaddingCache = None
+            self.model = None
+            self.frame_hz_mimi = float(
+                frame_hz_mimi if frame_hz_mimi is not None else frame_hz
+            )
+            self.output_dim = int(output_dim)
+
         self.dim = self.output_dim
         self.downsample_ratio = int(round(16000 / self.frame_hz)) if self.frame_hz else 0
 
@@ -491,24 +508,29 @@ class EncoderMimi(nn.Module):
             bias=True,
         )
 
-        self._fix_mimi_padding_buffers()
-
         if freeze:
             self.freeze()
 
     def freeze(self):
-        for param in self.model.parameters():
+        if self.model is not None:
+            for param in self.model.parameters():
+                param.requires_grad_(False)
+        for param in self.frame_rate_conv.parameters():
             param.requires_grad_(False)
         print(f"Froze {self.__class__.__name__}!")
 
     def unfreeze(self):
-        for param in self.model.parameters():
+        if self.model is not None:
+            for param in self.model.parameters():
+                param.requires_grad_(True)
+        for param in self.frame_rate_conv.parameters():
             param.requires_grad_(True)
         print(f"Trainable {self.__class__.__name__}!")
 
     def train(self, mode: bool = True):
         super().train(mode)
-        self.model.eval()
+        if self.model is not None:
+            self.model.eval()
         return self
 
     def reset_streaming_state(self):
@@ -930,8 +952,9 @@ class EncoderMimi(nn.Module):
         finalize_stream: bool = False,
         has_overlap_context: bool = True,
     ):
-        self.model.eval()
-        self._fix_mimi_padding_buffers()
+        if self.model is not None:
+            self.model.eval()
+            self._fix_mimi_padding_buffers()
 
         if not torch.is_tensor(waveform):
             raise TypeError(f"Expected waveform to be a torch.Tensor, got {type(waveform)}")
@@ -942,6 +965,11 @@ class EncoderMimi(nn.Module):
         waveform = waveform.to(dtype=torch.float32)
 
         if not streaming:
+            if self.model is None:
+                raise RuntimeError(
+                    "Non-streaming Mimi encode requires HF weights "
+                    "(EncoderMimi with load_hf_weights=True)."
+                )
             input_num_samples = int(waveform.shape[-1])
             if resampling:
                 waveform = self._resample_audio(waveform)
@@ -1032,7 +1060,12 @@ class EncoderMimiOnnx(EncoderMimi):
     
     Provides a streaming contract matching `transformers` v5 `StaticCache` with flat K/V I/O.
     Supports CUDA (FP32) and CPU (INT8) execution providers.
+
+    Does not load HF ``MimiModel`` weights. ORT sessions for the same ONNX path are shared
+    across encoder instances (e.g. VAP ch1/ch2); per-instance state buffers stay private.
     """
+
+    _ORT_SESSION_CACHE: dict[tuple, Any] = {}
 
     @staticmethod
     def _onnx_output_shape_for_fixed_bind(shape: list[Any] | tuple[Any, ...]) -> tuple[int, ...]:
@@ -1059,6 +1092,7 @@ class EncoderMimiOnnx(EncoderMimi):
         runtime_device: str = "cpu",
         onnx_cpu_intra_threads: int = 2,
         onnx_cpu_inter_threads: int = 1,
+        output_dim: int = 512,
     ):
         """Initialize the ONNX-backed Mimi Encoder.
         
@@ -1072,12 +1106,17 @@ class EncoderMimiOnnx(EncoderMimi):
             runtime_device (str): Device to run the ONNX model on ('cpu', 'cuda').
             onnx_cpu_intra_threads (int): Number of intra-op threads for CPU execution.
             onnx_cpu_inter_threads (int): Number of inter-op threads for CPU execution.
+            output_dim (int): Mimi embedding dim (kyutai/mimi default 512).
         """
+        # Skip HF from_pretrained — runtime uses ORT only.
         super().__init__(
             frame_hz=frame_hz,
             freeze=freeze,
             mimi_model_name=mimi_model_name,
             context_samples=context_samples,
+            load_hf_weights=False,
+            output_dim=int(output_dim),
+            frame_hz_mimi=float(frame_hz),
         )
 
         try:
@@ -1137,7 +1176,7 @@ class EncoderMimiOnnx(EncoderMimi):
         so = self._ort.SessionOptions()
         so.graph_optimization_level = self._ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         if self._use_cuda and "CUDAExecutionProvider" in self._ort.get_available_providers():
-            providers = [
+            providers: list[Any] = [
                 (
                     "CUDAExecutionProvider",
                     {
@@ -1147,18 +1186,50 @@ class EncoderMimiOnnx(EncoderMimi):
                 ),
                 "CPUExecutionProvider",
             ]
+            intra = 0
+            inter = 0
         else:
             # Realtime-friendly default for CPU EP.
             so.intra_op_num_threads = max(1, self._onnx_cpu_intra_threads)
             so.inter_op_num_threads = max(1, self._onnx_cpu_inter_threads)
             providers = ["CPUExecutionProvider"]
-        return self._ort.InferenceSession(self._onnx_model_path, sess_options=so, providers=providers)
+            intra = int(so.intra_op_num_threads)
+            inter = int(so.inter_op_num_threads)
+
+        cache_key = (
+            os.path.abspath(self._onnx_model_path),
+            self._use_cuda,
+            intra,
+            inter,
+            tuple(p[0] if isinstance(p, tuple) else p for p in providers),
+        )
+        cached = EncoderMimiOnnx._ORT_SESSION_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
+        sess = self._ort.InferenceSession(
+            self._onnx_model_path, sess_options=so, providers=providers
+        )
+        EncoderMimiOnnx._ORT_SESSION_CACHE[cache_key] = sess
+        return sess
 
     def _load_meta(self) -> dict[str, Any]:
         p = Path(self._onnx_meta_path)
         if not p.exists():
             raise FileNotFoundError(f"ONNX meta file not found: {p}")
         return json.loads(p.read_text(encoding="utf-8"))
+
+    @staticmethod
+    def _padding_shapes_from_meta(meta: dict[str, Any]) -> list[tuple[int, ...]]:
+        """Prefer export contract pad shapes; avoid HF probe at runtime."""
+        contract = meta.get("contract") if isinstance(meta.get("contract"), dict) else {}
+        spec = contract.get("spec") if isinstance(contract.get("spec"), dict) else {}
+        shapes = spec.get("padding_cache_shapes")
+        if isinstance(shapes, list) and shapes:
+            return [tuple(int(x) for x in s) for s in shapes]
+        raise RuntimeError(
+            "ONNX meta missing contract.spec.padding_cache_shapes; "
+            "re-export Mimi ONNX with export_mimi_streaming_onnx_v2.py."
+        )
 
     def _init_onnx_states(self):
         meta = self._load_meta()
@@ -1206,10 +1277,12 @@ class EncoderMimiOnnx(EncoderMimi):
         n_states_total = len(self._onnx_input_names) - n_non_state_inputs
         n_past = max(0, n_states_total - self._onnx_num_pad)
         self._onnx_past_input_keys = [f"past_{i}" for i in range(n_past)]
-        spec = self.get_mimi_streaming_onnx_io_spec(batch_size=1)
+        pad_shapes = self._padding_shapes_from_meta(meta)
 
         wave_len = int(meta["wave_24k_mimi_input"])
         self._onnx_wave_shape = (1, 1, wave_len)
+        if "frame_rate" in meta:
+            self.frame_hz_mimi = float(meta["frame_rate"])
         dtype = np.float32
         wave = np.zeros(self._onnx_wave_shape, dtype=dtype)
 
@@ -1237,9 +1310,8 @@ class EncoderMimiOnnx(EncoderMimi):
                 return np.zeros(tuple(shape), dtype=dtype)
             return np.zeros((1, 1, 0, 1), dtype=dtype)
 
-        # Padding cache: use the live model probe which provides the correct
-        # non-zero padding sizes required by causal convolution layers.
-        probe_pad = [np.zeros(tuple(s), dtype=dtype) for s in spec["padding_cache_shapes"]]
+        # Padding cache shapes from export meta (no HF probe).
+        probe_pad = [np.zeros(tuple(s), dtype=dtype) for s in pad_shapes]
         pad = []
         for i in range(self._onnx_num_pad):
             if i < len(probe_pad):
@@ -1371,7 +1443,10 @@ class EncoderMimiOnnx(EncoderMimi):
 
     def _encode_continuous_embeddings(self, x: torch.Tensor, streaming: bool) -> torch.Tensor:
         if not streaming:
-            return super()._encode_continuous_embeddings(x, streaming=False)
+            raise RuntimeError(
+                "EncoderMimiOnnx only supports streaming=True "
+                "(HF weights are not loaded on the ONNX path)."
+            )
 
         # ONNX model was exported with B=1 fixed signature.
         if x.shape[0] != 1:
