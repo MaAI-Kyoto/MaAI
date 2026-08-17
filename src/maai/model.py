@@ -12,6 +12,7 @@ from .util import load_vap_model, resolve_encoder_type
 from .models.vap import VapGPT
 from .models.vap_mono import VapGPT_mono
 from .models.vad import VadGPT, VadGPT_mono
+from .models.bc_det import BcDetGPT, BcDetGPT_mono
 from .models.vap_bc import VapGPT_bc
 from .models.vap_bc_2type import VapGPT_bc_2type
 from .models.vap_nod import VapGPT_nod
@@ -95,7 +96,7 @@ class Maai():
             return_p_bins (bool): Whether to return probability bins in 'vap' mode.
         """
 
-        if mode in ("vap_mono", "vad_mono"):
+        if mode in ("vap_mono", "vad_mono", "bc_det_mono"):
             if audio_ch2 is None:
                 audio_ch2 = Zero()
             elif not isinstance(audio_ch2, Zero):
@@ -159,6 +160,12 @@ class Maai():
 
         elif mode == "vad_mono":
             self.vap = VadGPT_mono(conf)
+
+        elif mode == "bc_det":
+            self.vap = BcDetGPT(conf)
+
+        elif mode == "bc_det_mono":
+            self.vap = BcDetGPT_mono(conf)
 
         elif mode == "bc":
             self.vap = VapGPT_bc(conf)
@@ -622,6 +629,12 @@ class Maai():
                 },
                 "vad_mono": lambda: {
                     "vad": out['vad'],
+                },
+                "bc_det": lambda: {
+                    "p_bc_det": out['p_bc_det'],
+                },
+                "bc_det_mono": lambda: {
+                    "p_bc_det": out['p_bc_det'],
                 },
                 "vap_prompt": lambda: {
                     "p_now": out['p_now'],
@@ -1173,6 +1186,8 @@ class MaaiMultiple:
             return d
         if mode in ("vad", "vad_mono"):
             return {"vad": out["vad"]}
+        if mode in ("bc_det", "bc_det_mono"):
+            return {"p_bc_det": out["p_bc_det"]}
         if mode == "vap_prompt":
             return {
                 "p_now": out["p_now"],

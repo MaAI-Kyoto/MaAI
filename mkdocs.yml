@@ -38,6 +38,7 @@ nav:
     - output: api/output.md
     - util: api/util.md
     - models:
+      - bc_det: api/models/bc_det.md
       - config: api/models/config.md
       - vad: api/models/vad.md
       - vap: api/models/vap.md

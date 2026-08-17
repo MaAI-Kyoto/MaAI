@@ -643,6 +643,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bc_det/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bc_det
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../config/" class="md-nav__link">
         
   
@@ -651,6 +679,34 @@
     
   
     config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vad/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vad
   
 
     
@@ -735,6 +791,34 @@
     
   
     vap_bc_2type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vap_mono/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_mono
   
 
     
@@ -1589,9 +1673,7 @@ voice activity and backchannels.</p>
 <span class="normal">437</span>
 <span class="normal">438</span>
 <span class="normal">439</span>
-<span class="normal">440</span>
-<span class="normal">441</span>
-<span class="normal">442</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VapGPT_nod_para</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">440</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VapGPT_nod_para</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Voice Activity Projection with parameterized Nodding prediction.</span>
 
 <span class="sd">    This model predicts detailed parameters for nodding behaviors such as</span>
@@ -1860,11 +1942,9 @@ voice activity and backchannels.</p>
         <span class="n">cross_out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpt_output_dropout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">cross_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpt_output_dropout</span><span class="p">(</span><span class="n">cross_out</span><span class="p">)</span>
-            <span class="n">o1</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">o1</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpt_output_dropout</span><span class="p">(</span><span class="n">o1</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])}</span>
-            <span class="n">o2</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">o2</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpt_output_dropout</span><span class="p">(</span><span class="n">o2</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])}</span>
 
-        <span class="n">v1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">va_classifier</span><span class="p">(</span><span class="n">o1</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
-        <span class="n">v2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">va_classifier</span><span class="p">(</span><span class="n">o2</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
+        <span class="n">v1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">va_classifier</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">&quot;x1&quot;</span><span class="p">])</span>
+        <span class="n">v2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">va_classifier</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">&quot;x2&quot;</span><span class="p">])</span>
         <span class="n">vad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vap_head</span><span class="p">(</span><span class="n">cross_out</span><span class="p">)</span>
         <span class="n">bc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_head</span><span class="p">(</span><span class="n">cross_out</span><span class="p">)</span>
@@ -2872,9 +2952,7 @@ If None, default VapConfig is used.</p>
 <span class="normal">437</span>
 <span class="normal">438</span>
 <span class="normal">439</span>
-<span class="normal">440</span>
-<span class="normal">441</span>
-<span class="normal">442</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+<span class="normal">440</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -2917,11 +2995,9 @@ If None, default VapConfig is used.</p>
     <span class="n">cross_out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpt_output_dropout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cross_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpt_output_dropout</span><span class="p">(</span><span class="n">cross_out</span><span class="p">)</span>
-        <span class="n">o1</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">o1</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpt_output_dropout</span><span class="p">(</span><span class="n">o1</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])}</span>
-        <span class="n">o2</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">o2</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpt_output_dropout</span><span class="p">(</span><span class="n">o2</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])}</span>
 
-    <span class="n">v1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">va_classifier</span><span class="p">(</span><span class="n">o1</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
-    <span class="n">v2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">va_classifier</span><span class="p">(</span><span class="n">o2</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
+    <span class="n">v1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">va_classifier</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">&quot;x1&quot;</span><span class="p">])</span>
+    <span class="n">v2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">va_classifier</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">&quot;x2&quot;</span><span class="p">])</span>
     <span class="n">vad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vap_head</span><span class="p">(</span><span class="n">cross_out</span><span class="p">)</span>
     <span class="n">bc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_head</span><span class="p">(</span><span class="n">cross_out</span><span class="p">)</span>

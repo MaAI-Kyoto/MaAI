@@ -44,8 +44,8 @@ Maai の各モデル（`vap`, `vap_mc`, `bc`, `bc_2type`, `nod`, `nod_para`, `va
 サブモデルごとに変えられる設定は `configs` リストで指定します。
 各要素は以下のキーを持つ `dict` です。
 
-- `"mode"`（必須）：`"vap"`, `"vap_mc"`, `"bc"`, `"bc_2type"`, `"nod"`,
-  `"nod_para"`, `"vap_prompt"` のいずれか
+- `"mode"`（必須）：`"vap"`, `"vap_mc"`, `"vad"`, `"bc"`, `"bc_det"`,
+  `"bc_2type"`, `"nod"`, `"nod_para"`, `"vap_prompt"` のいずれか
 - `"lang"`（必須）：`Maai` と同じ指定
 - `"label"`（任意）：結果辞書のキー名。省略時は `"mode"` を使用。
   同じ `mode` を複数登録するとき（例：複数言語の `vap` を比較するとき）に区別するために使います。

@@ -877,6 +877,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../models/bc_det/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bc_det
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../models/config/" class="md-nav__link">
         
   
@@ -885,6 +913,34 @@
     
   
     config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vad/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vad
   
 
     
@@ -969,6 +1025,34 @@
     
   
     vap_bc_2type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_mono/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_mono
   
 
     
@@ -2358,7 +2442,35 @@ Supports streaming and context tracking.</p>
 <span class="normal">1024</span>
 <span class="normal">1025</span>
 <span class="normal">1026</span>
-<span class="normal">1027</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EncoderMimi</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">1027</span>
+<span class="normal">1028</span>
+<span class="normal">1029</span>
+<span class="normal">1030</span>
+<span class="normal">1031</span>
+<span class="normal">1032</span>
+<span class="normal">1033</span>
+<span class="normal">1034</span>
+<span class="normal">1035</span>
+<span class="normal">1036</span>
+<span class="normal">1037</span>
+<span class="normal">1038</span>
+<span class="normal">1039</span>
+<span class="normal">1040</span>
+<span class="normal">1041</span>
+<span class="normal">1042</span>
+<span class="normal">1043</span>
+<span class="normal">1044</span>
+<span class="normal">1045</span>
+<span class="normal">1046</span>
+<span class="normal">1047</span>
+<span class="normal">1048</span>
+<span class="normal">1049</span>
+<span class="normal">1050</span>
+<span class="normal">1051</span>
+<span class="normal">1052</span>
+<span class="normal">1053</span>
+<span class="normal">1054</span>
+<span class="normal">1055</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EncoderMimi</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mimi-based Audio Encoder.</span>
 
 <span class="sd">    Uses Kyutai&#39;s Mimi model to extract continuous features from audio.</span>
@@ -2370,6 +2482,9 @@ Supports streaming and context tracking.</p>
         <span class="n">freeze</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">mimi_model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;kyutai/mimi&quot;</span><span class="p">,</span>
         <span class="n">context_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">320</span><span class="p">,</span>
+        <span class="n">load_hf_weights</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+        <span class="n">frame_hz_mimi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the Mimi Encoder.</span>
 
@@ -2378,16 +2493,11 @@ Supports streaming and context tracking.</p>
 <span class="sd">            freeze (bool): Whether to freeze the encoder weights.</span>
 <span class="sd">            mimi_model_name (str): Identifier of the Mimi model.</span>
 <span class="sd">            context_samples (int): Number of overlap context samples.</span>
+<span class="sd">            load_hf_weights (bool): If False, skip HF ``from_pretrained`` (ONNX runtime).</span>
+<span class="sd">            output_dim (int): Feature dim when ``load_hf_weights`` is False.</span>
+<span class="sd">            frame_hz_mimi (float | None): Native Mimi frame rate when skipping HF.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MimiConfig</span><span class="p">,</span> <span class="n">MimiModel</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">transformers.models.mimi.modeling_mimi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MimiConv1dPaddingCache</span>
-        <span class="k">except</span> <span class="ne">ModuleNotFoundError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ModuleNotFoundError</span><span class="p">(</span>
-                <span class="s2">&quot;Mimi encoder requires transformers with Mimi support.&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
@@ -2395,17 +2505,7 @@ Supports streaming and context tracking.</p>
             <span class="n">torchaudio</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_torchaudio</span> <span class="o">=</span> <span class="n">torchaudio</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_MimiConv1dPaddingCache</span> <span class="o">=</span> <span class="n">MimiConv1dPaddingCache</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">24000</span>
-
-        <span class="n">config</span> <span class="o">=</span> <span class="n">MimiConfig</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">)</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">use_causal_conv</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">MimiModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz_mimi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;quantizer&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">&quot;frame_rate&quot;</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">)</span>
-        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">frame_hz</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">context_samples</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_audio_resampler</span> <span class="o">=</span> <span class="n">_CausalStreamingResampler</span><span class="p">(</span>
@@ -2422,12 +2522,41 @@ Supports streaming and context tracking.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mimi_streaming_past_group_sizes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mimi_zero_flat_past</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mimi_onnx_pad_seeded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mimi_model_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="mi">512</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;hidden_size&quot;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hidden_size</span>
-        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;dimension&quot;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="k">if</span> <span class="n">load_hf_weights</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MimiConfig</span><span class="p">,</span> <span class="n">MimiModel</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">transformers.models.mimi.modeling_mimi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MimiConv1dPaddingCache</span>
+            <span class="k">except</span> <span class="ne">ModuleNotFoundError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ModuleNotFoundError</span><span class="p">(</span>
+                    <span class="s2">&quot;Mimi encoder requires transformers with Mimi support.&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_MimiConv1dPaddingCache</span> <span class="o">=</span> <span class="n">MimiConv1dPaddingCache</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">MimiConfig</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">)</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">use_causal_conv</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">MimiModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz_mimi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;quantizer&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">&quot;frame_rate&quot;</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="mi">512</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;hidden_size&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hidden_size</span>
+            <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;dimension&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dimension</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fix_mimi_padding_buffers</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># ONNX runtime path: no HF weights; shapes come from ONNX meta.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_MimiConv1dPaddingCache</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz_mimi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="n">frame_hz_mimi</span> <span class="k">if</span> <span class="n">frame_hz_mimi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">frame_hz</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">output_dim</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">downsample_ratio</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="mi">16000</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz</span> <span class="k">else</span> <span class="mi">0</span>
 
@@ -2439,24 +2568,29 @@ Supports streaming and context tracking.</p>
             <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fix_mimi_padding_buffers</span><span class="p">()</span>
-
         <span class="k">if</span> <span class="n">freeze</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">freeze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+                <span class="n">param</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_rate_conv</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
             <span class="n">param</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Froze </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">unfreeze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+                <span class="n">param</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_rate_conv</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
             <span class="n">param</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Trainable </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">reset_streaming_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2878,8 +3012,9 @@ Supports streaming and context tracking.</p>
         <span class="n">finalize_stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">has_overlap_context</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fix_mimi_padding_buffers</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fix_mimi_padding_buffers</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">waveform</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected waveform to be a torch.Tensor, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -2890,6 +3025,11 @@ Supports streaming and context tracking.</p>
         <span class="n">waveform</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">streaming</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Non-streaming Mimi encode requires HF weights &quot;</span>
+                    <span class="s2">&quot;(EncoderMimi with load_hf_weights=True).&quot;</span>
+                <span class="p">)</span>
             <span class="n">input_num_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">waveform</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">resampling</span><span class="p">:</span>
                 <span class="n">waveform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resample_audio</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
@@ -2993,7 +3133,7 @@ Supports streaming and context tracking.</p>
 
 
 <h4 id="maai.encoder.EncoderMimi.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">frame_hz</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">freeze</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mimi_model_name</span><span class="o">=</span><span class="s1">&#39;kyutai/mimi&#39;</span><span class="p">,</span> <span class="n">context_samples</span><span class="o">=</span><span class="mi">320</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">frame_hz</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">freeze</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mimi_model_name</span><span class="o">=</span><span class="s1">&#39;kyutai/mimi&#39;</span><span class="p">,</span> <span class="n">context_samples</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span> <span class="n">load_hf_weights</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">frame_hz_mimi</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h4>
 
@@ -3076,6 +3216,54 @@ Supports streaming and context tracking.</p>
             </td>
             <td>
                   <code>320</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>load_hf_weights</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If False, skip HF <code>from_pretrained</code> (ONNX runtime).</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_dim</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Feature dim when <code>load_hf_weights</code> is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>512</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>frame_hz_mimi</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Native Mimi frame rate when skipping HF.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -3162,12 +3350,30 @@ Supports streaming and context tracking.</p>
 <span class="normal">494</span>
 <span class="normal">495</span>
 <span class="normal">496</span>
-<span class="normal">497</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">frame_hz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">freeze</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">mimi_model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;kyutai/mimi&quot;</span><span class="p">,</span>
     <span class="n">context_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">320</span><span class="p">,</span>
+    <span class="n">load_hf_weights</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">frame_hz_mimi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the Mimi Encoder.</span>
 
@@ -3176,16 +3382,11 @@ Supports streaming and context tracking.</p>
 <span class="sd">        freeze (bool): Whether to freeze the encoder weights.</span>
 <span class="sd">        mimi_model_name (str): Identifier of the Mimi model.</span>
 <span class="sd">        context_samples (int): Number of overlap context samples.</span>
+<span class="sd">        load_hf_weights (bool): If False, skip HF ``from_pretrained`` (ONNX runtime).</span>
+<span class="sd">        output_dim (int): Feature dim when ``load_hf_weights`` is False.</span>
+<span class="sd">        frame_hz_mimi (float | None): Native Mimi frame rate when skipping HF.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MimiConfig</span><span class="p">,</span> <span class="n">MimiModel</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">transformers.models.mimi.modeling_mimi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MimiConv1dPaddingCache</span>
-    <span class="k">except</span> <span class="ne">ModuleNotFoundError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ModuleNotFoundError</span><span class="p">(</span>
-            <span class="s2">&quot;Mimi encoder requires transformers with Mimi support.&quot;</span>
-        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
@@ -3193,17 +3394,7 @@ Supports streaming and context tracking.</p>
         <span class="n">torchaudio</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">_torchaudio</span> <span class="o">=</span> <span class="n">torchaudio</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_MimiConv1dPaddingCache</span> <span class="o">=</span> <span class="n">MimiConv1dPaddingCache</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">24000</span>
-
-    <span class="n">config</span> <span class="o">=</span> <span class="n">MimiConfig</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">)</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">use_causal_conv</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">MimiModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz_mimi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
-        <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;quantizer&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">&quot;frame_rate&quot;</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">)</span>
-    <span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">frame_hz</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">context_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">context_samples</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_audio_resampler</span> <span class="o">=</span> <span class="n">_CausalStreamingResampler</span><span class="p">(</span>
@@ -3220,12 +3411,41 @@ Supports streaming and context tracking.</p>
     <span class="bp">self</span><span class="o">.</span><span class="n">_mimi_streaming_past_group_sizes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_mimi_zero_flat_past</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_mimi_onnx_pad_seeded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">mimi_model_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">)</span>
 
-    <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="mi">512</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;hidden_size&quot;</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hidden_size</span>
-    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;dimension&quot;</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dimension</span>
+    <span class="k">if</span> <span class="n">load_hf_weights</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MimiConfig</span><span class="p">,</span> <span class="n">MimiModel</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">transformers.models.mimi.modeling_mimi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MimiConv1dPaddingCache</span>
+        <span class="k">except</span> <span class="ne">ModuleNotFoundError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ModuleNotFoundError</span><span class="p">(</span>
+                <span class="s2">&quot;Mimi encoder requires transformers with Mimi support.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MimiConv1dPaddingCache</span> <span class="o">=</span> <span class="n">MimiConv1dPaddingCache</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">MimiConfig</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">use_causal_conv</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">MimiModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">mimi_model_name</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz_mimi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;quantizer&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">&quot;frame_rate&quot;</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="mi">512</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;hidden_size&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hidden_size</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;dimension&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fix_mimi_padding_buffers</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># ONNX runtime path: no HF weights; shapes come from ONNX meta.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MimiConv1dPaddingCache</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz_mimi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">frame_hz_mimi</span> <span class="k">if</span> <span class="n">frame_hz_mimi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">frame_hz</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">output_dim</span><span class="p">)</span>
+
     <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">downsample_ratio</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="mi">16000</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz</span> <span class="k">else</span> <span class="mi">0</span>
 
@@ -3236,8 +3456,6 @@ Supports streaming and context tracking.</p>
         <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">_fix_mimi_padding_buffers</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">freeze</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
@@ -3263,29 +3481,7 @@ Supports streaming and context tracking.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\maai\encoder.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">658</span>
-<span class="normal">659</span>
-<span class="normal">660</span>
-<span class="normal">661</span>
-<span class="normal">662</span>
-<span class="normal">663</span>
-<span class="normal">664</span>
-<span class="normal">665</span>
-<span class="normal">666</span>
-<span class="normal">667</span>
-<span class="normal">668</span>
-<span class="normal">669</span>
-<span class="normal">670</span>
-<span class="normal">671</span>
-<span class="normal">672</span>
-<span class="normal">673</span>
-<span class="normal">674</span>
-<span class="normal">675</span>
-<span class="normal">676</span>
-<span class="normal">677</span>
-<span class="normal">678</span>
-<span class="normal">679</span>
-<span class="normal">680</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">680</span>
 <span class="normal">681</span>
 <span class="normal">682</span>
 <span class="normal">683</span>
@@ -3297,7 +3493,29 @@ Supports streaming and context tracking.</p>
 <span class="normal">689</span>
 <span class="normal">690</span>
 <span class="normal">691</span>
-<span class="normal">692</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_mimi_streaming_onnx_io_spec</span><span class="p">(</span>
+<span class="normal">692</span>
+<span class="normal">693</span>
+<span class="normal">694</span>
+<span class="normal">695</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span>
+<span class="normal">713</span>
+<span class="normal">714</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_mimi_streaming_onnx_io_spec</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">num_samples_24k</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -3354,9 +3572,9 @@ Supports streaming and context tracking.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\maai\encoder.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">585</span>
-<span class="normal">586</span>
-<span class="normal">587</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_streaming_call_window_16k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_streaming_call_window_16k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Current PyTorch call window size (context + new samples) at 16k.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context_samples</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_streaming_emit_samples_16k</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
@@ -3381,11 +3599,11 @@ Supports streaming and context tracking.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\maai\encoder.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">579</span>
-<span class="normal">580</span>
-<span class="normal">581</span>
-<span class="normal">582</span>
-<span class="normal">583</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_streaming_emit_samples_16k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_streaming_emit_samples_16k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;New 16k samples processed in one streaming call.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;frame_hz must be &gt; 0&quot;</span><span class="p">)</span>
@@ -3412,10 +3630,10 @@ Supports streaming and context tracking.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\maai\encoder.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">589</span>
-<span class="normal">590</span>
-<span class="normal">591</span>
-<span class="normal">592</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_streaming_mimi_input_24k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_streaming_mimi_input_24k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mimi core input size at 24k after stripping overlap context.&quot;&quot;&quot;</span>
     <span class="n">emit_16k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_streaming_emit_samples_16k</span><span class="p">()</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">emit_16k</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span> <span class="o">/</span> <span class="mf">16000.0</span><span class="p">))</span>
@@ -3453,6 +3671,8 @@ Supports streaming and context tracking.</p>
         <p>Mimi core ONNX backend for optimized inference.</p>
 <p>Provides a streaming contract matching <code>transformers</code> v5 <code>StaticCache</code> with flat K/V I/O.
 Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
+<p>Does not load HF <code>MimiModel</code> weights. ORT sessions for the same ONNX path are shared
+across encoder instances (e.g. VAP ch1/ch2); per-instance state buffers stay private.</p>
 
 
 
@@ -3463,35 +3683,7 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src\maai\encoder.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1030</span>
-<span class="normal">1031</span>
-<span class="normal">1032</span>
-<span class="normal">1033</span>
-<span class="normal">1034</span>
-<span class="normal">1035</span>
-<span class="normal">1036</span>
-<span class="normal">1037</span>
-<span class="normal">1038</span>
-<span class="normal">1039</span>
-<span class="normal">1040</span>
-<span class="normal">1041</span>
-<span class="normal">1042</span>
-<span class="normal">1043</span>
-<span class="normal">1044</span>
-<span class="normal">1045</span>
-<span class="normal">1046</span>
-<span class="normal">1047</span>
-<span class="normal">1048</span>
-<span class="normal">1049</span>
-<span class="normal">1050</span>
-<span class="normal">1051</span>
-<span class="normal">1052</span>
-<span class="normal">1053</span>
-<span class="normal">1054</span>
-<span class="normal">1055</span>
-<span class="normal">1056</span>
-<span class="normal">1057</span>
-<span class="normal">1058</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1058</span>
 <span class="normal">1059</span>
 <span class="normal">1060</span>
 <span class="normal">1061</span>
@@ -3972,12 +4164,92 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 <span class="normal">1536</span>
 <span class="normal">1537</span>
 <span class="normal">1538</span>
-<span class="normal">1539</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EncoderMimiOnnx</span><span class="p">(</span><span class="n">EncoderMimi</span><span class="p">):</span>
+<span class="normal">1539</span>
+<span class="normal">1540</span>
+<span class="normal">1541</span>
+<span class="normal">1542</span>
+<span class="normal">1543</span>
+<span class="normal">1544</span>
+<span class="normal">1545</span>
+<span class="normal">1546</span>
+<span class="normal">1547</span>
+<span class="normal">1548</span>
+<span class="normal">1549</span>
+<span class="normal">1550</span>
+<span class="normal">1551</span>
+<span class="normal">1552</span>
+<span class="normal">1553</span>
+<span class="normal">1554</span>
+<span class="normal">1555</span>
+<span class="normal">1556</span>
+<span class="normal">1557</span>
+<span class="normal">1558</span>
+<span class="normal">1559</span>
+<span class="normal">1560</span>
+<span class="normal">1561</span>
+<span class="normal">1562</span>
+<span class="normal">1563</span>
+<span class="normal">1564</span>
+<span class="normal">1565</span>
+<span class="normal">1566</span>
+<span class="normal">1567</span>
+<span class="normal">1568</span>
+<span class="normal">1569</span>
+<span class="normal">1570</span>
+<span class="normal">1571</span>
+<span class="normal">1572</span>
+<span class="normal">1573</span>
+<span class="normal">1574</span>
+<span class="normal">1575</span>
+<span class="normal">1576</span>
+<span class="normal">1577</span>
+<span class="normal">1578</span>
+<span class="normal">1579</span>
+<span class="normal">1580</span>
+<span class="normal">1581</span>
+<span class="normal">1582</span>
+<span class="normal">1583</span>
+<span class="normal">1584</span>
+<span class="normal">1585</span>
+<span class="normal">1586</span>
+<span class="normal">1587</span>
+<span class="normal">1588</span>
+<span class="normal">1589</span>
+<span class="normal">1590</span>
+<span class="normal">1591</span>
+<span class="normal">1592</span>
+<span class="normal">1593</span>
+<span class="normal">1594</span>
+<span class="normal">1595</span>
+<span class="normal">1596</span>
+<span class="normal">1597</span>
+<span class="normal">1598</span>
+<span class="normal">1599</span>
+<span class="normal">1600</span>
+<span class="normal">1601</span>
+<span class="normal">1602</span>
+<span class="normal">1603</span>
+<span class="normal">1604</span>
+<span class="normal">1605</span>
+<span class="normal">1606</span>
+<span class="normal">1607</span>
+<span class="normal">1608</span>
+<span class="normal">1609</span>
+<span class="normal">1610</span>
+<span class="normal">1611</span>
+<span class="normal">1612</span>
+<span class="normal">1613</span>
+<span class="normal">1614</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EncoderMimiOnnx</span><span class="p">(</span><span class="n">EncoderMimi</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mimi core ONNX backend for optimized inference.</span>
 
 <span class="sd">    Provides a streaming contract matching `transformers` v5 `StaticCache` with flat K/V I/O.</span>
 <span class="sd">    Supports CUDA (FP32) and CPU (INT8) execution providers.</span>
+
+<span class="sd">    Does not load HF ``MimiModel`` weights. ORT sessions for the same ONNX path are shared</span>
+<span class="sd">    across encoder instances (e.g. VAP ch1/ch2); per-instance state buffers stay private.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_ORT_SESSION_CACHE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_onnx_output_shape_for_fixed_bind</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
@@ -4004,6 +4276,7 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
         <span class="n">runtime_device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
         <span class="n">onnx_cpu_intra_threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
         <span class="n">onnx_cpu_inter_threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the ONNX-backed Mimi Encoder.</span>
 
@@ -4017,12 +4290,17 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 <span class="sd">            runtime_device (str): Device to run the ONNX model on (&#39;cpu&#39;, &#39;cuda&#39;).</span>
 <span class="sd">            onnx_cpu_intra_threads (int): Number of intra-op threads for CPU execution.</span>
 <span class="sd">            onnx_cpu_inter_threads (int): Number of inter-op threads for CPU execution.</span>
+<span class="sd">            output_dim (int): Mimi embedding dim (kyutai/mimi default 512).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Skip HF from_pretrained — runtime uses ORT only.</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">frame_hz</span><span class="o">=</span><span class="n">frame_hz</span><span class="p">,</span>
             <span class="n">freeze</span><span class="o">=</span><span class="n">freeze</span><span class="p">,</span>
             <span class="n">mimi_model_name</span><span class="o">=</span><span class="n">mimi_model_name</span><span class="p">,</span>
             <span class="n">context_samples</span><span class="o">=</span><span class="n">context_samples</span><span class="p">,</span>
+            <span class="n">load_hf_weights</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">output_dim</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">output_dim</span><span class="p">),</span>
+            <span class="n">frame_hz_mimi</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">frame_hz</span><span class="p">),</span>
         <span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -4082,7 +4360,7 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
         <span class="n">so</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ort</span><span class="o">.</span><span class="n">SessionOptions</span><span class="p">()</span>
         <span class="n">so</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ort</span><span class="o">.</span><span class="n">GraphOptimizationLevel</span><span class="o">.</span><span class="n">ORT_ENABLE_ALL</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_cuda</span> <span class="ow">and</span> <span class="s2">&quot;CUDAExecutionProvider&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ort</span><span class="o">.</span><span class="n">get_available_providers</span><span class="p">():</span>
-            <span class="n">providers</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">providers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="p">(</span>
                     <span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span>
                     <span class="p">{</span>
@@ -4092,18 +4370,50 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
                 <span class="p">),</span>
                 <span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">,</span>
             <span class="p">]</span>
+            <span class="n">intra</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">inter</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Realtime-friendly default for CPU EP.</span>
             <span class="n">so</span><span class="o">.</span><span class="n">intra_op_num_threads</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_cpu_intra_threads</span><span class="p">)</span>
             <span class="n">so</span><span class="o">.</span><span class="n">inter_op_num_threads</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_cpu_inter_threads</span><span class="p">)</span>
             <span class="n">providers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_onnx_model_path</span><span class="p">,</span> <span class="n">sess_options</span><span class="o">=</span><span class="n">so</span><span class="p">,</span> <span class="n">providers</span><span class="o">=</span><span class="n">providers</span><span class="p">)</span>
+            <span class="n">intra</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">so</span><span class="o">.</span><span class="n">intra_op_num_threads</span><span class="p">)</span>
+            <span class="n">inter</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">so</span><span class="o">.</span><span class="n">inter_op_num_threads</span><span class="p">)</span>
+
+        <span class="n">cache_key</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_onnx_model_path</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_use_cuda</span><span class="p">,</span>
+            <span class="n">intra</span><span class="p">,</span>
+            <span class="n">inter</span><span class="p">,</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">providers</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">cached</span> <span class="o">=</span> <span class="n">EncoderMimiOnnx</span><span class="o">.</span><span class="n">_ORT_SESSION_CACHE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cached</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_model_path</span><span class="p">,</span> <span class="n">sess_options</span><span class="o">=</span><span class="n">so</span><span class="p">,</span> <span class="n">providers</span><span class="o">=</span><span class="n">providers</span>
+        <span class="p">)</span>
+        <span class="n">EncoderMimiOnnx</span><span class="o">.</span><span class="n">_ORT_SESSION_CACHE</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">sess</span>
+        <span class="k">return</span> <span class="n">sess</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_onnx_meta_path</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ONNX meta file not found: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_padding_shapes_from_meta</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prefer export contract pad shapes; avoid HF probe at runtime.&quot;&quot;&quot;</span>
+        <span class="n">contract</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;contract&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;contract&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">contract</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spec&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">contract</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spec&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="n">shapes</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;padding_cache_shapes&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">shapes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;ONNX meta missing contract.spec.padding_cache_shapes; &quot;</span>
+            <span class="s2">&quot;re-export Mimi ONNX with export_mimi_streaming_onnx_v2.py.&quot;</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_init_onnx_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_meta</span><span class="p">()</span>
@@ -4151,10 +4461,12 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
         <span class="n">n_states_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_onnx_input_names</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_non_state_inputs</span>
         <span class="n">n_past</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_states_total</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_num_pad</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_past_input_keys</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;past_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_past</span><span class="p">)]</span>
-        <span class="n">spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mimi_streaming_onnx_io_spec</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pad_shapes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_padding_shapes_from_meta</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
 
         <span class="n">wave_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;wave_24k_mimi_input&quot;</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_wave_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">wave_len</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;frame_rate&quot;</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">frame_hz_mimi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;frame_rate&quot;</span><span class="p">])</span>
         <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
         <span class="n">wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_onnx_wave_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
 
@@ -4182,9 +4494,8 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
                 <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
 
-        <span class="c1"># Padding cache: use the live model probe which provides the correct</span>
-        <span class="c1"># non-zero padding sizes required by causal convolution layers.</span>
-        <span class="n">probe_pad</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">[</span><span class="s2">&quot;padding_cache_shapes&quot;</span><span class="p">]]</span>
+        <span class="c1"># Padding cache shapes from export meta (no HF probe).</span>
+        <span class="n">probe_pad</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">pad_shapes</span><span class="p">]</span>
         <span class="n">pad</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_onnx_num_pad</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">probe_pad</span><span class="p">):</span>
@@ -4316,7 +4627,10 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_encode_continuous_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">streaming</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">streaming</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_encode_continuous_embeddings</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">streaming</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;EncoderMimiOnnx only supports streaming=True &quot;</span>
+                <span class="s2">&quot;(HF weights are not loaded on the ONNX path).&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># ONNX model was exported with B=1 fixed signature.</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
@@ -4502,7 +4816,7 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 
 
 <h4 id="maai.encoder.EncoderMimiOnnx.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">frame_hz</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">freeze</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mimi_model_name</span><span class="o">=</span><span class="s1">&#39;kyutai/mimi&#39;</span><span class="p">,</span> <span class="n">context_samples</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span> <span class="n">onnx_model_path</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">onnx_meta_path</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">runtime_device</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">onnx_cpu_intra_threads</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">onnx_cpu_inter_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">frame_hz</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">freeze</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mimi_model_name</span><span class="o">=</span><span class="s1">&#39;kyutai/mimi&#39;</span><span class="p">,</span> <span class="n">context_samples</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span> <span class="n">onnx_model_path</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">onnx_meta_path</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">runtime_device</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">onnx_cpu_intra_threads</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">onnx_cpu_inter_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span></code>
 
 </h4>
 
@@ -4667,46 +4981,29 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
                   <code>1</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_dim</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mimi embedding dim (kyutai/mimi default 512).</p>
+              </div>
+            </td>
+            <td>
+                  <code>512</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\maai\encoder.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1051</span>
-<span class="normal">1052</span>
-<span class="normal">1053</span>
-<span class="normal">1054</span>
-<span class="normal">1055</span>
-<span class="normal">1056</span>
-<span class="normal">1057</span>
-<span class="normal">1058</span>
-<span class="normal">1059</span>
-<span class="normal">1060</span>
-<span class="normal">1061</span>
-<span class="normal">1062</span>
-<span class="normal">1063</span>
-<span class="normal">1064</span>
-<span class="normal">1065</span>
-<span class="normal">1066</span>
-<span class="normal">1067</span>
-<span class="normal">1068</span>
-<span class="normal">1069</span>
-<span class="normal">1070</span>
-<span class="normal">1071</span>
-<span class="normal">1072</span>
-<span class="normal">1073</span>
-<span class="normal">1074</span>
-<span class="normal">1075</span>
-<span class="normal">1076</span>
-<span class="normal">1077</span>
-<span class="normal">1078</span>
-<span class="normal">1079</span>
-<span class="normal">1080</span>
-<span class="normal">1081</span>
-<span class="normal">1082</span>
-<span class="normal">1083</span>
-<span class="normal">1084</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1084</span>
 <span class="normal">1085</span>
 <span class="normal">1086</span>
 <span class="normal">1087</span>
@@ -4756,7 +5053,46 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 <span class="normal">1131</span>
 <span class="normal">1132</span>
 <span class="normal">1133</span>
-<span class="normal">1134</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">1134</span>
+<span class="normal">1135</span>
+<span class="normal">1136</span>
+<span class="normal">1137</span>
+<span class="normal">1138</span>
+<span class="normal">1139</span>
+<span class="normal">1140</span>
+<span class="normal">1141</span>
+<span class="normal">1142</span>
+<span class="normal">1143</span>
+<span class="normal">1144</span>
+<span class="normal">1145</span>
+<span class="normal">1146</span>
+<span class="normal">1147</span>
+<span class="normal">1148</span>
+<span class="normal">1149</span>
+<span class="normal">1150</span>
+<span class="normal">1151</span>
+<span class="normal">1152</span>
+<span class="normal">1153</span>
+<span class="normal">1154</span>
+<span class="normal">1155</span>
+<span class="normal">1156</span>
+<span class="normal">1157</span>
+<span class="normal">1158</span>
+<span class="normal">1159</span>
+<span class="normal">1160</span>
+<span class="normal">1161</span>
+<span class="normal">1162</span>
+<span class="normal">1163</span>
+<span class="normal">1164</span>
+<span class="normal">1165</span>
+<span class="normal">1166</span>
+<span class="normal">1167</span>
+<span class="normal">1168</span>
+<span class="normal">1169</span>
+<span class="normal">1170</span>
+<span class="normal">1171</span>
+<span class="normal">1172</span>
+<span class="normal">1173</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">frame_hz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">freeze</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -4767,6 +5103,7 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
     <span class="n">runtime_device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
     <span class="n">onnx_cpu_intra_threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
     <span class="n">onnx_cpu_inter_threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the ONNX-backed Mimi Encoder.</span>
 
@@ -4780,12 +5117,17 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 <span class="sd">        runtime_device (str): Device to run the ONNX model on (&#39;cpu&#39;, &#39;cuda&#39;).</span>
 <span class="sd">        onnx_cpu_intra_threads (int): Number of intra-op threads for CPU execution.</span>
 <span class="sd">        onnx_cpu_inter_threads (int): Number of inter-op threads for CPU execution.</span>
+<span class="sd">        output_dim (int): Mimi embedding dim (kyutai/mimi default 512).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Skip HF from_pretrained — runtime uses ORT only.</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
         <span class="n">frame_hz</span><span class="o">=</span><span class="n">frame_hz</span><span class="p">,</span>
         <span class="n">freeze</span><span class="o">=</span><span class="n">freeze</span><span class="p">,</span>
         <span class="n">mimi_model_name</span><span class="o">=</span><span class="n">mimi_model_name</span><span class="p">,</span>
         <span class="n">context_samples</span><span class="o">=</span><span class="n">context_samples</span><span class="p">,</span>
+        <span class="n">load_hf_weights</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">output_dim</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">output_dim</span><span class="p">),</span>
+        <span class="n">frame_hz_mimi</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">frame_hz</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
@@ -4941,82 +5283,7 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\maai\encoder.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1542</span>
-<span class="normal">1543</span>
-<span class="normal">1544</span>
-<span class="normal">1545</span>
-<span class="normal">1546</span>
-<span class="normal">1547</span>
-<span class="normal">1548</span>
-<span class="normal">1549</span>
-<span class="normal">1550</span>
-<span class="normal">1551</span>
-<span class="normal">1552</span>
-<span class="normal">1553</span>
-<span class="normal">1554</span>
-<span class="normal">1555</span>
-<span class="normal">1556</span>
-<span class="normal">1557</span>
-<span class="normal">1558</span>
-<span class="normal">1559</span>
-<span class="normal">1560</span>
-<span class="normal">1561</span>
-<span class="normal">1562</span>
-<span class="normal">1563</span>
-<span class="normal">1564</span>
-<span class="normal">1565</span>
-<span class="normal">1566</span>
-<span class="normal">1567</span>
-<span class="normal">1568</span>
-<span class="normal">1569</span>
-<span class="normal">1570</span>
-<span class="normal">1571</span>
-<span class="normal">1572</span>
-<span class="normal">1573</span>
-<span class="normal">1574</span>
-<span class="normal">1575</span>
-<span class="normal">1576</span>
-<span class="normal">1577</span>
-<span class="normal">1578</span>
-<span class="normal">1579</span>
-<span class="normal">1580</span>
-<span class="normal">1581</span>
-<span class="normal">1582</span>
-<span class="normal">1583</span>
-<span class="normal">1584</span>
-<span class="normal">1585</span>
-<span class="normal">1586</span>
-<span class="normal">1587</span>
-<span class="normal">1588</span>
-<span class="normal">1589</span>
-<span class="normal">1590</span>
-<span class="normal">1591</span>
-<span class="normal">1592</span>
-<span class="normal">1593</span>
-<span class="normal">1594</span>
-<span class="normal">1595</span>
-<span class="normal">1596</span>
-<span class="normal">1597</span>
-<span class="normal">1598</span>
-<span class="normal">1599</span>
-<span class="normal">1600</span>
-<span class="normal">1601</span>
-<span class="normal">1602</span>
-<span class="normal">1603</span>
-<span class="normal">1604</span>
-<span class="normal">1605</span>
-<span class="normal">1606</span>
-<span class="normal">1607</span>
-<span class="normal">1608</span>
-<span class="normal">1609</span>
-<span class="normal">1610</span>
-<span class="normal">1611</span>
-<span class="normal">1612</span>
-<span class="normal">1613</span>
-<span class="normal">1614</span>
-<span class="normal">1615</span>
-<span class="normal">1616</span>
-<span class="normal">1617</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1617</span>
 <span class="normal">1618</span>
 <span class="normal">1619</span>
 <span class="normal">1620</span>
@@ -5029,7 +5296,82 @@ Supports CUDA (FP32) and CPU (INT8) execution providers.</p>
 <span class="normal">1627</span>
 <span class="normal">1628</span>
 <span class="normal">1629</span>
-<span class="normal">1630</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">build_audio_encoder</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">cpc_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="normal">1630</span>
+<span class="normal">1631</span>
+<span class="normal">1632</span>
+<span class="normal">1633</span>
+<span class="normal">1634</span>
+<span class="normal">1635</span>
+<span class="normal">1636</span>
+<span class="normal">1637</span>
+<span class="normal">1638</span>
+<span class="normal">1639</span>
+<span class="normal">1640</span>
+<span class="normal">1641</span>
+<span class="normal">1642</span>
+<span class="normal">1643</span>
+<span class="normal">1644</span>
+<span class="normal">1645</span>
+<span class="normal">1646</span>
+<span class="normal">1647</span>
+<span class="normal">1648</span>
+<span class="normal">1649</span>
+<span class="normal">1650</span>
+<span class="normal">1651</span>
+<span class="normal">1652</span>
+<span class="normal">1653</span>
+<span class="normal">1654</span>
+<span class="normal">1655</span>
+<span class="normal">1656</span>
+<span class="normal">1657</span>
+<span class="normal">1658</span>
+<span class="normal">1659</span>
+<span class="normal">1660</span>
+<span class="normal">1661</span>
+<span class="normal">1662</span>
+<span class="normal">1663</span>
+<span class="normal">1664</span>
+<span class="normal">1665</span>
+<span class="normal">1666</span>
+<span class="normal">1667</span>
+<span class="normal">1668</span>
+<span class="normal">1669</span>
+<span class="normal">1670</span>
+<span class="normal">1671</span>
+<span class="normal">1672</span>
+<span class="normal">1673</span>
+<span class="normal">1674</span>
+<span class="normal">1675</span>
+<span class="normal">1676</span>
+<span class="normal">1677</span>
+<span class="normal">1678</span>
+<span class="normal">1679</span>
+<span class="normal">1680</span>
+<span class="normal">1681</span>
+<span class="normal">1682</span>
+<span class="normal">1683</span>
+<span class="normal">1684</span>
+<span class="normal">1685</span>
+<span class="normal">1686</span>
+<span class="normal">1687</span>
+<span class="normal">1688</span>
+<span class="normal">1689</span>
+<span class="normal">1690</span>
+<span class="normal">1691</span>
+<span class="normal">1692</span>
+<span class="normal">1693</span>
+<span class="normal">1694</span>
+<span class="normal">1695</span>
+<span class="normal">1696</span>
+<span class="normal">1697</span>
+<span class="normal">1698</span>
+<span class="normal">1699</span>
+<span class="normal">1700</span>
+<span class="normal">1701</span>
+<span class="normal">1702</span>
+<span class="normal">1703</span>
+<span class="normal">1704</span>
+<span class="normal">1705</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">build_audio_encoder</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">cpc_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build and return the appropriate audio encoder instance based on the configuration.</span>
 
 <span class="sd">    Instantiates either EncoderCPC, EncoderMimi, or EncoderMimiOnnx depending on the</span>

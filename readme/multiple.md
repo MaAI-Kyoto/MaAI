@@ -49,8 +49,8 @@ applied to every sub-model:
 Per-model differences are configured through the `configs` list. Each entry
 is a `dict` with:
 
-- `"mode"` (required): `"vap"`, `"vap_mc"`, `"bc"`, `"bc_2type"`, `"nod"`,
-  `"nod_para"` or `"vap_prompt"`.
+- `"mode"` (required): `"vap"`, `"vap_mc"`, `"vad"`, `"bc"`, `"bc_det"`,
+  `"bc_2type"`, `"nod"`, `"nod_para"` or `"vap_prompt"`.
 - `"lang"` (required): same value as for `Maai`.
 - `"label"` (optional): result-dict key for this sub-model. Defaults to
   `"mode"`. Use it to disambiguate when the same `mode` is registered twice

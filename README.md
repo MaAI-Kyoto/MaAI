@@ -114,6 +114,10 @@ Backchannels are short listener responses such as `yeah` and `oh`, that are also
 - [VAP-based Backchannel Prediction Model - Timing](readme/vap_bc.md)
 - [VAP-based Backchannel Prediction Model - Timing for Two types](readme/vap_bc_2type.md)
 
+While the models above *predict* when a backchannel should occur, the backchannel detection model *detects* whether the utterance being spoken right now is a backchannel.
+
+- [Backchannel Detection Model (single-channel version also available)](readme/bc_det.md)
+
 
 ### Nodding
 

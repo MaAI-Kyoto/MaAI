@@ -641,6 +641,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../bc_det/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bc_det
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../config/" class="md-nav__link">
         
   
@@ -649,6 +677,34 @@
     
   
     config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vad/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vad
   
 
     
@@ -733,6 +789,34 @@
     
   
     vap_bc_2type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vap_mono/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_mono
   
 
     
@@ -1644,8 +1728,8 @@ into the VAP architecture using sentence embeddings to condition the output.</p>
         <span class="n">x2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder2</span><span class="p">(</span><span class="n">audio2</span><span class="p">)</span>  <span class="c1"># speaker 2</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;decrease_dimension&quot;</span><span class="p">):</span>
-            <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decrease_dimension</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
-            <span class="n">x2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decrease_dimension</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span>
+            <span class="n">x1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decrease_dimension</span><span class="p">(</span><span class="n">x1</span><span class="p">))</span>
+            <span class="n">x2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decrease_dimension</span><span class="p">(</span><span class="n">x2</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span>
 
@@ -2166,8 +2250,8 @@ If None, default VapConfig is used.</p>
     <span class="n">x2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder2</span><span class="p">(</span><span class="n">audio2</span><span class="p">)</span>  <span class="c1"># speaker 2</span>
 
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;decrease_dimension&quot;</span><span class="p">):</span>
-        <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decrease_dimension</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
-        <span class="n">x2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decrease_dimension</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decrease_dimension</span><span class="p">(</span><span class="n">x1</span><span class="p">))</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decrease_dimension</span><span class="p">(</span><span class="n">x2</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span>
 </code></pre></div></td></tr></table></div>

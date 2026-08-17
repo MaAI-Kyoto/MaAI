@@ -347,6 +347,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -700,6 +711,34 @@
   
   
     <li class="md-nav__item">
+      <a href="api/models/bc_det/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bc_det
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="api/models/config/" class="md-nav__link">
         
   
@@ -708,6 +747,34 @@
     
   
     config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/models/vad/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vad
   
 
     
@@ -792,6 +859,34 @@
     
   
     vap_bc_2type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/models/vap_mono/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_mono
   
 
     
@@ -942,6 +1037,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -973,19 +1079,36 @@
 
 
 <h1 id="maai-api-documentation">MaAI API Documentation</h1>
+<p><a href="https://github.com/MaAI-Kyoto/MaAI">GitHub Repository (MaAI-Kyoto/MaAI)</a></p>
 <p>Welcome to the official API documentation for MaAI (Real-time and Continuous Non-Linguistic Behavior Generation Software).</p>
 <p>This documentation provides detailed specifications for each module, class, and function included in the MaAI source code.
 You can browse the detailed API references for each module using the top navigation bar or the left menu.</p>
 <h2 id="core-modules">Core Modules</h2>
 <ul>
-<li><strong><code>maai.encoder</code></strong>: Modules related to encoding audio and text features.</li>
-<li><strong><code>maai.model</code></strong>: Core modules for model building.</li>
-<li><strong><code>maai.input</code></strong>: Modules for input data processing and management.</li>
-<li><strong><code>maai.output</code></strong>: Modules for output data generation and management.</li>
-<li><strong><code>maai.objective</code></strong>: Modules defining objective functions, including loss functions for optimization.</li>
-<li><strong><code>maai.util</code></strong>: A collection of utility functions.</li>
-<li><strong><code>maai.models</code></strong>: Specific model architecture definitions corresponding to various tasks and conditions (e.g., VAP).</li>
+<li><strong><a href="api/encoder/"><code>maai.encoder</code></a></strong>: Modules related to encoding audio and text features.</li>
+<li><strong><a href="api/model/"><code>maai.model</code></a></strong>: Core modules for model building.</li>
+<li><strong><a href="api/input/"><code>maai.input</code></a></strong>: Modules for input data processing and management.</li>
+<li><strong><a href="api/output/"><code>maai.output</code></a></strong>: Modules for output data generation and management.</li>
+<li><strong><a href="api/objective/"><code>maai.objective</code></a></strong>: Modules defining objective functions, including loss functions for optimization.</li>
+<li><strong><a href="api/util/"><code>maai.util</code></a></strong>: A collection of utility functions.</li>
+<li><strong><code>maai.models</code></strong>: Specific model architecture definitions corresponding to various tasks and conditions (see below).</li>
 </ul>
+<h2 id="models">Models</h2>
+<p>Each model is selected through the <code>mode</code> argument of the <code>Maai</code> class.</p>
+<ul>
+<li><strong><a href="api/models/config/"><code>maai.models.config</code></a></strong>: <code>VapConfig</code>, the configuration object shared by all models.</li>
+<li><strong><a href="api/models/vap/"><code>maai.models.vap</code></a></strong> (<code>mode="vap"</code>, <code>"vap_mc"</code>): Voice Activity Projection, the turn-taking model that predicts who will be speaking in the near future. <code>"vap_mc"</code> is the noise-robust (multi-condition) variant.</li>
+<li><strong><a href="api/models/vap_mono/"><code>maai.models.vap_mono</code></a></strong> (<code>mode="vap_mono"</code>): Single-channel variant of VAP; the outputs are converted to single float values for the one input channel.</li>
+<li><strong><a href="api/models/vad/"><code>maai.models.vad</code></a></strong> (<code>mode="vad"</code>, <code>"vad_mono"</code>): Voice Activity Detection. Unlike the turn-taking models it does not predict the future, but detects whether each participant is speaking <em>right now</em>. Both channels are processed jointly with cross-channel attention, so the model can tell who is actually talking even when one speaker's voice leaks into the other's microphone (crosstalk). <code>"vad_mono"</code> is the single-channel variant.</li>
+<li><strong><a href="api/models/vap_bc/"><code>maai.models.vap_bc</code></a></strong> (<code>mode="bc"</code>): Backchannel prediction.</li>
+<li><strong><a href="api/models/bc_det/"><code>maai.models.bc_det</code></a></strong> (<code>mode="bc_det"</code>, <code>"bc_det_mono"</code>): Backchannel detection. Where <code>"bc"</code> predicts that a backchannel is <em>about to</em> happen, this model detects whether the utterance a speaker is producing <em>right now</em> is a backchannel. Both channels are processed jointly, since the interlocutor's speech is most of the evidence that a short utterance is a backchannel rather than the start of a turn. <code>"bc_det_mono"</code> is the single-channel variant.</li>
+<li><strong><a href="api/models/vap_bc_2type/"><code>maai.models.vap_bc_2type</code></a></strong> (<code>mode="bc_2type"</code>): Backchannel prediction distinguishing two backchannel types.</li>
+<li><strong><a href="api/models/vap_nod/"><code>maai.models.vap_nod</code></a></strong> (<code>mode="nod"</code>): Head nod generation.</li>
+<li><strong><a href="api/models/vap_nod_para/"><code>maai.models.vap_nod_para</code></a></strong> (<code>mode="nod_para"</code>): Head nod generation with nod parameters.</li>
+<li><strong><a href="api/models/vap_prompt/"><code>maai.models.vap_prompt</code></a></strong> (<code>mode="vap_prompt"</code>): VAP conditioned on a text prompt.</li>
+</ul>
+<p>Usage guides for each mode (supported languages, frame rates, and sample code) are available in the
+<a href="https://github.com/MaAI-Kyoto/MaAI/blob/main/README.md">repository README</a>.</p>
 <h2 id="usage">Usage</h2>
 <p>Select the module you wish to learn more about from the navigation menu on the left.
 Each page is automatically generated from the Docstrings within the source code.</p>

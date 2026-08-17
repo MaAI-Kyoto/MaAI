@@ -2,66 +2,78 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/encoder/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/encoder_components/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/input/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/model/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/modules/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/objective/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/output/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/util/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
+    </url>
+    <url>
+         <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/bc_det/</loc>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/config/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
+    </url>
+    <url>
+         <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/vad/</loc>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/vap/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/vap_bc/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/vap_bc_2type/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
+    </url>
+    <url>
+         <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/vap_mono/</loc>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/vap_nod/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/vap_nod_para/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
     <url>
          <loc>https://MaAI-Kyoto.github.io/MaAI/api/models/vap_prompt/</loc>
-         <lastmod>2026-05-29</lastmod>
+         <lastmod>2026-08-17</lastmod>
     </url>
 </urlset>
