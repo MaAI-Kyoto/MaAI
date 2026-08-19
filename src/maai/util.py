@@ -191,7 +191,7 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
     
     # vad_mono runs the same model / checkpoints as vad
-    elif mode in ("vad", "vad_mono"):
+    elif mode == "vad":
         if language == "jp":
             repo_id = repo_ids["vad_jp"]
             file_path = f"vad{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
@@ -204,11 +204,33 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             supported_languages = ["jp", "ch"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
+    elif mode == "vad_mono":
+        if language == "jp":
+            repo_id = repo_ids["vad_jp"]
+            file_path = f"vad_mono{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        elif language == "ch":
+            repo_id = repo_ids["vad_ch"]
+            file_path = f"vad_mono{encoder_suffix}_state_dict_ch_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        else:
+            supported_languages = ["jp", "ch"]
+            raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
     # bc_det_mono runs the same model / checkpoints as bc_det
-    elif mode in ("bc_det", "bc_det_mono"):
+    elif mode == "bc_det":
         if language in ("jp", "en", "ch"):
             repo_id = repo_ids[f"bc_det_{language}"]
             file_path = f"bc_det{encoder_suffix}_state_dict_{language}_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        else:
+            supported_languages = ["jp", "en", "ch"]
+            raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
+    elif mode == "bc_det_mono":
+        if language in ("jp", "en", "ch"):
+            repo_id = repo_ids[f"bc_det_{language}"]
+            file_path = f"bc_det_mono{encoder_suffix}_state_dict_{language}_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
 
         else:
             supported_languages = ["jp", "en", "ch"]

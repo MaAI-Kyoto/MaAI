@@ -6,6 +6,7 @@ import threading
 import queue
 import copy
 import os
+import sys
 
 from .input import Base, Zero
 from .util import load_vap_model, resolve_encoder_type
@@ -19,6 +20,49 @@ from .models.vap_nod import VapGPT_nod
 from .models.vap_nod_para import VapGPT_nod_para
 from .models.config import VapConfig
 # from .models.vap_prompt import VapGPT_prompt
+
+# 2-channel modes that have a dedicated single-channel (monaural) counterpart.
+MONO_ALTERNATIVE_MODES = {
+    "vad": "vad_mono",
+    "bc_det": "bc_det_mono",
+}
+
+
+def _confirm_zero_second_channel(mode: str, mono_mode: str) -> None:
+    """Warn that a 2-channel mode is being fed a silent second channel.
+
+    Asks on stdin whether to keep going with `mode` or to quit so that the
+    dedicated monaural mode can be used instead. If stdin is not interactive
+    the warning is printed and processing continues.
+
+    Args:
+        mode (str): The 2-channel mode that was requested.
+        mono_mode (str): The recommended single-channel mode.
+
+    Raises:
+        SystemExit: If the user chooses not to continue.
+    """
+    print(
+        f"[WARNING] mode='{mode}' is a 2-channel model, but the second channel is "
+        "MaaiInput.Zero (silence). For single-channel (monaural) input, "
+        f"mode='{mono_mode}' is recommended."
+    )
+
+    if not sys.stdin or not sys.stdin.isatty():
+        print(f"[WARNING] stdin is not interactive; continuing with mode='{mode}'.")
+        return
+
+    while True:
+        try:
+            answer = input(f"Continue with mode='{mode}'? [y/N]: ").strip().lower()
+        except EOFError:
+            answer = ""
+        if answer in ("y", "yes"):
+            return
+        if answer in ("", "n", "no"):
+            raise SystemExit(f"Aborted. Please use mode='{mono_mode}' instead.")
+        print("Please answer 'y' or 'n'.")
+
 
 class Maai():
     """Main wrapper class for running the MaAI model.
@@ -106,6 +150,8 @@ class Maai():
                 )
         elif audio_ch2 is None:
             raise ValueError(f"audio_ch2 is required for mode '{mode}'.")
+        elif mode in MONO_ALTERNATIVE_MODES and isinstance(audio_ch2, Zero):
+            _confirm_zero_second_channel(mode, MONO_ALTERNATIVE_MODES[mode])
 
         self.return_p_bins = bool(return_p_bins)
 
