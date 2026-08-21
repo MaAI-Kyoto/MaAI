@@ -45,6 +45,7 @@ repo_ids = {
 
     "vad_jp": "maai-kyoto/vad_jp",
     "vad_ch": "maai-kyoto/vad_ch",
+    "vad_en": "maai-kyoto/vad_en",
 
     "bc_det_jp": "maai-kyoto/bc_det_jp",
     "bc_det_en": "maai-kyoto/bc_det_en",
@@ -200,8 +201,12 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             repo_id = repo_ids["vad_ch"]
             file_path = f"vad{encoder_suffix}_state_dict_ch_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
 
+        elif language == "en":
+            repo_id = repo_ids["vad_en"]
+            file_path = f"vad{encoder_suffix}_state_dict_en_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
         else:
-            supported_languages = ["jp", "ch"]
+            supported_languages = ["jp", "ch", "en"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
     elif mode == "vad_mono":
@@ -213,8 +218,12 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             repo_id = repo_ids["vad_ch"]
             file_path = f"vad_mono{encoder_suffix}_state_dict_ch_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
 
+        elif language == "en":
+            repo_id = repo_ids["vad_en"]
+            file_path = f"vad_mono{encoder_suffix}_state_dict_en_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
         else:
-            supported_languages = ["jp", "ch"]
+            supported_languages = ["jp", "ch", "en"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
     # bc_det_mono runs the same model / checkpoints as bc_det
