@@ -118,6 +118,7 @@ class BcDetGPT(nn.Module):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """
         Forward pass for the BcDetGPT model.
@@ -126,6 +127,8 @@ class BcDetGPT(nn.Module):
             x1 (Tensor): Input audio embedded tensor for speaker 1.
             x2 (Tensor): Input audio embedded tensor for speaker 2.
             cache (dict, optional): Cache of past keys/values.
+            return_all_frames: Return one result dictionary for every input
+                time step instead of only the final step.
 
         Returns:
             Tuple[dict, dict]: Model outputs and updated cache.
@@ -159,12 +162,14 @@ class BcDetGPT(nn.Module):
         bc2 = self.bc_classifier(out["x2"])
 
         # Get back to the CPU
-        bc1 = bc1.sigmoid().to("cpu").tolist()[0][-1][0]
-        bc2 = bc2.sigmoid().to("cpu").tolist()[0][-1][0]
+        bc1_all = bc1.sigmoid().to("cpu").tolist()[0]
+        bc2_all = bc2.sigmoid().to("cpu").tolist()[0]
 
-        ret = {
-            "p_bc_det": [bc1, bc2],
-        }
+        frames = [
+            {"p_bc_det": [bc1_all[t][0], bc2_all[t][0]]}
+            for t in range(x1.shape[1])
+        ]
+        ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache
 
@@ -183,7 +188,13 @@ class BcDetGPT_mono(BcDetGPT):
     be less accurate than the two-channel one.
     """
 
-    def forward(self, x1: Tensor, x2: Tensor, cache: Optional[dict] = None) -> Tuple[dict, dict]:
+    def forward(
+        self,
+        x1: Tensor,
+        x2: Tensor,
+        cache: Optional[dict] = None,
+        return_all_frames: bool = False,
+    ) -> Tuple[dict, dict]:
         """
         Forward pass for the mono BC detection model.
 
@@ -191,11 +202,20 @@ class BcDetGPT_mono(BcDetGPT):
             x1 (Tensor): Input audio embedded tensor for the single speaker.
             x2 (Tensor): Input audio embedded tensor for the silent channel.
             cache (dict, optional): Cache of past keys/values.
+            return_all_frames: Return one result dictionary for every input
+                time step instead of only the final step.
 
         Returns:
             Tuple[dict, dict]: Model outputs (scalar ``p_bc_det``) and updated cache.
         """
-        ret, new_cache = super().forward(x1, x2, cache)
+        ret, new_cache = super().forward(
+            x1, x2, cache, return_all_frames=return_all_frames
+        )
+
+        if return_all_frames:
+            for frame in ret:
+                frame["p_bc_det"] = frame["p_bc_det"][0]
+            return ret, new_cache
 
         # ch1 のみを返す
         ret["p_bc_det"] = ret["p_bc_det"][0]
