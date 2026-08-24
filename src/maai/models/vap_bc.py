@@ -135,6 +135,7 @@ class VapGPT_bc(nn.Module):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """
         Forward pass for the VapGPT_bc model.
@@ -171,10 +172,14 @@ class VapGPT_bc(nn.Module):
             "cross2_c": (out["past_k2_c"], out["past_v2_c"]),
         }
 
-        p_bc = self.bc_head(out["x"]).sigmoid().to("cpu").tolist()[0][-1][0]
-        p_bc_detect = self.bc_detect_head(out["x"]).sigmoid().to("cpu").tolist()[0][-1][0]
-        print(f"p_bc: {p_bc:.4f}, p_bc_detect: {p_bc_detect:.4f}")
+        p_bc_all = self.bc_head(out["x"]).sigmoid().to("cpu").tolist()[0]
+        p_bc_detect_all = self.bc_detect_head(out["x"]).sigmoid().to("cpu").tolist()[0]
+        print(f"p_bc: {p_bc_all[-1][0]:.4f}, p_bc_detect: {p_bc_detect_all[-1][0]:.4f}")
 
-        ret = {"p_bc": p_bc, "p_bc_detect": p_bc_detect}
+        frames = [
+            {"p_bc": p_bc_all[t][0], "p_bc_detect": p_bc_detect_all[t][0]}
+            for t in range(x1.shape[1])
+        ]
+        ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache

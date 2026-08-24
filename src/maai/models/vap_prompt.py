@@ -188,6 +188,7 @@ class VapGPT_prompt(nn.Module):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """
         Forward pass for the VapGPT_prompt model.
@@ -278,12 +279,20 @@ class VapGPT_prompt(nn.Module):
         )
         
         # Get back to the CPU
-        p_now = p_now.to('cpu').tolist()[0][-1]
-        p_future = p_future.to('cpu').tolist()[0][-1]
+        p_now_all = p_now.to('cpu').tolist()[0]
+        p_future_all = p_future.to('cpu').tolist()[0]
         
-        vad1 = vad1.sigmoid().to('cpu').tolist()[0][-1][0]
-        vad2 = vad2.sigmoid().to('cpu').tolist()[0][-1][0]
+        vad1_all = vad1.sigmoid().to('cpu').tolist()[0]
+        vad2_all = vad2.sigmoid().to('cpu').tolist()[0]
 
-        ret = {"p_now": p_now, "p_future": p_future, "vad": [vad1, vad2]}
+        frames = [
+            {
+                "p_now": p_now_all[t],
+                "p_future": p_future_all[t],
+                "vad": [vad1_all[t][0], vad2_all[t][0]],
+            }
+            for t in range(x1.shape[1])
+        ]
+        ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache

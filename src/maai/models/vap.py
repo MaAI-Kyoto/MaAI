@@ -141,6 +141,7 @@ class VapGPT(nn.Module):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """
         Forward pass for the VapGPT model.
@@ -149,6 +150,8 @@ class VapGPT(nn.Module):
             x1 (Tensor): Input audio embedded tensor for speaker 1.
             x2 (Tensor): Input audio embedded tensor for speaker 2.
             cache (dict, optional): Cache of past keys/values.
+            return_all_frames: Return one result dictionary for every input
+                time step instead of only the final step.
 
         Returns:
             Tuple[dict, dict]: Model outputs and updated cache.
@@ -207,22 +210,25 @@ class VapGPT(nn.Module):
         )
 
         # Get back to the CPU（ビン合計は最大 2 なので 2 で割り各話者 [0, 1] に正規化）
-        p_bins = p_bins_tensor.to("cpu").tolist()[0][-1]
-        p_bins_now = (p_bins_now_t * 0.5).to("cpu").tolist()[0][-1]
-        p_bins_future = (p_bins_future_t * 0.5).to("cpu").tolist()[0][-1]
-        p_now = p_now.to("cpu").tolist()[0][-1]
-        p_future = p_future.to("cpu").tolist()[0][-1]
+        p_bins_all = p_bins_tensor.to("cpu").tolist()[0]
+        p_bins_now_all = (p_bins_now_t * 0.5).to("cpu").tolist()[0]
+        p_bins_future_all = (p_bins_future_t * 0.5).to("cpu").tolist()[0]
+        p_now_all = p_now.to("cpu").tolist()[0]
+        p_future_all = p_future.to("cpu").tolist()[0]
+        vad1_all = vad1.sigmoid().to("cpu").tolist()[0]
+        vad2_all = vad2.sigmoid().to("cpu").tolist()[0]
 
-        vad1 = vad1.sigmoid().to("cpu").tolist()[0][-1][0]
-        vad2 = vad2.sigmoid().to("cpu").tolist()[0][-1][0]
-
-        ret = {
-            "p_now": p_now,
-            "p_future": p_future,
-            "vad": [vad1, vad2],
-            "p_bins": p_bins,
-            "p_bins_now": p_bins_now,
-            "p_bins_future": p_bins_future,
-        }
+        frames = [
+            {
+                "p_now": p_now_all[t],
+                "p_future": p_future_all[t],
+                "vad": [vad1_all[t][0], vad2_all[t][0]],
+                "p_bins": p_bins_all[t],
+                "p_bins_now": p_bins_now_all[t],
+                "p_bins_future": p_bins_future_all[t],
+            }
+            for t in range(x1.shape[1])
+        ]
+        ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache

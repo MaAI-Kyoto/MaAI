@@ -62,6 +62,7 @@ class Maai():
         local_model = None,
         return_p_bins: bool = False,
         listener_style = None,
+        inference_chunk_frames: int = 1,
     ):
         """Initialize the Maai instance.
         
@@ -95,6 +96,9 @@ class Maai():
             local_model (str | None): Path to a local custom model file.
             return_p_bins (bool): Whether to return probability bins in 'vap' mode.
             listener_style: Optional FiLM condition vector for nod_para.
+            inference_chunk_frames (int): Number of Mimi/VAP frames evaluated
+                in one causal forward. When greater than one, only the final
+                frame of each batch is emitted through ``get_result()``.
         """
 
         if mode in ("vap_mono", "vad_mono"):
@@ -109,14 +113,22 @@ class Maai():
             raise ValueError(f"audio_ch2 is required for mode '{mode}'.")
 
         self.return_p_bins = bool(return_p_bins)
+        inference_chunk_frames = int(inference_chunk_frames)
+        if inference_chunk_frames < 1:
+            raise ValueError("inference_chunk_frames must be at least 1.")
 
         encoder_type = resolve_encoder_type(model_type)
 
         conf = VapConfig()
         conf.frame_hz = float(frame_rate)
+        # The cache is retained as context_len-1 history frames.  This mask
+        # also makes each query in a multi-frame forward observe the same
+        # sliding context that it would have received in separate forwards.
+        conf.context_limit = int(round(float(context_len_sec) * float(frame_rate)))
         conf.encoder_type = encoder_type
         conf.mimi_model_name = mimi_model_name
         conf.mimi_use_onnx = 1 if bool(use_mimi_onnx) else 0
+        conf.mimi_onnx_frames_per_call = int(inference_chunk_frames)
         precision = str(mimi_onnx_precision).strip().lower()
         if precision not in {"fp32", "int8"}:
             raise ValueError("mimi_onnx_precision must be 'fp32' or 'int8'.")
@@ -354,6 +366,12 @@ class Maai():
         self.model_type = model_type
         self.encoder_type = encoder_type
         self._use_mimi_onnx = bool(use_mimi_onnx)
+        self.inference_chunk_frames = inference_chunk_frames
+        if self.inference_chunk_frames > 1:
+            if self.encoder_type != "mimi":
+                raise ValueError(
+                    "inference_chunk_frames > 1 currently supports the Mimi encoder only."
+                )
         self.mic1 = audio_ch1
         self.mic2 = audio_ch2
 
@@ -375,7 +393,11 @@ class Maai():
         # 12.5Hz -> 320 + 1280 samples
         # 20Hz -> 320 + 800 samples
         # 50Hz -> 320 + 320 samples
-        self.audio_frame_size = int(round(self.sampling_rate / self.frame_rate)) + self.frame_contxt_padding
+        self.audio_samples_per_frame = int(round(self.sampling_rate / self.frame_rate))
+        self.audio_frame_size = (
+            self.audio_samples_per_frame * self.inference_chunk_frames
+            + self.frame_contxt_padding
+        )
         
         self.current_x1_audio = []
         self.current_x2_audio = []
@@ -424,6 +446,27 @@ class Maai():
             encoder = getattr(self.vap, encoder_name, None)
             if encoder is not None and hasattr(encoder, "reset_streaming_state"):
                 encoder.reset_streaming_state()
+
+    @staticmethod
+    def _trim_vap_cache(cache: dict, max_frames: int) -> dict:
+        """Keep only the newest ``max_frames`` entries of every VAP KV cache."""
+        trimmed = {}
+        for key, (k_list, v_list) in cache.items():
+            trimmed[key] = (
+                [
+                    tensor[..., -max_frames:, :]
+                    if isinstance(tensor, torch.Tensor) and tensor.dim() >= 3
+                    else tensor
+                    for tensor in k_list
+                ],
+                [
+                    tensor[..., -max_frames:, :]
+                    if isinstance(tensor, torch.Tensor) and tensor.dim() >= 3
+                    else tensor
+                    for tensor in v_list
+                ],
+            )
+        return trimmed
 
     # def _increase_mimi_chunk_threshold(self, attempted_num_samples: int):
     #     if self.encoder_type != "mimi":
@@ -601,51 +644,71 @@ class Maai():
                 self.e1_full.append(e1)
                 self.e2_full.append(e2)
             
-                # More efficient context management
-                if len(self.e1_full) > self.audio_context_len:
-                    self.e1_full.pop(0)  # Remove from front instead of slicing
-                if len(self.e2_full) > self.audio_context_len:
-                    self.e2_full.pop(0)
-                
                 x1_full_ = torch.cat(self.e1_full, dim=1)
                 x2_full_ = torch.cat(self.e2_full, dim=1)
+                # A list item may contain multiple frames.  Retain the
+                # rolling context by time dimension, not list length.
+                if x1_full_.shape[1] > self.audio_context_len:
+                    x1_full_ = x1_full_[:, -self.audio_context_len :]
+                    x2_full_ = x2_full_[:, -self.audio_context_len :]
+                self.e1_full = [x1_full_]
+                self.e2_full = [x2_full_]
                 
                 # Move to device only if necessary
                 if self.device != 'cpu':
                     x1_full_ = x1_full_.to(self.device, non_blocking=True)
                     x2_full_ = x2_full_.to(self.device, non_blocking=True)
 
-                out, _ = self.vap.forward(x1_full_, x2_full_, cache=None)
+                out, _ = self.vap.forward(
+                    x1_full_,
+                    x2_full_,
+                    cache=None,
+                    return_all_frames=self.inference_chunk_frames > 1,
+                )
 
             # User KV cache
             elif self.use_kv_cache:
 
-                out, self.vap_cache = self.vap.forward(e1, e2, cache=self.vap_cache)
+                out, self.vap_cache = self.vap.forward(
+                    e1,
+                    e2,
+                    cache=self.vap_cache,
+                    return_all_frames=self.inference_chunk_frames > 1,
+                )
 
-                ## Trim all cache data in self.vap_cache so that the second-to-last dimension is self.audio_context_len - 1
                 if self.vap_cache is not None:
-                    new_cache = {}
-                    for key, (k_list, v_list) in self.vap_cache.items():
-                        new_k_list = []
-                        new_v_list = []
-                        for t in k_list:
-                            if isinstance(t, torch.Tensor) and t.dim() >= 3:
-                                new_k_list.append(t[..., -(self.audio_context_len - 1) :, :])
-                            else:
-                                new_k_list.append(t)
-                        for t in v_list:
-                            if isinstance(t, torch.Tensor) and t.dim() >= 3:
-                                new_v_list.append(t[..., -(self.audio_context_len - 1) :, :])
-                            else:
-                                new_v_list.append(t)
-                        new_cache[key] = (new_k_list, new_v_list)
-                    self.vap_cache = new_cache
+                    self.vap_cache = self._trim_vap_cache(
+                        self.vap_cache, self.audio_context_len - 1
+                    )
+
+            if self.inference_chunk_frames > 1 and (
+                e1.shape[1] != self.inference_chunk_frames
+                or e2.shape[1] != self.inference_chunk_frames
+            ):
+                raise RuntimeError(
+                    "Mimi emitted an unexpected number of VAP frames: "
+                    f"ch1={e1.shape[1]}, ch2={e2.shape[1]}, "
+                    f"expected={self.inference_chunk_frames}."
+                )
+
+            emitted_at = time.time()
+            if self.inference_chunk_frames > 1:
+                # No-cache inference returns the complete context, whereas
+                # cached inference returns only this chunk.  The public
+                # realtime queue emits only the final frame of each batch.
+                out_frames = out[-self.inference_chunk_frames :]
+                out = out_frames[-1]
+                x1_result = x1_dist[-self.audio_samples_per_frame :].copy()
+                x2_result = x2_dist[-self.audio_samples_per_frame :].copy()
+            else:
+                x1_result = x1_dist.copy()
+                x2_result = x2_dist.copy()
 
             # Pre-create result dict structure to avoid repeated key creation
             result_dict = {
-                "t": time.time(),
-                "x1": x1_dist.copy(),  # Only copy when necessary
-                "x2": x2_dist.copy(),
+                "t": emitted_at,
+                "x1": x1_result,
+                "x2": x2_result,
             }
             
             # Use dictionary mapping for mode-specific outputs (faster than if-elif chain)
