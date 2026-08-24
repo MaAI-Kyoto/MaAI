@@ -284,6 +284,7 @@ class VapGPT_nod_para(nn.Module):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """Forward pass for the VapGPT_nod_para model.
         
@@ -389,52 +390,49 @@ class VapGPT_nod_para(nn.Module):
         p_future = self.objective.probs_next_speaker_aggregate(
             probs, from_bin=self.BINS_PFUTURE[0], to_bin=self.BINS_PFUTURE[1]
         )
-        p_now = p_now.to("cpu").tolist()[0][-1]
-        p_now = [p_now[1], p_now[0]]
-        p_future = p_future.to("cpu").tolist()[0][-1]
-        p_future = [p_future[1], p_future[0]]
-
-        vad1 = float(v1.sigmoid().to("cpu").tolist()[0][-1][0])
-        vad2 = float(v2.sigmoid().to("cpu").tolist()[0][-1][0])
-
-        p_bc = float(bc.sigmoid().to("cpu").tolist()[0][-1][0])
-        p_nod = float(nod_t.sigmoid().to("cpu").tolist()[0][-1][0])
-
-        nc = nod_rep_logits.softmax(dim=-1).to("cpu").tolist()[0][-1]
-        nod_repetitions = [float(nc[i]) for i in range(len(nc))]
-        nod_repetitions_pred = self._apply_repetitions_thresholds(
-            nod_repetitions, self.nod_repetitions_thresholds
-        )
+        p_now_all = p_now.to("cpu").tolist()[0]
+        p_future_all = p_future.to("cpu").tolist()[0]
+        vad1_all = v1.sigmoid().to("cpu").tolist()[0]
+        vad2_all = v2.sigmoid().to("cpu").tolist()[0]
+        p_bc_all = bc.sigmoid().to("cpu").tolist()[0]
+        p_nod_all = nod_t.sigmoid().to("cpu").tolist()[0]
+        nod_repetitions_all = nod_rep_logits.softmax(dim=-1).to("cpu").tolist()[0]
 
         st = self.nod_param_stats
-        nod_range_z = float(nod_range.to("cpu").tolist()[0][-1][0])
-        nod_speed_z = float(nod_speed.to("cpu").tolist()[0][-1][0])
-        nod_range_val = self.denormalize(
-            nod_range_z,
-            float(st.get("range_mean", 0.0)),
-            float(st.get("range_std", 1.0)),
-        )
-        nod_speed_val = self.denormalize(
-            nod_speed_z,
-            float(st.get("speed_mean", 0.0)),
-            float(st.get("speed_std", 1.0)),
-        )
+        nod_range_all = nod_range.to("cpu").tolist()[0]
+        nod_speed_all = nod_speed.to("cpu").tolist()[0]
+        nod_swing_up_all = nod_swing_bin.sigmoid().to("cpu").tolist()[0]
 
-        nod_swing_up_prob = float(nod_swing_bin.sigmoid().to("cpu").tolist()[0][-1][0])
-        nod_swing_up_pred = int(nod_swing_up_prob >= float(self.nod_swing_up_threshold))
+        def _frame(t: int) -> dict:
+            nod_repetitions = [float(value) for value in nod_repetitions_all[t]]
+            nod_swing_up_prob = float(nod_swing_up_all[t][0])
+            return {
+                "p_now": [p_now_all[t][1], p_now_all[t][0]],
+                "p_future": [p_future_all[t][1], p_future_all[t][0]],
+                "vad": [float(vad2_all[t][0]), float(vad1_all[t][0])],
+                "p_bc": float(p_bc_all[t][0]),
+                "p_nod": float(p_nod_all[t][0]),
+                "nod_repetitions": nod_repetitions,
+                "nod_repetitions_pred": self._apply_repetitions_thresholds(
+                    nod_repetitions, self.nod_repetitions_thresholds
+                ),
+                "nod_range": self.denormalize(
+                    float(nod_range_all[t][0]),
+                    float(st.get("range_mean", 0.0)),
+                    float(st.get("range_std", 1.0)),
+                ),
+                "nod_speed": self.denormalize(
+                    float(nod_speed_all[t][0]),
+                    float(st.get("speed_mean", 0.0)),
+                    float(st.get("speed_std", 1.0)),
+                ),
+                "nod_swing_up": nod_swing_up_prob,
+                "nod_swing_up_pred": int(
+                    nod_swing_up_prob >= float(self.nod_swing_up_threshold)
+                ),
+            }
 
-        ret = {
-            "p_now": p_now,
-            "p_future": p_future,
-            "vad": [vad2, vad1],
-            "p_bc": p_bc,
-            "p_nod": p_nod,
-            "nod_repetitions": nod_repetitions,
-            "nod_repetitions_pred": nod_repetitions_pred,
-            "nod_range": nod_range_val,
-            "nod_speed": nod_speed_val,
-            "nod_swing_up": nod_swing_up_prob,
-            "nod_swing_up_pred": nod_swing_up_pred,
-        }
+        frames = [_frame(t) for t in range(x1.shape[1])]
+        ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache

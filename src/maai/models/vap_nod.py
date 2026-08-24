@@ -141,6 +141,7 @@ class VapGPT_nod(nn.Module):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """
         Forward pass for the VapGPT_nod model.
@@ -180,17 +181,18 @@ class VapGPT_nod(nn.Module):
         p_bc = self.bc_head(out["x"])
         nod = self.gt_head(out["x"])
 
-        p_bc = p_bc.sigmoid().to("cpu").tolist()[0][-1][0]
-        nod_ = nod.softmax(dim=-1).to("cpu").tolist()[0][-1]
-        p_nod_short = nod_[1]
-        p_nod_long = nod_[2]
-        p_nod_long_p = nod_[3]
+        p_bc_all = p_bc.sigmoid().to("cpu").tolist()[0]
+        nod_all = nod.softmax(dim=-1).to("cpu").tolist()[0]
 
-        ret = {
-            "p_bc": p_bc,
-            "p_nod_short": p_nod_short,
-            "p_nod_long": p_nod_long,
-            "p_nod_long_p": p_nod_long_p,
-        }
+        frames = [
+            {
+                "p_bc": p_bc_all[t][0],
+                "p_nod_short": nod_all[t][1],
+                "p_nod_long": nod_all[t][2],
+                "p_nod_long_p": nod_all[t][3],
+            }
+            for t in range(x1.shape[1])
+        ]
+        ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache

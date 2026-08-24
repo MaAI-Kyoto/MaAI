@@ -24,6 +24,7 @@ class VapGPT_mono(VapGPT):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """
         Forward pass for the mono VAP model.
@@ -36,7 +37,19 @@ class VapGPT_mono(VapGPT):
         Returns:
             Tuple[dict, dict]: Mono-converted model outputs and updated cache.
         """
-        ret, new_cache = super().forward(x1, x2, cache)
+        ret, new_cache = super().forward(
+            x1, x2, cache, return_all_frames=return_all_frames
+        )
+
+        if return_all_frames:
+            for frame in ret:
+                frame["p_now"] = max(0.0, (frame["p_now"][0] - 0.5) * 2.0)
+                frame["p_future"] = max(0.0, (frame["p_future"][0] - 0.5) * 2.0)
+                frame["vad"] = frame["vad"][0]
+                frame["p_bins"] = frame["p_bins"][0]
+                frame["p_bins_now"] = frame["p_bins_now"][0]
+                frame["p_bins_future"] = frame["p_bins_future"][0]
+            return ret, new_cache
 
         # 話者間正規化済み ch1 の [0.5, 1.0] を [0, 1] に線形伸長(0.5 以下は 0)
         ret["p_now"] = max(0.0, (ret["p_now"][0] - 0.5) * 2.0)

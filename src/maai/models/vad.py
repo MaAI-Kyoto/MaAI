@@ -105,6 +105,7 @@ class VadGPT(nn.Module):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """
         Forward pass for the VadGPT model.
@@ -146,12 +147,14 @@ class VadGPT(nn.Module):
         vad2 = self.va_classifier(out["x2"])
 
         # Get back to the CPU
-        vad1 = vad1.sigmoid().to("cpu").tolist()[0][-1][0]
-        vad2 = vad2.sigmoid().to("cpu").tolist()[0][-1][0]
+        vad1_all = vad1.sigmoid().to("cpu").tolist()[0]
+        vad2_all = vad2.sigmoid().to("cpu").tolist()[0]
 
-        ret = {
-            "vad": [vad1, vad2],
-        }
+        frames = [
+            {"vad": [vad1_all[t][0], vad2_all[t][0]]}
+            for t in range(x1.shape[1])
+        ]
+        ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache
 
@@ -166,7 +169,13 @@ class VadGPT_mono(VadGPT):
     for channel 1 instead of a value per speaker.
     """
 
-    def forward(self, x1: Tensor, x2: Tensor, cache: Optional[dict] = None) -> Tuple[dict, dict]:
+    def forward(
+        self,
+        x1: Tensor,
+        x2: Tensor,
+        cache: Optional[dict] = None,
+        return_all_frames: bool = False,
+    ) -> Tuple[dict, dict]:
         """
         Forward pass for the mono VAD model.
 
@@ -178,7 +187,14 @@ class VadGPT_mono(VadGPT):
         Returns:
             Tuple[dict, dict]: Model outputs (scalar ``vad``) and updated cache.
         """
-        ret, new_cache = super().forward(x1, x2, cache)
+        ret, new_cache = super().forward(
+            x1, x2, cache, return_all_frames=return_all_frames
+        )
+
+        if return_all_frames:
+            for frame in ret:
+                frame["vad"] = frame["vad"][0]
+            return ret, new_cache
 
         # ch1 のみを返す
         ret["vad"] = ret["vad"][0]

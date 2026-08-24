@@ -952,20 +952,30 @@ def download_continuous_mimi_onnx(
     precision: str = "fp32",
     cache_dir: str | None = None,
     force_download: bool = False,
+    frames_per_call: int = 1,
 ) -> tuple[str, str]:
     """
     Resolve paths to the streaming Mimi ONNX model and JSON sidecar on disk.
 
     Files are fetched from ``maai-kyoto/continuous-mimi-onnx`` via ``hf_hub_download``
     (cached under the usual Hugging Face cache layout, or under ``cache_dir`` when set).
+
+    ``frames_per_call`` selects the microbatch export contract: 1 (default) is the
+    original one-frame-per-call export (``continuous_mimi_{precision}.onnx``); N > 1
+    selects the N-frames-per-call export (``continuous_mimi_{precision}_{N}f.onnx``),
+    which produces N VAP frames per ONNX call.
     """
     precision = str(precision).strip().lower()
+    frames_per_call = int(frames_per_call)
+    if frames_per_call < 1:
+        raise ValueError("frames_per_call must be at least 1.")
+    suffix = "" if frames_per_call == 1 else f"_{frames_per_call}f"
     if precision == "fp32":
-        onnx_fn = "continuous_mimi_fp32.onnx"
-        meta_fn = "continuous_mimi_fp32.json"
+        onnx_fn = f"continuous_mimi_fp32{suffix}.onnx"
+        meta_fn = f"continuous_mimi_fp32{suffix}.json"
     elif precision == "int8":
-        onnx_fn = "continuous_mimi_int8.onnx"
-        meta_fn = "continuous_mimi_int8.json"
+        onnx_fn = f"continuous_mimi_int8{suffix}.onnx"
+        meta_fn = f"continuous_mimi_int8{suffix}.json"
     else:
         raise ValueError(f"Unsupported precision for continuous Mimi ONNX: {precision}")
 

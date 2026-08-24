@@ -604,14 +604,23 @@ class EncoderMimi(nn.Module):
             raise ValueError("frame_hz must be > 0")
         return int(round(16000.0 / float(self.frame_hz)))
 
-    def get_streaming_call_window_16k(self) -> int:
+    def get_streaming_call_window_16k(self, frames_per_call: int = 1) -> int:
         """Current PyTorch call window size (context + new samples) at 16k."""
-        return int(self.context_samples + self.get_streaming_emit_samples_16k())
+        return int(
+            self.context_samples
+            + int(frames_per_call) * self.get_streaming_emit_samples_16k()
+        )
 
-    def get_streaming_mimi_input_24k(self) -> int:
+    def get_streaming_mimi_input_24k(self, frames_per_call: int = 1) -> int:
         """Mimi core input size at 24k after stripping overlap context."""
         emit_16k = self.get_streaming_emit_samples_16k()
-        return int(round(float(emit_16k) * float(self.sample_rate) / 16000.0))
+        return int(
+            round(
+                float(int(frames_per_call) * emit_16k)
+                * float(self.sample_rate)
+                / 16000.0
+            )
+        )
 
     def _probe_mimi_cache_templates(
         self,
@@ -699,12 +708,22 @@ class EncoderMimi(nn.Module):
             for t in layer:
                 past_shapes.append(tuple(int(v) for v in t.shape))
 
+        native_wave_24k = self.get_streaming_mimi_input_24k()
+        actual_wave_24k = int(
+            native_wave_24k if num_samples_24k is None else num_samples_24k
+        )
+        if actual_wave_24k % native_wave_24k:
+            raise ValueError(
+                "num_samples_24k must be an integer number of Mimi streaming frames: "
+                f"got {actual_wave_24k}, native_frame={native_wave_24k}."
+            )
+        frames_per_call = actual_wave_24k // native_wave_24k
+
         return {
-            "wave_16k_call_window": self.get_streaming_call_window_16k(),
+            "frames_per_call": int(frames_per_call),
+            "wave_16k_call_window": self.get_streaming_call_window_16k(frames_per_call),
             "wave_24k_mimi_input": int(
-                self.get_streaming_mimi_input_24k()
-                if num_samples_24k is None
-                else num_samples_24k
+                actual_wave_24k
             ),
             "padding_cache_shapes": [tuple(int(v) for v in t.shape) for t in pad_templates],
             "past_key_value_shapes": past_shapes,
@@ -1093,6 +1112,7 @@ class EncoderMimiOnnx(EncoderMimi):
         onnx_cpu_intra_threads: int = 2,
         onnx_cpu_inter_threads: int = 1,
         output_dim: int = 512,
+        frames_per_call: int = 1,
     ):
         """Initialize the ONNX-backed Mimi Encoder.
         
@@ -1107,6 +1127,7 @@ class EncoderMimiOnnx(EncoderMimi):
             onnx_cpu_intra_threads (int): Number of intra-op threads for CPU execution.
             onnx_cpu_inter_threads (int): Number of inter-op threads for CPU execution.
             output_dim (int): Mimi embedding dim (kyutai/mimi default 512).
+            frames_per_call (int): Number of target VAP frames in one ONNX call.
         """
         # Skip HF from_pretrained — runtime uses ORT only.
         super().__init__(
@@ -1131,6 +1152,9 @@ class EncoderMimiOnnx(EncoderMimi):
         self._use_cuda = self._runtime_device.startswith("cuda")
         self._onnx_model_path = str(onnx_model_path)
         self._onnx_meta_path = str(onnx_meta_path)
+        self._onnx_frames_per_call = int(frames_per_call)
+        if self._onnx_frames_per_call < 1:
+            raise ValueError("frames_per_call must be at least 1.")
         self._onnx_states: list[np.ndarray] = []
         self._onnx_input_names: list[str] = []
         self._onnx_output_names: list[str] = []
@@ -1234,11 +1258,21 @@ class EncoderMimiOnnx(EncoderMimi):
     def _init_onnx_states(self):
         meta = self._load_meta()
         required_params = meta.get("required_params", None)
+        emit_16k = self.get_streaming_emit_samples_16k()
         expected_required = {
-            "frame_rate": 12.5,
-            "context_samples": 320,
-            "wave_16k_call_window": 1600,
-            "wave_24k_mimi_input": 1920,
+            "frame_rate": float(self.frame_hz),
+            "context_samples": int(self.context_samples),
+            "frames_per_call": int(self._onnx_frames_per_call),
+            "wave_16k_call_window": int(
+                self.context_samples + emit_16k * self._onnx_frames_per_call
+            ),
+            "wave_24k_mimi_input": int(
+                round(
+                    float(emit_16k * self._onnx_frames_per_call)
+                    * float(self.sample_rate)
+                    / 16000.0
+                )
+            ),
         }
         if required_params is None:
             raise RuntimeError(
@@ -1246,7 +1280,9 @@ class EncoderMimiOnnx(EncoderMimi):
                 "Legacy meta format is no longer supported."
             )
         for k, v in expected_required.items():
-            got = required_params.get(k, None)
+            # Pre-microbatch exports did not record this field; they are the
+            # one-frame contract and remain compatible with frames_per_call=1.
+            got = required_params.get(k, 1 if k == "frames_per_call" else None)
             if got != v:
                 raise RuntimeError(
                     f"ONNX meta required_params mismatch for {k}: got={got}, expected={v}"
@@ -1400,9 +1436,14 @@ class EncoderMimiOnnx(EncoderMimi):
                     None,
                 )
                 if emb_meta is not None and emb_meta.type == "tensor(float)":
-                    emb_shape = self._onnx_output_shape_for_fixed_bind(emb_meta.shape)
+                    emb_shape = list(self._onnx_output_shape_for_fixed_bind(emb_meta.shape))
+                    # ORT reports the time dimension as dynamic.  Bind the
+                    # concrete export contract rather than resolving it to 1,
+                    # otherwise a two-frame graph cannot write its output.
+                    if len(emb_shape) >= 2:
+                        emb_shape[1] = int(self._onnx_frames_per_call)
                     self._onnx_cuda_embeddings_ortvalue = self._ort.OrtValue.ortvalue_from_shape_and_type(
-                        list(emb_shape),
+                        emb_shape,
                         np.float32,
                         "cuda",
                         0,
@@ -1690,6 +1731,7 @@ def build_audio_encoder(conf, cpc_model: str = ""):
                 precision=onnx_precision,
                 cache_dir=hf_cache_dir,
                 force_download=hf_force,
+                frames_per_call=getattr(conf, "mimi_onnx_frames_per_call", 1),
             )
         return EncoderMimiOnnx(
             frame_hz=getattr(conf, "frame_hz", 12.5),
@@ -1700,6 +1742,7 @@ def build_audio_encoder(conf, cpc_model: str = ""):
             runtime_device=runtime_device,
             onnx_cpu_intra_threads=getattr(conf, "mimi_onnx_cpu_intra_threads", 4),
             onnx_cpu_inter_threads=getattr(conf, "mimi_onnx_cpu_inter_threads", 1),
+            frames_per_call=getattr(conf, "mimi_onnx_frames_per_call", 1),
         )
 
     raise ValueError(f"Unsupported encoder_type: {encoder_type}")

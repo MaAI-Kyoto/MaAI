@@ -142,6 +142,7 @@ class VapGPT_bc_2type(nn.Module):
         x1: Tensor,
         x2: Tensor,
         cache: Optional[dict] = None,
+        return_all_frames: bool = False,
     ) -> Tuple[dict, dict]:
         """
         Forward pass for the VapGPT_bc_2type model.
@@ -180,9 +181,12 @@ class VapGPT_bc_2type(nn.Module):
 
         bc = self.bc_head(out["x"])
 
-        p_bc_react = bc.softmax(dim=-1).to("cpu").tolist()[0][-1][1]
-        p_bc_emo = bc.softmax(dim=-1).to("cpu").tolist()[0][-1][2]
+        bc_all = bc.softmax(dim=-1).to("cpu").tolist()[0]
 
-        ret = {"p_bc_react": p_bc_react, "p_bc_emo": p_bc_emo}
+        frames = [
+            {"p_bc_react": bc_all[t][1], "p_bc_emo": bc_all[t][2]}
+            for t in range(x1.shape[1])
+        ]
+        ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache
