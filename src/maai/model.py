@@ -857,8 +857,9 @@ class MaaiMultiple:
     audio once per frame and feeds the encoded features into every sub-model.
 
     All sub-models must share the same encoder configuration:
-    ``model_type``, ``frame_rate``, ``context_len_sec``, ``device`` and the
-    ``mimi_*`` parameters. Per-model differences allowed in ``configs`` are
+    ``model_type``, ``frame_rate``, ``context_len_sec``, ``device``,
+    ``inference_chunk_frames`` and the ``mimi_*`` parameters. Per-model
+    differences allowed in ``configs`` are
     ``mode``, ``lang``, ``local_model``, ``return_p_bins`` and an optional
     ``label`` used as the result key.
 
@@ -898,9 +899,14 @@ class MaaiMultiple:
         cache_dir: str = None,
         force_download: bool = False,
         use_kv_cache: bool = True,
+        inference_chunk_frames: int = 1,
     ):
         if not configs:
             raise ValueError("MaaiMultiple requires at least one model config.")
+
+        inference_chunk_frames = int(inference_chunk_frames)
+        if inference_chunk_frames < 1:
+            raise ValueError("inference_chunk_frames must be at least 1.")
 
         shared_kwargs = dict(
             audio_ch1=audio_ch1,
@@ -926,6 +932,7 @@ class MaaiMultiple:
             cache_dir=cache_dir,
             force_download=force_download,
             use_kv_cache=use_kv_cache,
+            inference_chunk_frames=inference_chunk_frames,
         )
 
         self.sub_maais: list[Maai] = []
@@ -975,7 +982,13 @@ class MaaiMultiple:
         self.sampling_rate = primary.sampling_rate
         self.frame_contxt_padding = primary.frame_contxt_padding
         self.audio_frame_size = primary.audio_frame_size
+        self.audio_samples_per_frame = primary.audio_samples_per_frame
         self.use_kv_cache = bool(use_kv_cache)
+        self.inference_chunk_frames = inference_chunk_frames
+        if self.inference_chunk_frames > 1 and self.encoder_type != "mimi":
+            raise ValueError(
+                "inference_chunk_frames > 1 currently supports the Mimi encoder only."
+            )
 
         # Shared audio buffers and (when KV cache is disabled) shared encoded
         # context. These are populated by the worker on each frame.
@@ -1181,20 +1194,42 @@ class MaaiMultiple:
             if not self.use_kv_cache:
                 self.eA_full.append(eA_shared)
                 self.eB_full.append(eB_shared)
-                if len(self.eA_full) > self.audio_context_len:
-                    self.eA_full.pop(0)
-                if len(self.eB_full) > self.audio_context_len:
-                    self.eB_full.pop(0)
                 eA_in = torch.cat(self.eA_full, dim=1)
                 eB_in = torch.cat(self.eB_full, dim=1)
+                # A list item may contain multiple frames (inference_chunk_frames > 1).
+                # Retain the rolling context by time dimension, not list length.
+                if eA_in.shape[1] > self.audio_context_len:
+                    eA_in = eA_in[:, -self.audio_context_len:]
+                    eB_in = eB_in[:, -self.audio_context_len:]
+                self.eA_full = [eA_in]
+                self.eB_full = [eB_in]
             else:
                 eA_in = eA_shared
                 eB_in = eB_shared
 
+            if self.inference_chunk_frames > 1 and (
+                eA_in.shape[1] != self.inference_chunk_frames
+                or eB_in.shape[1] != self.inference_chunk_frames
+            ) and self.use_kv_cache:
+                raise RuntimeError(
+                    "Mimi emitted an unexpected number of VAP frames: "
+                    f"chA={eA_in.shape[1]}, chB={eB_in.shape[1]}, "
+                    f"expected={self.inference_chunk_frames}."
+                )
+
+            if self.inference_chunk_frames > 1:
+                # One combined result per process() call, representing only
+                # the newest frame -- same convention as Maai.process().
+                x1_result = x1_dist[-self.audio_samples_per_frame:].copy()
+                x2_result = x2_dist[-self.audio_samples_per_frame:].copy()
+            else:
+                x1_result = x1_dist.copy()
+                x2_result = x2_dist.copy()
+
             results_combined: dict = {
                 "t": time.time(),
-                "x1": x1_dist.copy(),
-                "x2": x2_dist.copy(),
+                "x1": x1_result,
+                "x2": x2_result,
             }
 
             def _run_sub(label: str, sub: "Maai") -> tuple[str, dict]:
