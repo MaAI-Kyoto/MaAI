@@ -45,6 +45,11 @@ repo_ids = {
 
     "vad_jp": "maai-kyoto/vad_jp",
     "vad_ch": "maai-kyoto/vad_ch",
+    "vad_en": "maai-kyoto/vad_en",
+
+    "bc_det_jp": "maai-kyoto/bc_det_jp",
+    "bc_det_en": "maai-kyoto/bc_det_en",
+    "bc_det_ch": "maai-kyoto/bc_det_ch",
 }
 
 # Streaming Mimi ONNX weights (same hub pattern as VAP checkpoints).
@@ -187,7 +192,7 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
     
     # vad_mono runs the same model / checkpoints as vad
-    elif mode in ("vad", "vad_mono"):
+    elif mode == "vad":
         if language == "jp":
             repo_id = repo_ids["vad_jp"]
             file_path = f"vad{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
@@ -196,8 +201,48 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             repo_id = repo_ids["vad_ch"]
             file_path = f"vad{encoder_suffix}_state_dict_ch_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
 
+        elif language == "en":
+            repo_id = repo_ids["vad_en"]
+            file_path = f"vad{encoder_suffix}_state_dict_en_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
         else:
-            supported_languages = ["jp", "ch"]
+            supported_languages = ["jp", "ch", "en"]
+            raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
+    elif mode == "vad_mono":
+        if language == "jp":
+            repo_id = repo_ids["vad_jp"]
+            file_path = f"vad_mono{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        elif language == "ch":
+            repo_id = repo_ids["vad_ch"]
+            file_path = f"vad_mono{encoder_suffix}_state_dict_ch_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        elif language == "en":
+            repo_id = repo_ids["vad_en"]
+            file_path = f"vad_mono{encoder_suffix}_state_dict_en_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        else:
+            supported_languages = ["jp", "ch", "en"]
+            raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
+    # bc_det_mono runs the same model / checkpoints as bc_det
+    elif mode == "bc_det":
+        if language in ("jp", "en", "ch"):
+            repo_id = repo_ids[f"bc_det_{language}"]
+            file_path = f"bc_det{encoder_suffix}_state_dict_{language}_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        else:
+            supported_languages = ["jp", "en", "ch"]
+            raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
+    elif mode == "bc_det_mono":
+        if language in ("jp", "en", "ch"):
+            repo_id = repo_ids[f"bc_det_{language}"]
+            file_path = f"bc_det_mono{encoder_suffix}_state_dict_{language}_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        else:
+            supported_languages = ["jp", "en", "ch"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
     elif mode == "bc":
@@ -271,7 +316,7 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
         )
 
     else:
-        supported_modes = ["vap", "vap_mono", "vap_mc", "vad", "vad_mono", "bc", "bc_2type", "nod", "vap_prompt", "nod_para"]
+        supported_modes = ["vap", "vap_mono", "vap_mc", "vad", "vad_mono", "bc_det", "bc_det_mono", "bc", "bc_2type", "nod", "vap_prompt", "nod_para"]
         raise ValueError(f"Invalid mode: {mode}. Supported modes are: {supported_modes}")
 
     try:
@@ -665,6 +710,108 @@ def conv_bytearray_2_vapresult_vad_mono(barr):
     """
     result_vap = conv_bytearray_2_vapresult_vad(barr)
     result_vap['vad'] = result_vap['vad'][0]
+    return result_vap
+
+#
+# BC detection result -> Byte
+#
+def conv_vapresult_2_bytearray_bc_det(vap_result):
+    """Serialize a BC detection result dictionary into a byte array.
+
+    Args:
+        vap_result (Dict[str, Any]): BC detection result data.
+
+    Returns:
+        bytes: The serialized byte array.
+    """
+    b = b''
+    b += struct.pack('<d', vap_result['t'])
+
+    b += len(vap_result['x1']).to_bytes(4, BYTE_ORDER)
+    b += conv_floatarray_2_byte(vap_result['x1'])
+
+    b += len(vap_result['x2']).to_bytes(4, BYTE_ORDER)
+    b += conv_floatarray_2_byte(vap_result['x2'])
+
+    b += len(vap_result['p_bc_det']).to_bytes(4, BYTE_ORDER)
+    b += conv_floatarray_2_byte(vap_result['p_bc_det'])
+
+    return b
+
+#
+# Byte -> BC detection result
+#
+def conv_bytearray_2_vapresult_bc_det(barr):
+    """Deserialize a byte array back into a BC detection result dictionary.
+
+    Args:
+        barr (bytes): Serialized byte array.
+
+    Returns:
+        Dict[str, Any]: The decoded BC detection result data.
+    """
+    idx = 0
+    t = struct.unpack('<d', barr[idx:8])[0]
+    idx += 8
+
+    len_x1 = struct.unpack('<I', barr[idx:idx+4])[0]
+    idx += 4
+    x1 = conv_bytearray_2_floatarray(barr[idx:idx+8*len_x1])
+    idx += 8*len_x1
+
+    len_x2 = struct.unpack('<I', barr[idx:idx+4])[0]
+    idx += 4
+    x2 = conv_bytearray_2_floatarray(barr[idx:idx+8*len_x2])
+    idx += 8*len_x2
+
+    len_bc_det = struct.unpack('<I', barr[idx:idx+4])[0]
+    idx += 4
+    p_bc_det = conv_bytearray_2_floatarray(barr[idx:idx+8*len_bc_det])
+    idx += 8*len_bc_det
+
+    result_vap = {
+        't': t,
+        'x1': x1,
+        'x2': x2,
+        'p_bc_det': p_bc_det
+    }
+
+    return result_vap
+
+#
+# BC detection result (mono) -> Byte
+#
+def conv_vapresult_2_bytearray_bc_det_mono(vap_result):
+    """Serialize a mono BC detection result dictionary into a byte array.
+
+    The scalar ``p_bc_det`` value is wrapped into a length-1 array so the
+    wire format stays identical to the two-channel one.
+
+    Args:
+        vap_result (Dict[str, Any]): Mono BC detection result data.
+
+    Returns:
+        bytes: The serialized byte array.
+    """
+    wrapped = dict(vap_result)
+    wrapped['p_bc_det'] = [vap_result['p_bc_det']]
+    return conv_vapresult_2_bytearray_bc_det(wrapped)
+
+#
+# Byte -> BC detection result (mono)
+#
+def conv_bytearray_2_vapresult_bc_det_mono(barr):
+    """Deserialize a byte array back into a mono BC detection result dictionary.
+
+    Args:
+        barr (bytes): Serialized byte array.
+
+    Returns:
+        Dict[str, Any]: The decoded mono BC detection result data with a
+        scalar ``p_bc_det``.
+    """
+    result_vap = conv_bytearray_2_vapresult_bc_det(barr)
+    result_vap['p_bc_det'] = result_vap['p_bc_det'][0]
     return result_vap
 
 #

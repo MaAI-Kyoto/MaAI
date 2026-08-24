@@ -337,6 +337,19 @@ class ConsoleBar:
                 # vap_mono: スカラー vad は ch1 のみ
                 local["vad(x1)"] = local["vad"]
 
+        # p_bc_det も同様に展開する。2 要素だが確率分布ではなく話者ごとの
+        # 独立した確率なので、balance バーではなく個別のバーで描画する。
+        if "p_bc_det" in local:
+            if isinstance(local["p_bc_det"], (list, tuple)):
+                try:
+                    local["p_bc_det(x1)"] = local["p_bc_det"][0]
+                    local["p_bc_det(x2)"] = local["p_bc_det"][1]
+                except Exception:
+                    pass
+            else:
+                # bc_det_mono: スカラー p_bc_det は ch1 のみ
+                local["p_bc_det(x1)"] = local["p_bc_det"]
+
         skip_nod_para: set = set()
         if is_nod_para:
             skip_nod_para = {
@@ -424,7 +437,7 @@ class ConsoleBar:
 
         # 各キーを動的に処理
         for key, value in local.items():
-            if key in ("t", "vad", "bin_times"):
+            if key in ("t", "vad", "p_bc_det", "bin_times"):
                 continue
             if key in skip_nod_para:
                 continue
@@ -500,6 +513,10 @@ class TcpReceiver:
             vap_result = util.conv_bytearray_2_vapresult_vad(data)
         elif self.mode == 'vad_mono':
             vap_result = util.conv_bytearray_2_vapresult_vad_mono(data)
+        elif self.mode == 'bc_det':
+            vap_result = util.conv_bytearray_2_vapresult_bc_det(data)
+        elif self.mode == 'bc_det_mono':
+            vap_result = util.conv_bytearray_2_vapresult_bc_det_mono(data)
         elif self.mode == 'bc_2type':
             vap_result = util.conv_bytearray_2_vapresult_bc_2type(data)
         elif self.mode == 'nod':
@@ -573,6 +590,10 @@ class TcpTransmitter:
             data_sent = util.conv_vapresult_2_bytearray_vad(result_dict)
         elif self.mode == 'vad_mono':
             data_sent = util.conv_vapresult_2_bytearray_vad_mono(result_dict)
+        elif self.mode == 'bc_det':
+            data_sent = util.conv_vapresult_2_bytearray_bc_det(result_dict)
+        elif self.mode == 'bc_det_mono':
+            data_sent = util.conv_vapresult_2_bytearray_bc_det_mono(result_dict)
         elif self.mode == 'bc_2type':
             data_sent = util.conv_vapresult_2_bytearray_bc_2type(result_dict)
         elif self.mode == 'nod':
@@ -693,6 +714,13 @@ class GuiPlot:
         "p_bc_emo": (255, 210, 70),
         "p_nod": (80, 200, 120),
         "p_bc": (230, 70, 70),
+    }
+
+    # 話者ごとに独立した 0–1 の値を上下対称（ch1 は上、ch2 は下）に描くキーと
+    # そのプロットタイトル。mono モードではスカラーになり単一カーブで描かれる。
+    _MIRROR_PLOT_TITLES: Dict[str, str] = {
+        "vad": "Voice Activity Detection (VAD)",
+        "p_bc_det": "Backchannel Detection (p_bc_det)",
     }
 
     @staticmethod
@@ -945,6 +973,7 @@ class GuiPlot:
             "p_future",
             "p_bins",
             "vad",
+            "p_bc_det",
             "p_bins_now",
             "p_bins_future",
             "silero_vad_score",
@@ -1047,11 +1076,11 @@ class GuiPlot:
                     pass
                 self.curves[key] = {"hi": hi_c, "lo": lo_c}
                 self.data_buffer[key] = list(buf)
-            elif key == "vad" and isinstance(
+            elif key in ("vad", "p_bc_det") and isinstance(
                 val, (int, float, np.floating, np.integer)
             ):
-                # vap_mono: ch1 のみのスカラー vad を単一カーブ(0–1)で描画
-                self._cfg(p, "Voice Activity Detection (VAD)")
+                # vap_mono / bc_det_mono: ch1 のみのスカラー値を単一カーブ(0–1)で描画
+                self._cfg(p, self._MIRROR_PLOT_TITLES[key])
                 p.setYRange(0.0, 1.0, padding=0.0)
                 buf = np.zeros(self.MAX_CONTEXT_LEN, dtype=float)
                 c = p.plot(
@@ -1063,8 +1092,8 @@ class GuiPlot:
                 )
                 self.curves[key] = c
                 self.data_buffer[key] = list(buf)
-            elif key == "vad":
-                self._cfg(p, "Voice Activity Detection (VAD)")
+            elif key in ("vad", "p_bc_det"):
+                self._cfg(p, self._MIRROR_PLOT_TITLES[key])
                 p.setYRange(-1.0, 1.0, padding=0.0)
                 b1 = np.zeros(self.MAX_CONTEXT_LEN, dtype=float)
                 b2 = np.zeros(self.MAX_CONTEXT_LEN, dtype=float)
@@ -1263,8 +1292,8 @@ class GuiPlot:
                     else:
                         # vap_mono: 単一カーブ
                         self.curves[key].setData(x, arr)
-            elif key == "vad" and key in self.curves and not isinstance(self.curves[key], tuple):
-                # vap_mono: スカラー vad を単一カーブで描画
+            elif key in ("vad", "p_bc_det") and key in self.curves and not isinstance(self.curves[key], tuple):
+                # vap_mono / bc_det_mono: スカラー値を単一カーブで描画
                 buf = self.data_buffer[key]
                 try:
                     fv = float(np.asarray(val).reshape(-1)[0])
@@ -1277,11 +1306,11 @@ class GuiPlot:
                 if draw:
                     x = np.linspace(-self.shown_context_sec, 0.0, len(buf))
                     self.curves[key].setData(x, np.asarray(buf, dtype=float))
-            elif key == "vad" and key in self.curves:
+            elif key in ("vad", "p_bc_det") and key in self.curves:
                 b1, b2 = self.data_buffer[key]
-                vad1, vad2 = result[key]
-                b1 = list(b1) + [float(vad1)]
-                b2 = list(b2) + [float(vad2)]
+                v1, v2 = result[key]
+                b1 = list(b1) + [float(v1)]
+                b2 = list(b2) + [float(v2)]
                 if len(b1) > self.MAX_CONTEXT_LEN:
                     b1 = b1[-self.MAX_CONTEXT_LEN :]
                 if len(b2) > self.MAX_CONTEXT_LEN:
