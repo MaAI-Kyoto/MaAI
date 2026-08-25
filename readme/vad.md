@@ -35,14 +35,24 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 
 ## Supported Languages and Frame Rates
 
-| lang | model_type | frame_rate |
-| ---- | ---------- | ---------- |
-| jp | `normal` (CPC encoder) | 10, 20, 50 |
-| jp | `normal-ver2` (Mimi encoder) | 12.5 |
-| ch | `normal` (CPC encoder) | 10, 20, 50 |
-| ch | `normal-ver2` (Mimi encoder) | 12.5 |
+| lang | model_type | frame_rate | `vad` (2ch) | `vad_mono` (1ch) |
+| ---- | ---------- | ---------- | ----------- | ---------------- |
+| jp | `normal` (CPC encoder) | 10, 20, 50 | ✅ | — |
+| jp | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
+| en | `normal` (CPC encoder) | 10, 20, 50 | ✅ | — |
+| en | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | coming soon |
+| ch | `normal` (CPC encoder) | 10, 20, 50 | ✅ | — |
+| ch | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
 
-Note that the 10/20/50 Hz models are the CPC-based ones (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`).
+Note that the 10/20/50 Hz models are the CPC-based ones (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`). The single-channel mode (`vad_mono`) is released only for the 12.5 Hz Mimi-based models; the English single-channel model is coming soon.
+
+## Training Data
+
+| lang | Training data |
+| ---- | ------------- |
+| jp | [Travel Agency Task Dialogue](https://aclanthology.org/2022.lrec-1.619/), [Human-Robot Dialogue](https://aclanthology.org/2025.naacl-long.367/), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) |
+| en | [Switchboard corpus](https://catalog.ldc.upenn.edu/LDC97S62), [Seamless Interaction](https://ai.meta.com/research/seamless-interaction/), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) |
+| ch | [HKUST Mandarin Telephone Speech](https://catalog.ldc.upenn.edu/LDC2005S15), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) |
 
 ## Usage Example
 
@@ -70,7 +80,7 @@ while True:
     print(result["vad"])  # [float, float]
 ```
 
-For the single-channel version, set `mode="vad_mono"` and pass only `audio_ch1`; `result["vad"]` is then a single float.
+For the single-channel version, set `mode="vad_mono"` and pass only `audio_ch1`; `result["vad"]` is then a single float. `vad_mono` is available for `jp` and `ch` with `frame_rate=12.5` and `model_type="normal-ver2"`.
 
 Sample scripts:
 - [With 2 mic inputs](../example/vad/vad_2mic.py) 🎤

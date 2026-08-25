@@ -134,6 +134,26 @@ the (relatively expensive) encoder runs only once per audio frame.
 
 - [MaaiMultiple - Sharing the Audio Encoder Across Multiple Models](readme/multiple.md)
 
+### Speeding Up Inference with Chunked Frames
+
+`Maai` and `MaaiMultiple` accept `inference_chunk_frames` (default `1`), which
+evaluates several frames in a single causal forward instead of one frame at a
+time. The outputs stay numerically equivalent, but the number of forward calls
+per second of audio drops from `frame_rate` to `frame_rate / N`, so the
+computational cost goes down. In exchange, only the final frame of each chunk
+is emitted, so the result rate becomes `frame_rate / N` as well. It requires
+the Mimi encoder (`model_type="normal-ver2"`), and the ONNX backend currently
+supports `N=1` and `N=2`.
+
+```python
+maai = Maai(
+    mode="vap", lang="jp", frame_rate=12.5,
+    audio_ch1=mic1, audio_ch2=mic2, device="cpu",
+    model_type="normal-ver2",
+    inference_chunk_frames=2,   # two frames per forward
+)
+```
+
 <br>
 
 ## 🎚️ Input / Output

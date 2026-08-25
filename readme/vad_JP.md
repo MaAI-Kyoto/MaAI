@@ -35,14 +35,24 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 
 ## 対応言語・フレームレート
 
-| lang | model_type | frame_rate |
-| ---- | ---------- | ---------- |
-| jp | `normal` (CPC エンコーダ) | 10, 20, 50 |
-| jp | `normal-ver2` (Mimi エンコーダ) | 12.5 |
-| ch | `normal` (CPC エンコーダ) | 10, 20, 50 |
-| ch | `normal-ver2` (Mimi エンコーダ) | 12.5 |
+| lang | model_type | frame_rate | `vad` (2ch) | `vad_mono` (1ch) |
+| ---- | ---------- | ---------- | ----------- | ---------------- |
+| jp | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
+| jp | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
+| en | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
+| en | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | 近日公開予定 |
+| ch | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
+| ch | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
 
-10/20/50 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。
+10/20/50 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。1チャネル版 (`vad_mono`) は 12.5 Hz の Mimi ベースのモデルのみ公開しており、英語の1チャネル版は近日公開予定です。
+
+## 学習データ
+
+| lang | 学習データ |
+| ---- | ---------- |
+| jp | [旅行代理店タスク対話](https://aclanthology.org/2022.lrec-1.619/)、[人間ロボット対話](https://aclanthology.org/2025.naacl-long.367/)、[オンライン会話データセット](https://www.arxiv.org/abs/2506.21191) |
+| en | [Switchboard corpus](https://catalog.ldc.upenn.edu/LDC97S62)、[Seamless Interaction](https://ai.meta.com/research/seamless-interaction/)、[オンライン会話データセット](https://www.arxiv.org/abs/2506.21191) |
+| ch | [HKUST Mandarin Telephone Speech](https://catalog.ldc.upenn.edu/LDC2005S15)、[オンライン会話データセット](https://www.arxiv.org/abs/2506.21191) |
 
 ## 使用例
 
@@ -70,7 +80,7 @@ while True:
     print(result["vad"])  # [float, float]
 ```
 
-1チャネル版を使う場合は `mode="vad_mono"` を指定し、`audio_ch1` のみを渡してください。このとき `result["vad"]` は単一の float になります。
+1チャネル版を使う場合は `mode="vad_mono"` を指定し、`audio_ch1` のみを渡してください。このとき `result["vad"]` は単一の float になります。`vad_mono` は `jp` と `ch` で `frame_rate=12.5`、`model_type="normal-ver2"` の組み合わせで利用できます。
 
 サンプルスクリプト:
 - [マイク2本の入力](../example/vad/vad_2mic.py) 🎤

@@ -44,6 +44,7 @@ applied to every sub-model:
 - All `mimi_*` parameters (used when `model_type="normal-ver2"`)
 - `cache_dir`, `force_download`
 - `use_kv_cache`
+- `inference_chunk_frames` (see [Speeding Up Inference with Chunked Frames](../README.md#speeding-up-inference-with-chunked-frames))
 - `audio_ch1`, `audio_ch2`
 
 Per-model differences are configured through the `configs` list. Each entry
@@ -133,6 +134,7 @@ MaaiMultiple(
     device: str = "cpu",
     model_type: str = "normal",
     use_kv_cache: bool = True,
+    inference_chunk_frames: int = 1,
     # ... mimi_* / cache_dir / cpc_model / force_download identical to Maai
 )
 ```
@@ -196,3 +198,6 @@ dicts are present in the result.
 - When `use_kv_cache=False`, the rolling encoded-feature context is shared
   across sub-models (one rolling window of length `context_len_sec`), and
   each sub-model's `decrease_dimension` projection is applied on top of it.
+- `inference_chunk_frames` is a single shared setting because all sub-models
+  read from the same encoder. With `N > 1`, one combined result is emitted per
+  `N` frames.

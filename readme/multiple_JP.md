@@ -39,6 +39,7 @@ Maai の各モデル（`vap`, `vap_mc`, `bc`, `bc_2type`, `nod`, `nod_para`, `va
 - `mimi_*` 各種パラメータ（`model_type="normal-ver2"` のとき有効）
 - `cache_dir`, `force_download`
 - `use_kv_cache`
+- `inference_chunk_frames`（[複数フレームをまとめて推論して高速化](../README_JP.md#複数フレームをまとめて推論して高速化) を参照）
 - `audio_ch1`, `audio_ch2`
 
 サブモデルごとに変えられる設定は `configs` リストで指定します。
@@ -123,6 +124,7 @@ MaaiMultiple(
     device: str = "cpu",
     model_type: str = "normal",
     use_kv_cache: bool = True,
+    inference_chunk_frames: int = 1,
     # ... mimi_* / cache_dir / cpc_model / force_download は Maai と同じ
 )
 ```
@@ -178,4 +180,5 @@ while True:
   そのため、エンコーダの重みおよび Mimi のストリーミング状態はメモリ上・デバイス上に 1 つしか存在しません。
 - KV キャッシュ（`use_kv_cache=True`）はサブモデルごとに独立で、毎ステップ `context_len_sec` まで切り詰められます（`Maai` と同じ挙動）。
 - `use_kv_cache=False` の場合は、エンコーダ出力のローリングコンテキスト（長さ `context_len_sec`）が全サブモデルで共有されます。
+- `inference_chunk_frames` は全サブモデルが同じエンコーダを共有するため、共通の設定として1つだけ指定します。`N > 1` の場合、`N` フレームにつき1つの結果が出力されます。
   各サブモデルの `decrease_dimension` 投影はその上で個別に適用されます。

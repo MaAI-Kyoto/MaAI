@@ -126,6 +126,24 @@ while True:
 
 - [MaaiMultiple - 音声エンコーダを共有して複数モデルを同時実行](readme/multiple_JP.md)
 
+### 複数フレームをまとめて推論して高速化
+
+`Maai` と `MaaiMultiple` は `inference_chunk_frames`（既定値 `1`）を備えており、
+1フレームずつではなく複数フレームを1回の因果的な順伝播でまとめて処理できます。
+出力は数値的に等価なまま、音声1秒あたりの順伝播回数が `frame_rate` 回から
+`frame_rate / N` 回に減るため計算コストを下げられます。
+その代わり、出力されるのは各チャンクの最終フレームのみとなり、出力レートも `frame_rate / N` になります。
+Mimi エンコーダ（`model_type="normal-ver2"`）が必要で、ONNX バックエンドは現在 `N=1` と `N=2` に対応しています。
+
+```python
+maai = Maai(
+    mode="vap", lang="jp", frame_rate=12.5,
+    audio_ch1=mic1, audio_ch2=mic2, device="cpu",
+    model_type="normal-ver2",
+    inference_chunk_frames=2,   # 2フレームを1回の順伝播で処理
+)
+```
+
 <br>
 
 ## 🎚️ 入出力
