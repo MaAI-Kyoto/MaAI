@@ -45,6 +45,7 @@ https://github.com/user-attachments/assets/e7d1b266-0613-4a46-8718-1808a3682bd3
 
 ## 🆕 Update
 
+- [Voice Activity Detection (VAD) model](readme/vad.md) with cross-channel attention (single-channel version also available) is now available (August 9th, 2026)
 - We released a new version of MaAI (version 0.2.0) with a significant performance improvement (April 17th, 2026)
 - [Backchannel prediction model](readme/vap_bc.md) supporting three languages (English, Chinese, and Japanese) is now available (November 19th, 2025)
 - Computational efficiency is improved in the long-context models (September 3rd, 2025)
