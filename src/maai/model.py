@@ -787,16 +787,26 @@ class Maai():
             
             time_process = time.time() - time_start
             self.list_process_time_context.append(time_process)
-            
+
             # Performance monitoring (unchanged for clarity)
             if len(self.list_process_time_context) > self.CALC_PROCESS_TIME_INTERVAL:
                 ave_proc_time = np.mean(self.list_process_time_context)  # np.mean is faster than np.average
                 num_process_frame = len(self.list_process_time_context) / (time.time() - self.last_interval_time)
                 self.last_interval_time = time.time()
 
-                perf_message = f'[{self.mode}] Average processing time: {ave_proc_time:.5f} [sec], #process/sec: {num_process_frame:.3f}'
+                frame_budget = 1.0 / self.frame_rate
+                rtf = ave_proc_time / frame_budget
+                perf_message = f'[{self.mode}] Average processing time: {ave_proc_time:.5f} [sec], #process/sec: {num_process_frame:.3f}, RTF: {rtf:.2f}'
                 if self.encoder_type == "mimi":
                     perf_message += f', chunk_samples: {self.audio_frame_size}'
+                # High load warning (always shown when RTF > 1.0)
+                if rtf > 1.0:
+                    perf_message += "  [WARNING] HIGH LOAD (RTF > 1.0)"
+                    if self.encoder_type == "mimi":
+                        perf_message += (
+                            ": Consider setting inference_chunk_frames=2 "
+                            "to batch-process frames and reduce per-frame overhead."
+                        )
                 print(perf_message)
                 self.list_process_time_context.clear()  # clear() is faster than = []
             
@@ -1299,13 +1309,23 @@ class MaaiMultiple:
                 )
                 self.last_interval_time = time.time()
 
+                frame_budget = 1.0 / self.frame_rate
+                rtf = ave_proc_time / frame_budget
                 modes = ",".join(self.labels)
                 msg = (
                     f"[multi:{modes}] Average processing time: {ave_proc_time:.5f} [sec], "
-                    f"#process/sec: {num_process_frame:.3f}"
+                    f"#process/sec: {num_process_frame:.3f}, RTF: {rtf:.2f}"
                 )
                 if self.encoder_type == "mimi":
                     msg += f", chunk_samples: {self.audio_frame_size}"
+                # High load warning (always shown when RTF > 1.0)
+                if rtf > 1.0:
+                    msg += "  [WARNING] HIGH LOAD (RTF > 1.0)"
+                    if self.encoder_type == "mimi":
+                        msg += (
+                            ": Consider setting inference_chunk_frames=2 "
+                            "to batch-process frames and reduce per-frame overhead."
+                        )
                 print(msg)
                 self.list_process_time_context.clear()
 
