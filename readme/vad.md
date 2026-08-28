@@ -40,11 +40,11 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 | jp | `normal` (CPC encoder) | 10, 20, 50 | ✅ | — |
 | jp | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
 | en | `normal` (CPC encoder) | 10, 20, 50 | ✅ | — |
-| en | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | coming soon |
+| en | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
 | ch | `normal` (CPC encoder) | 10, 20, 50 | ✅ | — |
 | ch | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
 
-Note that the 10/20/50 Hz models are the CPC-based ones (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`). The single-channel mode (`vad_mono`) is released only for the 12.5 Hz Mimi-based models; the English single-channel model is coming soon.
+Note that the 10/20/50 Hz models are the CPC-based ones (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`).
 
 ## Training Data
 
@@ -80,7 +80,7 @@ while True:
     print(result["vad"])  # [float, float]
 ```
 
-For the single-channel version, set `mode="vad_mono"` and pass only `audio_ch1`; `result["vad"]` is then a single float. `vad_mono` is available for `jp` and `ch` with `frame_rate=12.5` and `model_type="normal-ver2"`.
+For the single-channel version, set `mode="vad_mono"` and pass only `audio_ch1`; `result["vad"]` is then a single float.
 
 Sample scripts:
 - [With 2 mic inputs](../example/vad/vad_2mic.py) 🎤

@@ -40,11 +40,11 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 | jp | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
 | jp | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
 | en | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
-| en | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | 近日公開予定 |
+| en | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
 | ch | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
 | ch | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
 
-10/20/50 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。1チャネル版 (`vad_mono`) は 12.5 Hz の Mimi ベースのモデルのみ公開しており、英語の1チャネル版は近日公開予定です。
+10/20/50 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。
 
 ## 学習データ
 
@@ -80,7 +80,7 @@ while True:
     print(result["vad"])  # [float, float]
 ```
 
-1チャネル版を使う場合は `mode="vad_mono"` を指定し、`audio_ch1` のみを渡してください。このとき `result["vad"]` は単一の float になります。`vad_mono` は `jp` と `ch` で `frame_rate=12.5`、`model_type="normal-ver2"` の組み合わせで利用できます。
+1チャネル版を使う場合は `mode="vad_mono"` を指定し、`audio_ch1` のみを渡してください。このとき `result["vad"]` は単一の float になります。
 
 サンプルスクリプト:
 - [マイク2本の入力](../example/vad/vad_2mic.py) 🎤
