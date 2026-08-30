@@ -23,6 +23,7 @@ from .models.config import VapConfig
 
 # 2-channel modes that have a dedicated single-channel (monaural) counterpart.
 MONO_ALTERNATIVE_MODES = {
+    "vap": "vap_mono",
     "vad": "vad_mono",
     "bc_det": "bc_det_mono",
 }
@@ -115,7 +116,8 @@ class Maai():
             lang (str): Language setting (e.g., 'jp', 'en').
             audio_ch1 (Base): Audio input source for channel 1.
             audio_ch2 (Base): Audio input source for channel 2.
-                Not used in 'vap_mono' mode (silence is fed internally).
+                Not used by the single-channel modes ('vap_mono', 'vad_mono',
+                'bc_det_mono'); silence is fed internally instead.
             frame_rate (float): Frame rate for processing audio.
             context_len_sec (int): Audio context length in seconds.
             device (str): Device to run the model on ('cpu', 'cuda').
@@ -250,6 +252,10 @@ class Maai():
         if not (self.device == "cpu" or self.device.startswith("cuda")):
             raise ValueError("Device must be 'cpu', 'cuda', or 'cuda:N'.")
         
+        # Models that encode and attend over a single channel only (their
+        # encode_audio / forward take one stream, and there is no encoder2).
+        self.single_tower = bool(getattr(self.vap, "is_single_tower", False))
+
         # Store the initial state of the model to check for unchanged parameters
         initial_state_dict = {name: param.clone() for name, param in self.vap.named_parameters()}
 
@@ -333,10 +339,11 @@ class Maai():
             self.vap.encoder1.downsample[2].ln.weight = nn.Parameter(sd['encoder.downsample.2.ln.weight'])
             self.vap.encoder1.downsample[2].ln.bias = nn.Parameter(sd['encoder.downsample.2.ln.bias'])
             
-            self.vap.encoder2.downsample[1].weight = nn.Parameter(sd['encoder.downsample.1.weight'])
-            self.vap.encoder2.downsample[1].bias = nn.Parameter(sd['encoder.downsample.1.bias'])
-            self.vap.encoder2.downsample[2].ln.weight = nn.Parameter(sd['encoder.downsample.2.ln.weight'])
-            self.vap.encoder2.downsample[2].ln.bias = nn.Parameter(sd['encoder.downsample.2.ln.bias'])
+            if getattr(self.vap, "encoder2", None) is not None:
+                self.vap.encoder2.downsample[1].weight = nn.Parameter(sd['encoder.downsample.1.weight'])
+                self.vap.encoder2.downsample[1].bias = nn.Parameter(sd['encoder.downsample.1.bias'])
+                self.vap.encoder2.downsample[2].ln.weight = nn.Parameter(sd['encoder.downsample.2.ln.weight'])
+                self.vap.encoder2.downsample[2].ln.bias = nn.Parameter(sd['encoder.downsample.2.ln.bias'])
         
         # print(sd.keys())
         # input("Model loaded. Press Enter to continue...")
@@ -344,8 +351,9 @@ class Maai():
             self.vap.encoder1.frame_rate_conv.weight = nn.Parameter(sd['encoder.frame_rate_conv.weight'])
             self.vap.encoder1.frame_rate_conv.bias = nn.Parameter(sd['encoder.frame_rate_conv.bias'])
             
-            self.vap.encoder2.frame_rate_conv.weight = nn.Parameter(sd['encoder.frame_rate_conv.weight'])
-            self.vap.encoder2.frame_rate_conv.bias = nn.Parameter(sd['encoder.frame_rate_conv.bias'])
+            if getattr(self.vap, "encoder2", None) is not None:
+                self.vap.encoder2.frame_rate_conv.weight = nn.Parameter(sd['encoder.frame_rate_conv.weight'])
+                self.vap.encoder2.frame_rate_conv.bias = nn.Parameter(sd['encoder.frame_rate_conv.bias'])
 
         # Check for parameters that were not updated from their initial values
         for name, param in self.vap.named_parameters():
@@ -595,7 +603,11 @@ class Maai():
                 x2_ = x2_.to(self.device, non_blocking=True)
 
             # try:
-            e1, e2 = self.vap.encode_audio(x1_, x2_)
+            if self.single_tower:
+                e1 = self.vap.encode_audio(x1_)
+                e2 = None
+            else:
+                e1, e2 = self.vap.encode_audio(x1_, x2_)
             # except RuntimeError as exc:
             #     short_chunk_error = (
             #         self.encoder_type == "mimi"
@@ -608,7 +620,7 @@ class Maai():
             #         return
             #     raise
 
-            if e1.shape[1] == 0 or e2.shape[1] == 0:
+            if e1.shape[1] == 0 or (e2 is not None and e2.shape[1] == 0):
                 # if self.encoder_type == "mimi":
                 #     self._increase_mimi_chunk_threshold(len(self.current_x1_audio))
                 # self.process_time_abs = time.time()
@@ -638,39 +650,57 @@ class Maai():
             if not self.use_kv_cache:
                 
                 self.e1_full.append(e1)
-                self.e2_full.append(e2)
-            
+
                 x1_full_ = torch.cat(self.e1_full, dim=1)
-                x2_full_ = torch.cat(self.e2_full, dim=1)
                 # A list item may contain multiple frames.  Retain the
                 # rolling context by time dimension, not list length.
                 if x1_full_.shape[1] > self.audio_context_len:
                     x1_full_ = x1_full_[:, -self.audio_context_len :]
-                    x2_full_ = x2_full_[:, -self.audio_context_len :]
                 self.e1_full = [x1_full_]
-                self.e2_full = [x2_full_]
-                
+
+                if not self.single_tower:
+                    self.e2_full.append(e2)
+                    x2_full_ = torch.cat(self.e2_full, dim=1)
+                    if x2_full_.shape[1] > self.audio_context_len:
+                        x2_full_ = x2_full_[:, -self.audio_context_len :]
+                    self.e2_full = [x2_full_]
+
                 # Move to device only if necessary
                 if self.device != 'cpu':
                     x1_full_ = x1_full_.to(self.device, non_blocking=True)
-                    x2_full_ = x2_full_.to(self.device, non_blocking=True)
+                    if not self.single_tower:
+                        x2_full_ = x2_full_.to(self.device, non_blocking=True)
 
-                out, _ = self.vap.forward(
-                    x1_full_,
-                    x2_full_,
-                    cache=None,
-                    return_all_frames=self.inference_chunk_frames > 1,
-                )
+                if self.single_tower:
+                    out, _ = self.vap.forward(
+                        x1_full_,
+                        cache=None,
+                        return_all_frames=self.inference_chunk_frames > 1,
+                    )
+                else:
+                    out, _ = self.vap.forward(
+                        x1_full_,
+                        x2_full_,
+                        cache=None,
+                        return_all_frames=self.inference_chunk_frames > 1,
+                    )
 
             # User KV cache
             elif self.use_kv_cache:
 
-                out, self.vap_cache = self.vap.forward(
-                    e1,
-                    e2,
-                    cache=self.vap_cache,
-                    return_all_frames=self.inference_chunk_frames > 1,
-                )
+                if self.single_tower:
+                    out, self.vap_cache = self.vap.forward(
+                        e1,
+                        cache=self.vap_cache,
+                        return_all_frames=self.inference_chunk_frames > 1,
+                    )
+                else:
+                    out, self.vap_cache = self.vap.forward(
+                        e1,
+                        e2,
+                        cache=self.vap_cache,
+                        return_all_frames=self.inference_chunk_frames > 1,
+                    )
 
                 if self.vap_cache is not None:
                     self.vap_cache = self._trim_vap_cache(
@@ -679,12 +709,14 @@ class Maai():
 
             if self.inference_chunk_frames > 1 and (
                 e1.shape[1] != self.inference_chunk_frames
-                or e2.shape[1] != self.inference_chunk_frames
+                or (e2 is not None and e2.shape[1] != self.inference_chunk_frames)
             ):
+                shapes = f"ch1={e1.shape[1]}"
+                if e2 is not None:
+                    shapes += f", ch2={e2.shape[1]}"
                 raise RuntimeError(
                     "Mimi emitted an unexpected number of VAP frames: "
-                    f"ch1={e1.shape[1]}, ch2={e2.shape[1]}, "
-                    f"expected={self.inference_chunk_frames}."
+                    f"{shapes}, expected={self.inference_chunk_frames}."
                 )
 
             emitted_at = time.time()
@@ -969,6 +1001,22 @@ class MaaiMultiple:
 
         primary = self.sub_maais[0]
 
+        # Single-channel sub-models have no encoder2 and take one stream in
+        # forward().  Channel 2 only has to be encoded when at least one
+        # sub-model actually reads it, and the shared encoder must come from a
+        # sub-model that owns both.
+        self._needs_ch2 = any(
+            not getattr(sub.vap, "is_single_tower", False) for sub in self.sub_maais
+        )
+        self._encoder_owner = next(
+            (
+                sub
+                for sub in self.sub_maais
+                if not getattr(sub.vap, "is_single_tower", False)
+            ),
+            primary,
+        )
+
         # Mic configuration. Each Maai sub-instance subscribes a queue from
         # the input source in __init__; we keep only the primary's queues and
         # detach the rest so the audio source does not push frames into queues
@@ -1055,9 +1103,9 @@ class MaaiMultiple:
             self.encoder_type == "mimi" and self._use_mimi_onnx
         )
 
-        primary_vap = self.sub_maais[0].vap
+        shared_vap = self._encoder_owner.vap
         for encoder_name in ["encoder1", "encoder2"]:
-            encoder = getattr(primary_vap, encoder_name, None)
+            encoder = getattr(shared_vap, encoder_name, None)
             if encoder is not None and hasattr(encoder, "reset_streaming_state"):
                 encoder.reset_streaming_state()
 
@@ -1176,16 +1224,22 @@ class MaaiMultiple:
 
             # Shared encoding step. We extract the shared features (before model-specific downsample)
             # using the primary model's encoder. The state/KV cache is maintained here.
-            primary_vap = self.sub_maais[0].vap
-            
-            if self.encoder_type == "mimi":
-                eA_shared, input_num_samples_A = primary_vap.encoder1.forward_shared(x1_t)
-                eB_shared, input_num_samples_B = primary_vap.encoder2.forward_shared(x2_t)
-            else:
-                eA_shared = primary_vap.encoder1.forward_shared(x1_t)
-                eB_shared = primary_vap.encoder2.forward_shared(x2_t)
+            shared_vap = self._encoder_owner.vap
+            eB_shared = None
+            input_num_samples_B = None
 
-            if eA_shared.shape[1] == 0 or eB_shared.shape[1] == 0:
+            if self.encoder_type == "mimi":
+                eA_shared, input_num_samples_A = shared_vap.encoder1.forward_shared(x1_t)
+                if self._needs_ch2:
+                    eB_shared, input_num_samples_B = shared_vap.encoder2.forward_shared(x2_t)
+            else:
+                eA_shared = shared_vap.encoder1.forward_shared(x1_t)
+                if self._needs_ch2:
+                    eB_shared = shared_vap.encoder2.forward_shared(x2_t)
+
+            if eA_shared.shape[1] == 0 or (
+                eB_shared is not None and eB_shared.shape[1] == 0
+            ):
                 self._trim_audio_buffers()
                 print("[Warning] No audio features extracted. Skipping this frame.")
                 return
@@ -1203,28 +1257,34 @@ class MaaiMultiple:
             # encoded features and feed each sub-model with the full window.
             if not self.use_kv_cache:
                 self.eA_full.append(eA_shared)
-                self.eB_full.append(eB_shared)
                 eA_in = torch.cat(self.eA_full, dim=1)
-                eB_in = torch.cat(self.eB_full, dim=1)
                 # A list item may contain multiple frames (inference_chunk_frames > 1).
                 # Retain the rolling context by time dimension, not list length.
                 if eA_in.shape[1] > self.audio_context_len:
                     eA_in = eA_in[:, -self.audio_context_len:]
-                    eB_in = eB_in[:, -self.audio_context_len:]
                 self.eA_full = [eA_in]
-                self.eB_full = [eB_in]
+
+                eB_in = None
+                if self._needs_ch2:
+                    self.eB_full.append(eB_shared)
+                    eB_in = torch.cat(self.eB_full, dim=1)
+                    if eB_in.shape[1] > self.audio_context_len:
+                        eB_in = eB_in[:, -self.audio_context_len:]
+                    self.eB_full = [eB_in]
             else:
                 eA_in = eA_shared
                 eB_in = eB_shared
 
             if self.inference_chunk_frames > 1 and (
                 eA_in.shape[1] != self.inference_chunk_frames
-                or eB_in.shape[1] != self.inference_chunk_frames
+                or (eB_in is not None and eB_in.shape[1] != self.inference_chunk_frames)
             ) and self.use_kv_cache:
+                shapes = f"chA={eA_in.shape[1]}"
+                if eB_in is not None:
+                    shapes += f", chB={eB_in.shape[1]}"
                 raise RuntimeError(
                     "Mimi emitted an unexpected number of VAP frames: "
-                    f"chA={eA_in.shape[1]}, chB={eB_in.shape[1]}, "
-                    f"expected={self.inference_chunk_frames}."
+                    f"{shapes}, expected={self.inference_chunk_frames}."
                 )
 
             if self.inference_chunk_frames > 1:
@@ -1248,38 +1308,44 @@ class MaaiMultiple:
                     # Reproduce the per-mode swap that lives in each model's
                     # encode_audio: bc/bc_2type/nod/nod_para want the swapped
                     # (user, system) ordering, the others want the natural one.
+                    single_tower = getattr(sub.vap, "is_single_tower", False)
                     if sub.mode in self._SWAP_MODES:
                         e1_shared, e2_shared = eB_in, eA_in
                     else:
                         e1_shared, e2_shared = eA_in, eB_in
 
                     # Apply the model-specific downsampling layer
+                    e2 = None
                     if self.encoder_type == "mimi":
                         if sub.mode in self._SWAP_MODES:
                             n1, n2 = input_num_samples_B, input_num_samples_A
                         else:
                             n1, n2 = input_num_samples_A, input_num_samples_B
                         e1 = sub.vap.encoder1.forward_specific(e1_shared, input_num_samples=n1)
-                        e2 = sub.vap.encoder2.forward_specific(e2_shared, input_num_samples=n2)
+                        if not single_tower:
+                            e2 = sub.vap.encoder2.forward_specific(e2_shared, input_num_samples=n2)
                     else:
                         e1 = sub.vap.encoder1.forward_specific(e1_shared)
-                        e2 = sub.vap.encoder2.forward_specific(e2_shared)
+                        if not single_tower:
+                            e2 = sub.vap.encoder2.forward_specific(e2_shared)
 
                     # Apply each sub-model's decrease_dimension here (most models
                     # apply it inside encode_audio). nod_para applies projections
                     # internally inside its forward, so leave it alone.
                     if sub.mode != "nod_para" and hasattr(sub.vap, "decrease_dimension"):
                         e1 = torch.relu(sub.vap.decrease_dimension(e1))
-                        e2 = torch.relu(sub.vap.decrease_dimension(e2))
+                        if e2 is not None:
+                            e2 = torch.relu(sub.vap.decrease_dimension(e2))
 
+                    args = (e1,) if single_tower else (e1, e2)
                     if self.use_kv_cache:
-                        out, sub.vap_cache = sub.vap.forward(e1, e2, cache=sub.vap_cache)
+                        out, sub.vap_cache = sub.vap.forward(*args, cache=sub.vap_cache)
                         if sub.vap_cache is not None:
                             sub.vap_cache = self._trim_kv_cache(
                                 sub.vap_cache, self.audio_context_len
                             )
                     else:
-                        out, _ = sub.vap.forward(e1, e2, cache=None)
+                        out, _ = sub.vap.forward(*args, cache=None)
 
                     return label, self._extract_outputs(sub.mode, out, sub.return_p_bins)
 

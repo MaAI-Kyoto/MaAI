@@ -104,8 +104,7 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
     elif encoder_type != "cpc":
         raise ValueError(f"Unsupported encoder_type for pretrained model lookup: {encoder_type}")
     
-    # vap_mono runs the same model / checkpoints as vap
-    if mode in ("vap", "vap_mono"):
+    if mode == "vap":
         if language == "jp":
             repo_id = repo_ids["vap_jp"]
             file_path = f"vap{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
@@ -150,6 +149,16 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             supported_languages = ["jp", "en", "ch", "tri", "jp_kyoto", "en_kyoto", "ch_kyoto", "tri_kyoto", "ca", "fr"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
+    # vap_mono is a single-channel model with its own checkpoints
+    elif mode == "vap_mono":
+        if language in ("jp", "en", "ch"):
+            repo_id = repo_ids[f"vap_{language}"]
+            file_path = f"vap_mono{encoder_suffix}_state_dict_{language}_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+
+        else:
+            supported_languages = ["jp", "en", "ch"]
+            raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
     elif mode == "vap_mc":
         if language == "jp":
             repo_id = repo_ids["vap_mc_jp"]
@@ -191,7 +200,6 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             supported_languages = ["jp", "en", "ch", "tri", "jp_kyoto", "en_kyoto", "ch_kyoto", "tri_kyoto", "fr"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
     
-    # vad_mono runs the same model / checkpoints as vad
     elif mode == "vad":
         if language == "jp":
             repo_id = repo_ids["vad_jp"]
@@ -226,7 +234,6 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             supported_languages = ["jp", "ch", "en"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
-    # bc_det_mono runs the same model / checkpoints as bc_det
     elif mode == "bc_det":
         if language in ("jp", "en", "ch"):
             repo_id = repo_ids[f"bc_det_{language}"]

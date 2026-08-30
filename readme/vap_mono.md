@@ -9,28 +9,48 @@ README: <a href="vap_mono.md">English </a> | <a href="vap_mono_JP.md">Japanese (
 
 Please set the `mode` parameter of the `Maai` class to `vap_mono`.
 
-This mode runs the same model and pretrained weights as the standard VAP model (`vap`), but exposes a single-channel interface: only `audio_ch1` is required, and silence (zero signal) is fed internally to the second channel.
+This is a **dedicated single-channel model with its own pretrained weights** — not the standard two-speaker VAP model fed with a silent second channel. It encodes one audio stream, replaces the cross-channel transformer of the standard model with a plain causal transformer, and predicts the future activity of that one speaker directly.
 It is intended for use cases where only one speaker's audio is available (e.g., a single microphone input for a spoken dialogue system).
 
 The input requires 1-channel, 16kHz audio data.
 
 ## Output
 
-The outputs `p_now` and `p_future` are single float values (not two-element lists) representing the input audio:
+`p_now` and `p_future` are single float values in the range [0.0, 1.0] (not two-element lists):
 
-- Internally, the model computes the standard speaker-normalized `p_now` / `p_future` for the input channel versus the silent channel.
-- The channel-1 value in the range [0.5, 1.0] is then linearly stretched to [0.0, 1.0]; values at or below 0.5 become 0.0.
+- `p_now` is the probability that the input speaker is active in the next 0 to 600 milliseconds.
+- `p_future` is the same for 600 to 2000 milliseconds ahead.
 
-```
-p_mono = max(0.0, (p[0] - 0.5) * 2.0)
-```
+Because there is no second speaker to compare against, these values are **not** normalized between speakers as in the standard `vap` model: each is the expected voice-activity ratio of the input speaker over the corresponding time range, already a probability.
 
-`p_now` represents the voice activity of the input speaker occurring in the next 0 to 600 milliseconds, and `p_future` represents 600 to 2000 milliseconds ahead.
 `vad` is also a single float value for the input channel.
+
+With `return_p_bins=True`, `p_bins` is a list of four per-bin activity probabilities (0–200, 200–600, 600–1200, 1200–2000 ms), and `p_bins_now` / `p_bins_future` are their averages over the `p_now` / `p_future` ranges.
 
 ## Supported Languages, Frame Rates, and Context Lengths
 
-Since `vap_mono` shares its checkpoints with the standard VAP model, the supported `lang`, `frame_rate`, and `context_len_sec` values are identical to those of [the VAP model](vap.md).
+| lang | model_type | frame_rate | context_len_sec | `vap_mono` |
+| ---- | ---------- | ---------- | --------------- | ---------- |
+| jp | `normal` (CPC encoder) | 50 | 20 | Coming soon |
+| jp | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
+| en | `normal` (CPC encoder) | 50 | 20 | Coming soon |
+| en | `normal-ver2` (Mimi encoder) | 12.5 | 20 | Coming soon |
+| ch | `normal` (CPC encoder) | 50 | 20 | Coming soon |
+| ch | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
+
+Japanese and Chinese with the Mimi encoder are released; the other combinations are in preparation and will follow.
+
+Note that the 50 Hz model is the CPC-based one (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`). Unlike the standard [VAP model](vap.md), `vap_mono` offers a single frame rate per encoder and a fixed 20-second context.
+
+## Training Data
+
+The same data as the [VAD model](vad.md).
+
+| lang | Training data |
+| ---- | ------------- |
+| jp | [Travel Agency Task Dialogue](https://aclanthology.org/2022.lrec-1.619/), [Human-Robot Dialogue](https://aclanthology.org/2025.naacl-long.367/), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) |
+| en | [Switchboard corpus](https://catalog.ldc.upenn.edu/LDC97S62), [Seamless Interaction](https://ai.meta.com/research/seamless-interaction/), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) |
+| ch | [HKUST Mandarin Telephone Speech](https://catalog.ldc.upenn.edu/LDC2005S15), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) |
 
 ## Usage Example
 
@@ -43,6 +63,7 @@ maai = Maai(
     mode="vap_mono",
     lang="jp",
     frame_rate=12.5,
+    context_len_sec=20,
     audio_ch1=mic,   # audio_ch2 is not needed
     device="cpu",
     model_type="normal-ver2",

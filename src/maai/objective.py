@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -22,6 +24,45 @@ def bin_times_to_frames(bin_times: List[float], frame_hz: float) -> List[int]:
     return frames.to(dtype=torch.long).tolist()
 
 
+def bin_times_to_frames_cumulative(bin_times: List[float], frame_hz: float) -> List[int]:
+    """Convert bin durations into frame counts by rounding the bin *boundaries*.
+
+    Unlike :func:`bin_times_to_frames`, which rounds every duration on its own,
+    this rounds the cumulative boundary of each bin and takes the difference, so
+    the bins tile the horizon exactly (``sum(bin_frames) / frame_hz`` equals
+    ``sum(bin_times)``).
+
+    The single-channel VAP model (``vap_mono``) is trained with this rule and its
+    ``p_now`` / ``p_future`` are weighted by the bin lengths, so the two rules are
+    not interchangeable there. With ``bin_times=[0.2, 0.4, 0.6, 0.8]`` they agree
+    at 10/20/50 Hz and differ at 12.5 Hz ([3, 5, 7, 10] here versus [3, 5, 8, 10]).
+
+    Args:
+        bin_times (List[float]): A list of bin durations in seconds.
+        frame_hz (float): The frame rate (Hz) of the system.
+
+    Returns:
+        List[int]: A list of corresponding frame counts.
+    """
+    if frame_hz <= 0:
+        raise ValueError(f"frame_hz must be > 0, got {frame_hz}")
+
+    bin_frames: List[int] = []
+    cumulative_time = 0.0
+    previous_boundary = 0
+    for bin_time in bin_times:
+        cumulative_time += float(bin_time)
+        boundary = int(math.floor(cumulative_time * float(frame_hz) + 0.5))
+        frames = boundary - previous_boundary
+        if frames <= 0:
+            raise ValueError(
+                f"bin_times {bin_times} with frame_hz={frame_hz} produce a non-positive bin width"
+            )
+        bin_frames.append(frames)
+        previous_boundary = boundary
+    return bin_frames
+
+
 class ProjectionWindow:
     """Extracts and evaluates projection windows to determine voice activity.
     
@@ -32,6 +73,7 @@ class ProjectionWindow:
         bin_times: List = [0.2, 0.4, 0.6, 0.8],
         frame_hz: float = 50,
         threshold_ratio: float = 0.5,
+        num_channels: int = 2,
     ):
         """Initialize the ProjectionWindow.
         
@@ -39,15 +81,22 @@ class ProjectionWindow:
             bin_times (List[float]): Duration of each projection bin in seconds.
             frame_hz (float): Frame rate of the input signal.
             threshold_ratio (float): Ratio threshold to consider a bin as active.
+            num_channels (int): Number of speaker channels the projection covers
+                (2 for the standard VAP model, 1 for the single-channel one).
         """
         super().__init__()
         self.bin_times = bin_times
         self.frame_hz = frame_hz
         self.threshold_ratio = threshold_ratio
+        self.num_channels = num_channels
 
-        self.bin_frames = bin_times_to_frames(bin_times, frame_hz)
+        self.bin_frames = (
+            bin_times_to_frames_cumulative(bin_times, frame_hz)
+            if num_channels == 1
+            else bin_times_to_frames(bin_times, frame_hz)
+        )
         self.n_bins = len(self.bin_frames)
-        self.total_bins = self.n_bins * 2
+        self.total_bins = self.n_bins * num_channels
         self.horizon = sum(self.bin_frames)
 
     def __repr__(self) -> str:
@@ -55,6 +104,7 @@ class ProjectionWindow:
         s += f"  bin_times: {self.bin_times}\n"
         s += f"  bin_frames: {self.bin_frames}\n"
         s += f"  frame_hz: {self.frame_hz}\n"
+        s += f"  num_channels: {self.num_channels}\n"
         s += f"  thresh: {self.threshold_ratio}\n"
         s += ")\n"
         return s
@@ -103,16 +153,19 @@ class Codebook(nn.Module):
     
     Represents combinations of future voice activity patterns.
     """
-    def __init__(self, bin_frames):
+    def __init__(self, bin_frames, num_channels: int = 2):
         """Initialize the Codebook.
         
         Args:
             bin_frames (List[int]): List of frame counts for each bin.
+            num_channels (int): Number of speaker channels encoded per state
+                (2 for the standard VAP model, 1 for the single-channel one).
         """
         super().__init__()
         self.bin_frames = bin_frames
+        self.num_channels: int = num_channels
         self.n_bins: int = len(self.bin_frames)
-        self.total_bins: int = self.n_bins * 2
+        self.total_bins: int = self.n_bins * num_channels
         self.n_classes: int = 2 ** self.total_bins
 
         self.emb = nn.Embedding(
@@ -152,13 +205,15 @@ class Codebook(nn.Module):
             https://github.com/lucidrains/vector-quantize-pytorch/blob/master/vector_quantize_pytorch/vector_quantize_pytorch.py
         """
         assert x.shape[-2:] == (
-            2,
+            self.num_channels,
             self.n_bins,
-        ), f"Codebook expects (..., 2, {self.n_bins}) got {x.shape}"
+        ), f"Codebook expects (..., {self.num_channels}, {self.n_bins}) got {x.shape}"
 
         # compare with codebook and get closest idx
         shape = x.shape
-        flatten = rearrange(x, "... c bpp -> (...) (c bpp)", c=2, bpp=self.n_bins)
+        flatten = rearrange(
+            x, "... c bpp -> (...) (c bpp)", c=self.num_channels, bpp=self.n_bins
+        )
         embed = self.emb.weight.T
         dist = -(
             flatten.pow(2).sum(1, keepdim=True)
@@ -171,7 +226,7 @@ class Codebook(nn.Module):
 
     def decode(self, idx: Tensor):
         v = self.emb(idx)
-        return rearrange(v, "... (c b) -> ... c b", c=2)
+        return rearrange(v, "... (c b) -> ... c b", c=self.num_channels)
 
     def forward(self, projection_windows: Tensor):
         return self.encode(projection_windows)
@@ -188,6 +243,7 @@ class ObjectiveVAP(nn.Module):
         bin_times: List[float] = [0.2, 0.4, 0.6, 0.8],
         frame_hz: float = 50,
         threshold_ratio: float = 0.5,
+        num_channels: int = 2,
     ):
         """Initialize the ObjectiveVAP module.
         
@@ -195,17 +251,30 @@ class ObjectiveVAP(nn.Module):
             bin_times (List[float]): Bin durations in seconds.
             frame_hz (float): Frame rate.
             threshold_ratio (float): Threshold to mark a bin as active.
+            num_channels (int): Number of speaker channels covered by one
+                codebook state. 2 (the default) gives the standard two-speaker
+                objective with ``2 ** (2 * n_bins)`` classes; 1 gives the
+                single-channel objective used by ``vap_mono`` with
+                ``2 ** n_bins`` classes.
         """
         super().__init__()
         self.frame_hz = frame_hz
         self.bin_times = bin_times
-        self.bin_frames: List[int] = bin_times_to_frames(bin_times, frame_hz)
+        self.num_channels = num_channels
+        # The single-channel model is trained with boundary-rounded bins and
+        # weights p_now / p_future by the bin lengths, so the two rules are not
+        # interchangeable there (they differ at 12.5 Hz).
+        self.bin_frames: List[int] = (
+            bin_times_to_frames_cumulative(bin_times, frame_hz)
+            if num_channels == 1
+            else bin_times_to_frames(bin_times, frame_hz)
+        )
         self.horizon = sum(self.bin_frames)
         self.horizon_time = sum(bin_times)
 
-        self.codebook = Codebook(self.bin_frames)
+        self.codebook = Codebook(self.bin_frames, num_channels=num_channels)
         self.projection_window_extractor = ProjectionWindow(
-            bin_times, frame_hz, threshold_ratio
+            bin_times, frame_hz, threshold_ratio, num_channels=num_channels
         )
         self.requires_grad_(False)
 
@@ -225,6 +294,64 @@ class ObjectiveVAP(nn.Module):
     @property
     def n_bins(self) -> int:
         return self.codebook.n_bins
+
+    def probs_self_activity(
+        self,
+        probs: Tensor,
+        from_bin: int = 0,
+        to_bin: int = 3,
+        scale_with_bins: bool = True,
+    ) -> Tensor:
+        """Single-channel P(this speaker is active) over bins ``[from_bin, to_bin]``.
+
+        Only meaningful for a ``num_channels=1`` objective. There is no other
+        speaker to normalize against, so the returned value is the expectation
+        of the (frame-weighted) activity ratio and is already a probability --
+        unlike :meth:`probs_next_speaker_aggregate`, nothing is renormalized.
+
+        Args:
+            probs (Tensor): (B, n_frames, n_classes) softmax over the codebook.
+            from_bin (int): First bin of the range (inclusive).
+            to_bin (int): Last bin of the range (inclusive).
+            scale_with_bins (bool): Weight each bin by its length in frames.
+
+        Returns:
+            Tensor: (B, n_frames) expected activity ratio in [0, 1].
+        """
+        assert (
+            probs.ndim == 3
+        ), f"Expected probs of shape (B, n_frames, n_classes) but got {probs.shape}"
+
+        idx = torch.arange(self.codebook.n_classes, device=probs.device)
+        states = self.codebook.decode(idx)  # (n_classes, 1, n_bins)
+        a = states[:, 0, from_bin : to_bin + 1]  # (n_classes, k)
+        if scale_with_bins:
+            w = torch.tensor(
+                self.bin_frames[from_bin : to_bin + 1],
+                dtype=a.dtype,
+                device=a.device,
+            )
+        else:
+            w = torch.ones(a.shape[-1], dtype=a.dtype, device=a.device)
+        ratio = (a * w).sum(-1) / w.sum()
+        return torch.einsum("bid,d->bi", probs, ratio)
+
+    def probs_bins(self, probs: Tensor) -> Tensor:
+        """Single-channel per-bin marginal activity probability.
+
+        Args:
+            probs (Tensor): (B, n_frames, n_classes) softmax over the codebook.
+
+        Returns:
+            Tensor: (B, n_frames, n_bins) marginal probability per bin.
+        """
+        assert (
+            probs.ndim == 3
+        ), f"Expected probs of shape (B, n_frames, n_classes) but got {probs.shape}"
+
+        idx = torch.arange(self.codebook.n_classes, device=probs.device)
+        states = self.codebook.decode(idx)[:, 0, :]  # (n_classes, n_bins)
+        return torch.einsum("bid,dk->bik", probs, states)
 
     def probs_next_speaker_aggregate(
         self,

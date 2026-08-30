@@ -26,9 +26,12 @@ def test():
     maai = Maai(
         mode="vap_mono",
         lang="jp",
-        frame_rate=10,
+        frame_rate=12.5,
         audio_ch1=wav,
         device="cpu",
+        model_type="normal-ver2",
+        use_mimi_onnx=True,
+        mimi_onnx_precision="fp32",
     )
 
     maai.start()
