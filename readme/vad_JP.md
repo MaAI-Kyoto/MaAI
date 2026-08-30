@@ -37,11 +37,11 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 
 | lang | model_type | frame_rate | `vad` (2ch) | `vad_mono` (1ch) |
 | ---- | ---------- | ---------- | ----------- | ---------------- |
-| jp | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
+| jp | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | ✅ |
 | jp | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
 | en | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
 | en | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
-| ch | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | — |
+| ch | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | ✅ |
 | ch | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
 
 10/20/50 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。
