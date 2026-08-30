@@ -67,9 +67,16 @@ def _confirm_zero_second_channel(mode: str, mono_mode: str) -> None:
 
 class Maai():
     """Main wrapper class for running the MaAI model.
-    
+
     Handles audio input streams, model loading, audio processing,
     feature extraction, and VAP outputs in a background thread.
+
+    Most modes are two-channel: ``audio_ch1`` and ``audio_ch2`` carry the two
+    speakers, and both are encoded and attended to jointly. The single-channel
+    modes (``vap_mono``, ``vad_mono``, ``bc_det_mono``) are separate models
+    with their own pretrained weights that take one stream and run a single
+    encoder; ``audio_ch2`` must be omitted for them (silence is fed internally
+    so that ``x2`` remains present in the result dict for the output helpers).
     """
     
     BINS_P_NOW = [0, 1]
@@ -904,6 +911,13 @@ class MaaiMultiple:
     differences allowed in ``configs`` are
     ``mode``, ``lang``, ``local_model``, ``return_p_bins`` and an optional
     ``label`` used as the result key.
+
+    Single-channel sub-models (``vap_mono``, ``vad_mono``, ``bc_det_mono``)
+    can be mixed in. They encode one stream only, so the shared encoder is
+    taken from a two-channel sub-model when the list contains one, and channel
+    2 is not encoded at all when every sub-model is single-channel. Since all
+    sub-models share ``audio_ch2``, a config list that includes a
+    single-channel mode must pass ``audio_ch2=MaaiInput.Zero()``.
 
     Each call to :meth:`get_result` returns a single ``dict`` whose top level
     contains shared fields ``t``, ``x1``, ``x2`` plus one nested ``dict``

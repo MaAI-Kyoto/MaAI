@@ -10,7 +10,9 @@ You can browse the detailed API references for each module using the top navigat
 ## Core Modules
 
 * **[`maai.encoder`](api/encoder.md)**: Modules related to encoding audio and text features.
-* **[`maai.model`](api/model.md)**: Core modules for model building.
+* **[`maai.encoder_components`](api/encoder_components.md)**: Building blocks used by the audio encoders.
+* **[`maai.model`](api/model.md)**: Core modules for model building. `Maai` runs a single model; `MaaiMultiple` runs several of them on one shared encoder.
+* **[`maai.modules`](api/modules.md)**: Transformer building blocks (`GPT`, `GPTStereo`, ALiBi attention) shared by the models.
 * **[`maai.input`](api/input.md)**: Modules for input data processing and management.
 * **[`maai.output`](api/output.md)**: Modules for output data generation and management.
 * **[`maai.objective`](api/objective.md)**: Modules defining objective functions, including loss functions for optimization.
@@ -31,6 +33,10 @@ Each model is selected through the `mode` argument of the `Maai` class.
 * **[`maai.models.vap_nod`](api/models/vap_nod.md)** (`mode="nod"`): Head nod generation.
 * **[`maai.models.vap_nod_para`](api/models/vap_nod_para.md)** (`mode="nod_para"`): Head nod generation with nod parameters.
 * **[`maai.models.vap_prompt`](api/models/vap_prompt.md)** (`mode="vap_prompt"`): VAP conditioned on a text prompt.
+
+Modes whose name ends in `_mono` are single-channel: they are separately trained models with their own
+pretrained weights, take only `audio_ch1`, and run one encoder instead of two. They can be combined with
+the two-channel modes through `MaaiMultiple`.
 
 Usage guides for each mode (supported languages, frame rates, and sample code) are available in the
 [repository README](https://github.com/MaAI-Kyoto/MaAI/blob/main/README.md).
