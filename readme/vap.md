@@ -36,26 +36,25 @@ With `return_p_bins=True`, `p_bins` is a list of per-speaker, per-bin activity p
 ## Supported Languages and Frame Rates
 
 Specify the language with the `lang` parameter of the `Maai` class.
-The values in parentheses are the `context_len_sec` values (the audio context length in seconds) for which a checkpoint is published at that frame rate. The default is `context_len_sec=20`.
 
-| lang | model_type | frame_rate (available `context_len_sec`) |
-| ---- | ---------- | ---------------------------------------- |
-| jp | `normal` (CPC encoder) | 5 (3, 5, 10, 20), 10 (3, 5, 10, 20), 20 (2.5, 10, 20) |
-| jp | `normal-ver2` (Mimi encoder) | 12.5 (20) |
-| jp_kyoto | `normal` (CPC encoder) | 5 (3, 5, 20), 10 (3, 5, 20), 20 (2.5, 20) |
-| jp_kyoto | `normal-ver2` (Mimi encoder) | 12.5 (20) |
-| en | `normal` (CPC encoder) | 5 (3, 5, 20), 10 (3, 5, 20), 20 (2.5, 20) |
-| en | `normal-ver2` (Mimi encoder) | 12.5 (20) |
-| en_kyoto | `normal` (CPC encoder) | 5 (20), 10 (20) |
-| en_kyoto | `normal-ver2` (Mimi encoder) | 12.5 (20) |
-| ch | `normal` (CPC encoder) | 5 (3, 5, 20), 10 (3, 5, 20), 20 (2.5, 20) |
-| ch | `normal-ver2` (Mimi encoder) | 12.5 (20) |
-| ch_kyoto | `normal` (CPC encoder) | 5 (20), 10 (20) |
+| lang | model_type | frame_rate |
+| ---- | ---------- | ---------- |
+| jp | `normal` (CPC encoder) | 5, 10, 20 |
+| jp | `normal-ver2` (Mimi encoder) | 12.5 |
+| jp_kyoto | `normal` (CPC encoder) | 5, 10, 20 |
+| jp_kyoto | `normal-ver2` (Mimi encoder) | 12.5 |
+| en | `normal` (CPC encoder) | 5, 10, 20 |
+| en | `normal-ver2` (Mimi encoder) | 12.5 |
+| en_kyoto | `normal` (CPC encoder) | 5, 10 |
+| en_kyoto | `normal-ver2` (Mimi encoder) | 12.5 |
+| ch | `normal` (CPC encoder) | 5, 10, 20 |
+| ch | `normal-ver2` (Mimi encoder) | 12.5 |
+| ch_kyoto | `normal` (CPC encoder) | 5, 10 |
 | ch_kyoto | `normal-ver2` (Mimi encoder) | Coming soon |
-| tri | `normal` (CPC encoder) | 5 (3, 5, 20), 10 (3, 5, 20), 20 (2.5) |
-| tri | `normal-ver2` (Mimi encoder) | 12.5 (20) |
-| tri_kyoto | `normal` (CPC encoder) | 5 (20), 10 (20) |
-| tri_kyoto | `normal-ver2` (Mimi encoder) | 12.5 (20) |
+| tri | `normal` (CPC encoder) | 5, 10 |
+| tri | `normal-ver2` (Mimi encoder) | 12.5 |
+| tri_kyoto | `normal` (CPC encoder) | 5, 10 |
+| tri_kyoto | `normal-ver2` (Mimi encoder) | 12.5 |
 
 `model_type` selects the model variant: `"normal"` is the existing variant used in previous releases, and `"normal-ver2"` is the newer variant that uses Mimi as the encoder. Note that the 5/10/20 Hz models are the CPC-based ones (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`).
 

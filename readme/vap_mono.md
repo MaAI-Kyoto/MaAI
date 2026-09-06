@@ -27,20 +27,20 @@ Because there is no second speaker to compare against, these values are **not** 
 
 With `return_p_bins=True`, `p_bins` is a list of four per-bin activity probabilities (0–200, 200–600, 600–1200, 1200–2000 ms), and `p_bins_now` / `p_bins_future` are their averages over the `p_now` / `p_future` ranges.
 
-## Supported Languages, Frame Rates, and Context Lengths
+## Supported Languages and Frame Rates
 
-| lang | model_type | frame_rate | context_len_sec | `vap_mono` |
-| ---- | ---------- | ---------- | --------------- | ---------- |
-| jp | `normal` (CPC encoder) | 50 | 20 | ✅ |
-| jp | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
-| en | `normal` (CPC encoder) | 50 | 20 | Coming soon |
-| en | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
-| ch | `normal` (CPC encoder) | 50 | 20 | Coming soon |
-| ch | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
+| lang | model_type | frame_rate | `vap_mono` |
+| ---- | ---------- | ---------- | ---------- |
+| jp | `normal` (CPC encoder) | 50 | ✅ |
+| jp | `normal-ver2` (Mimi encoder) | 12.5 | ✅ |
+| en | `normal` (CPC encoder) | 50 | Coming soon |
+| en | `normal-ver2` (Mimi encoder) | 12.5 | ✅ |
+| ch | `normal` (CPC encoder) | 50 | Coming soon |
+| ch | `normal-ver2` (Mimi encoder) | 12.5 | ✅ |
 
 Japanese and Chinese with the Mimi encoder are released; the other combinations are in preparation and will follow.
 
-Note that the 50 Hz model is the CPC-based one (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`). Unlike the standard [VAP model](vap.md), `vap_mono` offers a single frame rate per encoder and a fixed 20-second context.
+Note that the 50 Hz model is the CPC-based one (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`). Unlike the standard [VAP model](vap.md), `vap_mono` offers a single frame rate per encoder.
 
 ## Training Data
 
@@ -63,7 +63,6 @@ maai = Maai(
     mode="vap_mono",
     lang="jp",
     frame_rate=12.5,
-    context_len_sec=20,
     audio_ch1=mic,   # audio_ch2 is not needed
     device="cpu",
     model_type="normal-ver2",

@@ -36,26 +36,25 @@ result["p_future"]  # 例: [0.62, 0.38]
 ## 対応言語・フレームレート
 
 `Maai` クラスの `lang` パラメータで言語を指定してください。
-括弧内は、そのフレームレートで公開されている `context_len_sec`（モデルへ入力する音声文脈の長さ・秒）の値です。既定値は `context_len_sec=20` です。
 
-| lang | model_type | frame_rate（公開されている `context_len_sec`） |
-| ---- | ---------- | ---------------------------------------------- |
-| jp | `normal` (CPC エンコーダ) | 5 (3, 5, 10, 20)、10 (3, 5, 10, 20)、20 (2.5, 10, 20) |
-| jp | `normal-ver2` (Mimi エンコーダ) | 12.5 (20) |
-| jp_kyoto | `normal` (CPC エンコーダ) | 5 (3, 5, 20)、10 (3, 5, 20)、20 (2.5, 20) |
-| jp_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 (20) |
-| en | `normal` (CPC エンコーダ) | 5 (3, 5, 20)、10 (3, 5, 20)、20 (2.5, 20) |
-| en | `normal-ver2` (Mimi エンコーダ) | 12.5 (20) |
-| en_kyoto | `normal` (CPC エンコーダ) | 5 (20)、10 (20) |
-| en_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 (20) |
-| ch | `normal` (CPC エンコーダ) | 5 (3, 5, 20)、10 (3, 5, 20)、20 (2.5, 20) |
-| ch | `normal-ver2` (Mimi エンコーダ) | 12.5 (20) |
-| ch_kyoto | `normal` (CPC エンコーダ) | 5 (20)、10 (20) |
+| lang | model_type | frame_rate |
+| ---- | ---------- | ---------- |
+| jp | `normal` (CPC エンコーダ) | 5, 10, 20 |
+| jp | `normal-ver2` (Mimi エンコーダ) | 12.5 |
+| jp_kyoto | `normal` (CPC エンコーダ) | 5, 10, 20 |
+| jp_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 |
+| en | `normal` (CPC エンコーダ) | 5, 10, 20 |
+| en | `normal-ver2` (Mimi エンコーダ) | 12.5 |
+| en_kyoto | `normal` (CPC エンコーダ) | 5, 10 |
+| en_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 |
+| ch | `normal` (CPC エンコーダ) | 5, 10, 20 |
+| ch | `normal-ver2` (Mimi エンコーダ) | 12.5 |
+| ch_kyoto | `normal` (CPC エンコーダ) | 5, 10 |
 | ch_kyoto | `normal-ver2` (Mimi エンコーダ) | 準備中 |
-| tri | `normal` (CPC エンコーダ) | 5 (3, 5, 20)、10 (3, 5, 20)、20 (2.5) |
-| tri | `normal-ver2` (Mimi エンコーダ) | 12.5 (20) |
-| tri_kyoto | `normal` (CPC エンコーダ) | 5 (20)、10 (20) |
-| tri_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 (20) |
+| tri | `normal` (CPC エンコーダ) | 5, 10 |
+| tri | `normal-ver2` (Mimi エンコーダ) | 12.5 |
+| tri_kyoto | `normal` (CPC エンコーダ) | 5, 10 |
+| tri_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 |
 
 `model_type` はモデル種別を指定します。`"normal"` はこれまでのリリースで使っていた既存モデル、`"normal-ver2"` は Mimi をエンコーダとして使用する新しいモデルです。5/10/20 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。
 

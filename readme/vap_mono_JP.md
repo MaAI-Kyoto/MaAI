@@ -27,20 +27,20 @@ README: <a href="vap_mono.md">English </a> | <a href="vap_mono_JP.md">Japanese (
 
 `return_p_bins=True` を指定した場合、`p_bins` は4つのビン(0〜200, 200〜600, 600〜1200, 1200〜2000 ミリ秒)ごとの音声活動確率のリストになり、`p_bins_now` / `p_bins_future` はそれぞれ `p_now` / `p_future` の範囲における平均値になります。
 
-## 対応言語・フレームレート・コンテキスト長
+## 対応言語・フレームレート
 
-| lang | model_type | frame_rate | context_len_sec | `vap_mono` |
-| ---- | ---------- | ---------- | --------------- | ---------- |
-| jp | `normal` (CPC エンコーダ) | 50 | 20 | ✅ |
-| jp | `normal-ver2` (Mimi エンコーダ) | 12.5 | 20 | ✅ |
-| en | `normal` (CPC エンコーダ) | 50 | 20 | 準備中 |
-| en | `normal-ver2` (Mimi エンコーダ) | 12.5 | 20 | ✅ |
-| ch | `normal` (CPC エンコーダ) | 50 | 20 | 準備中 |
-| ch | `normal-ver2` (Mimi エンコーダ) | 12.5 | 20 | ✅ |
+| lang | model_type | frame_rate | `vap_mono` |
+| ---- | ---------- | ---------- | ---------- |
+| jp | `normal` (CPC エンコーダ) | 50 | ✅ |
+| jp | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ |
+| en | `normal` (CPC エンコーダ) | 50 | 準備中 |
+| en | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ |
+| ch | `normal` (CPC エンコーダ) | 50 | 準備中 |
+| ch | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ |
 
 現在公開しているのは日本語・中国語の Mimi エンコーダのモデルです。その他の組み合わせは順次公開予定です。
 
-50 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。標準の [VAP モデル](vap_JP.md) とは異なり、`vap_mono` はエンコーダごとにフレームレートが1種類、コンテキスト長は 20 秒固定です。
+50 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。標準の [VAP モデル](vap_JP.md) とは異なり、`vap_mono` はエンコーダごとにフレームレートが1種類です。
 
 ## 学習データ
 
@@ -63,7 +63,6 @@ maai = Maai(
     mode="vap_mono",
     lang="jp",
     frame_rate=12.5,
-    context_len_sec=20,
     audio_ch1=mic,   # audio_ch2 は不要
     device="cpu",
     model_type="normal-ver2",
