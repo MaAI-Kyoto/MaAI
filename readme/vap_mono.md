@@ -31,7 +31,7 @@ With `return_p_bins=True`, `p_bins` is a list of four per-bin activity probabili
 
 | lang | model_type | frame_rate | context_len_sec | `vap_mono` |
 | ---- | ---------- | ---------- | --------------- | ---------- |
-| jp | `normal` (CPC encoder) | 50 | 20 | Coming soon |
+| jp | `normal` (CPC encoder) | 50 | 20 | ✅ |
 | jp | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
 | en | `normal` (CPC encoder) | 50 | 20 | Coming soon |
 | en | `normal-ver2` (Mimi encoder) | 12.5 | 20 | Coming soon |

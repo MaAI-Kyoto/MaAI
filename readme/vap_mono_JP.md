@@ -31,7 +31,7 @@ README: <a href="vap_mono.md">English </a> | <a href="vap_mono_JP.md">Japanese (
 
 | lang | model_type | frame_rate | context_len_sec | `vap_mono` |
 | ---- | ---------- | ---------- | --------------- | ---------- |
-| jp | `normal` (CPC エンコーダ) | 50 | 20 | 準備中 |
+| jp | `normal` (CPC エンコーダ) | 50 | 20 | ✅ |
 | jp | `normal-ver2` (Mimi エンコーダ) | 12.5 | 20 | ✅ |
 | en | `normal` (CPC エンコーダ) | 50 | 20 | 準備中 |
 | en | `normal-ver2` (Mimi エンコーダ) | 12.5 | 20 | 準備中 |

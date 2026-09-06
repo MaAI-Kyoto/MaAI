@@ -9,93 +9,75 @@ README: <a href="vap_mc.md">English </a> | <a href="vap_mc_JP.md">Japanese (日�
 
 Please set the `mode` parameter of the `Maai` class to `vap_mc`.
 
-This model has been trained on data with various environmental noises added, and the gain of the speech audio has also been randomly changed.
-Therefore, it is expected to operate more robustly in real-world environments than standard models.
+This is the multi-condition version of the standard [VAP model](vap.md): it has been trained on data with various environmental noises added, and the gain of the speech audio was also randomly changed. Therefore, it is expected to operate more robustly in real-world environments than the standard model.
+
+Apart from the training conditions, the model architecture, the inputs, and the outputs are the same as the standard [VAP model](vap.md).
 
 The input requires 2-channel, 16kHz audio data.
-There are two outputs: `p_now` represents the probability of voice activity between the two speakers occurring in the next 0 to 600 milliseconds, and `p_future` represents the probability from 600 to 2000 milliseconds ahead.
+
+## Output
+
+`p_now` and `p_future` are lists of two float values in the range [0.0, 1.0], the probability that each speaker holds the floor over the corresponding time range. The two values are normalized between the speakers, so they sum to 1.0.
+
+- `p_now` covers the next 0 to 600 milliseconds.
+- `p_future` covers 600 to 2000 milliseconds ahead.
+
 For general turn-taking purposes, we recommend using `p_now`.
-Both outputs are returned as dictionaries.
 
-</br>
+```python
+result["p_now"]     # e.g. [0.87, 0.13]  -> speaker 1 is likely to be the next speaker
+result["p_future"]  # e.g. [0.62, 0.38]
+```
 
-## Supported Languages
+`vad` is a list of two float values, the voice activity probability of each input channel at the current frame.
 
-The following languages are supported.
-Please specify the language using the `lang` parameter of the `Maai` class.
-Currently, only Japanese is available, but English and Chinese are planned to be added.
+With `return_p_bins=True`, `p_bins` is a list of per-speaker, per-bin activity probabilities over the four bins (0–200, 200–600, 600–1200, 1200–2000 ms), and `p_bins_now` / `p_bins_future` are their averages over the `p_now` / `p_future` ranges. Unlike `p_now` and `p_future`, these are not normalized between the speakers.
 
-### Japanese (`lang=jp`)
+## Supported Languages and Frame Rates
 
-This model is trained on the following Japanese datasets:
-- [Travel Agency Task Dialogue](https://aclanthology.org/2022.lrec-1.619/)
-- [Human-Robot Dialogue](https://aclanthology.org/2025.naacl-long.367/)
-- [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191)
+Specify the language with the `lang` parameter of the `Maai` class.
+The values in parentheses are the `context_len_sec` values (the audio context length in seconds) for which a checkpoint is published at that frame rate. The default is `context_len_sec=20`.
 
-</br>
+| lang | model_type | frame_rate (available `context_len_sec`) |
+| ---- | ---------- | ---------------------------------------- |
+| jp | `normal` (CPC encoder) | 5 (3, 5, 10, 20), 10 (3, 5, 10, 20), 20 (2.5, 10, 20) |
+| jp | `normal-ver2` (Mimi encoder) | 12.5 (20) |
+| jp_kyoto | `normal` (CPC encoder) | 5 (3, 5, 20), 10 (3, 5, 20), 20 (2.5, 20) |
+| jp_kyoto | `normal-ver2` (Mimi encoder) | 12.5 (20) |
+| en | `normal` (CPC encoder) | 5 (3, 5, 20), 10 (3, 5, 20), 20 (2.5, 20) |
+| en | `normal-ver2` (Mimi encoder) | 12.5 (20) |
+| en_kyoto | `normal` (CPC encoder) | 5 (20), 10 (20) |
+| en_kyoto | `normal-ver2` (Mimi encoder) | 12.5 (20) |
+| ch | `normal` (CPC encoder) | 5 (3, 5, 20), 10 (3, 5, 20), 20 (2.5, 20) |
+| ch | `normal-ver2` (Mimi encoder) | 12.5 (20) |
+| ch_kyoto | `normal` (CPC encoder) | 5 (20), 10 (20) |
+| ch_kyoto | `normal-ver2` (Mimi encoder) | 12.5 (20) |
+| tri | `normal` (CPC encoder) | 5 (3, 5, 20), 10 (3, 5, 20), 20 (2.5) |
+| tri | `normal-ver2` (Mimi encoder) | 12.5 (20) |
+| tri_kyoto | `normal` (CPC encoder) | 5 (20), 10 (20) |
+| tri_kyoto | `normal-ver2` (Mimi encoder) | 12.5 (20) |
 
-### Japanese (MIT License) (`lang=jp_kyoto`)
+`model_type` selects the model variant: `"normal"` is the existing variant used in previous releases, and `"normal-ver2"` is the newer variant that uses Mimi as the encoder. Note that the 5/10/20 Hz models are the CPC-based ones (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`).
 
-This model is trained on the following Japanese dataset:
-- [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191)
+`frame_rate` specifies the number of samples the VAP model processes per second. Please adjust this value according to your computing environment.
 
-</br>
+## Training Data
 
-### English (`lang=en`)
+The same data as the standard [VAP model](vap.md), with environmental noise and random gain augmentation applied.
+`tri` is the tri-lingual (JPN + ENG + CHN) model. The `*_kyoto` models are trained only on the Online Conversation Dataset and are released under the MIT license.
 
-This model is trained on the following English dataset:
-- [Switchboard corpus](https://catalog.ldc.upenn.edu/LDC97S62)
-- Online Conversation Dataset
+| lang | Training data | License |
+| ---- | ------------- | ------- |
+| jp | [Travel Agency Task Dialogue](https://aclanthology.org/2022.lrec-1.619/), [Human-Robot Dialogue](https://aclanthology.org/2025.naacl-long.367/), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) | |
+| jp_kyoto | [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) | MIT |
+| en | [Switchboard corpus](https://catalog.ldc.upenn.edu/LDC97S62), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) | |
+| en_kyoto | [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) | MIT |
+| ch | [HKUST Mandarin Telephone Speech](https://catalog.ldc.upenn.edu/LDC2005S15), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) | |
+| ch_kyoto | [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) | MIT |
+| tri | [Switchboard corpus](https://catalog.ldc.upenn.edu/LDC97S62), [HKUST Mandarin Telephone Speech](https://catalog.ldc.upenn.edu/LDC2005S15), [Travel Agency Task Dialogue](https://aclanthology.org/2022.lrec-1.619/), [Human-Robot Dialogue](https://aclanthology.org/2025.naacl-long.367/), [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) | |
+| tri_kyoto | [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191) | MIT |
 
-</br>
-
-### English (MIT License) (`lang=en_kyoto`)
-
-This model is trained on the following English dataset:
-- Online Conversation Dataset
-
-This model is also released under the MIT license.
-
-</br>
-
-### Chinese (`lang=ch`)
-
-This model is trained on the following Chinese dataset:
-- [HKUST Mandarin Telephone Speech](https://catalog.ldc.upenn.edu/LDC2005S15)
-- Online Conversation Dataset
-
-</br>
-
-### Chinese (MIT License) (`lang=ch_kyoto`)
-
-This model is trained on the following Chinese dataset:
-- Online Conversation Dataset
-
-This model is also released under the MIT license.
-
-</br>
-
-### Tri-lingual (JPN + ENG + CHN) (`lang=tri`)
-
-This model is trained on the following three-language datasets:
-- [Switchboard corpus](https://catalog.ldc.upenn.edu/LDC97S62)
-- [HKUST Mandarin Telephone Speech](https://catalog.ldc.upenn.edu/LDC2005S15)
-- [Travel Agency Task Dialogue](https://aclanthology.org/2022.lrec-1.619/)
-- [Human-Robot Dialogue](https://aclanthology.org/2025.naacl-long.367/)
-- [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191)
-
-</br>
-
-### Tri-lingual (JPN + ENG + CHN, MIT License) (`lang=tri_kyoto`)
-
-This model is trained on the following three-language dataset:
-- [Online Conversation Dataset](https://www.arxiv.org/abs/2506.21191)
-
-This model is also released under the MIT license.
-
-</br>
-
-## Example Implementation
+## Usage Example
 
 ```python
 from maai import Maai, MaaiInput
@@ -103,55 +85,27 @@ from maai import Maai, MaaiInput
 wav1 = MaaiInput.Wav(wav_file_path="path_to_your_user_wav_file")
 wav2 = MaaiInput.Wav(wav_file_path="path_to_your_system_wav_file")
 
-maai = Maai(mode="vap_mc", lang="jp", frame_rate=10, context_len_sec=5, audio_ch1=wav1, audio_ch2=wav2, device="cpu")
-
+maai = Maai(
+    mode="vap_mc",
+    lang="jp",
+    frame_rate=10,
+    context_len_sec=5,
+    audio_ch1=wav1,
+    audio_ch2=wav2,
+    device="cpu",
+)
 maai.start()
 
 while True:
     result = maai.get_result()
-
-    print(result['p_now'])
-    print(result['p_future'])
+    print(result["p_now"])     # [float, float]
+    print(result["p_future"])  # [float, float]
 ```
 
-</br>
+Sample scripts:
+- [With 1 mic input (the second channel is a zero signal)](../example/vap_mc/vap_mc_mic.py) 🎤
 
-## Parameters
-
-The available parameters are summarized below.
-`model_type` selects the model variant.
-
-- `"normal"`: the existing model variant used in previous releases
-- `"normal-ver2"`: a new model variant that uses Mimi as the encoder
-
-`frame_rate` specifies the number of samples the VAP model processes per second.
-Please adjust this value according to your computing environment.
-
-For `model_type="normal"`, the available `frame_rate` values are shown in the table below.
-For `model_type="normal-ver2"`, only `frame_rate=12.5` is supported.
-
-| `lang` | `model_type` | `frame_rate` |
-| --- | --- | --- |
-| jp | normal | 5, 10, 20 |
-| jp | normal-ver2 | 12.5 |
-| jp_kyoto | normal | 5, 10, 20 |
-| jp_kyoto | normal-ver2 | 12.5 |
-| en | normal | 5, 10, 20 |
-| en | normal-ver2 | 12.5 |
-| en_kyoto | normal | 5, 10, 20 |
-| en_kyoto | normal-ver2 | 12.5 |
-| ch | normal | 5, 10, 20 |
-| ch | normal-ver2 | 12.5 |
-| ch_kyoto | normal | 5, 10, 20 |
-| ch_kyoto | normal-ver2 | 12.5 |
-| tri | normal | 5, 10, 20 |
-| tri | normal-ver2 | 12.5 |
-| tri_kyoto | normal | 5, 10, 20 |
-| tri_kyoto | normal-ver2 | 12.5 |
-
-</br>
-
-## 📚 Papers and References
+## 📚 Publication
 
 When publishing results using this model, please cite the following paper. 🙏
 
