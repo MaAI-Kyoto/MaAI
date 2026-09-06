@@ -34,7 +34,7 @@ With `return_p_bins=True`, `p_bins` is a list of four per-bin activity probabili
 | jp | `normal` (CPC encoder) | 50 | 20 | ✅ |
 | jp | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
 | en | `normal` (CPC encoder) | 50 | 20 | Coming soon |
-| en | `normal-ver2` (Mimi encoder) | 12.5 | 20 | Coming soon |
+| en | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
 | ch | `normal` (CPC encoder) | 50 | 20 | Coming soon |
 | ch | `normal-ver2` (Mimi encoder) | 12.5 | 20 | ✅ |
 
