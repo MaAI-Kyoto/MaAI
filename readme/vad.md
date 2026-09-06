@@ -39,7 +39,7 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 | ---- | ---------- | ---------- | ----------- | ---------------- |
 | jp | `normal` (CPC encoder) | 10, 20, 50 | ✅ | ✅ |
 | jp | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
-| en | `normal` (CPC encoder) | 10, 20, 50 | ✅ | — |
+| en | `normal` (CPC encoder) | 10, 20, 50 | ✅ | ✅ |
 | en | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
 | ch | `normal` (CPC encoder) | 10, 20, 50 | ✅ | ✅ |
 | ch | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
