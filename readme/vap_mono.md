@@ -29,18 +29,25 @@ With `return_p_bins=True`, `p_bins` is a list of four per-bin activity probabili
 
 ## Supported Languages and Frame Rates
 
-| lang | model_type | frame_rate | `vap_mono` |
-| ---- | ---------- | ---------- | ---------- |
-| jp | `normal` (CPC encoder) | 50 | ✅ |
-| jp | `normal-ver2` (Mimi encoder) | 12.5 | ✅ |
-| en | `normal` (CPC encoder) | 50 | Coming soon |
-| en | `normal-ver2` (Mimi encoder) | 12.5 | ✅ |
-| ch | `normal` (CPC encoder) | 50 | Coming soon |
-| ch | `normal-ver2` (Mimi encoder) | 12.5 | ✅ |
+`model_type` selects the model variant: `"normal-ver2"` is the newer variant that uses Mimi as the encoder, and `"normal"` is the existing variant that uses the CPC encoder. Unlike the standard [VAP model](vap.md), `vap_mono` offers a single frame rate per encoder.
 
-Japanese and Chinese with the Mimi encoder are released; the other combinations are in preparation and will follow.
+Combinations marked as "Coming soon" are in preparation and will follow.
 
-Note that the 50 Hz model is the CPC-based one (`model_type="normal"`) and the 12.5 Hz model is the Mimi-based one (`model_type="normal-ver2"`). Unlike the standard [VAP model](vap.md), `vap_mono` offers a single frame rate per encoder.
+### `model_type="normal-ver2"` (Mimi encoder)
+
+| lang | frame_rate | `vap_mono` |
+| ---- | ---------- | ---------- |
+| jp | 12.5 | ✅ |
+| en | 12.5 | ✅ |
+| ch | 12.5 | ✅ |
+
+### `model_type="normal"` (CPC encoder)
+
+| lang | frame_rate | `vap_mono` |
+| ---- | ---------- | ---------- |
+| jp | 50 | ✅ |
+| en | 50 | Coming soon |
+| ch | 50 | Coming soon |
 
 ## Training Data
 

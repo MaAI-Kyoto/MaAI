@@ -29,18 +29,25 @@ README: <a href="vap_mono.md">English </a> | <a href="vap_mono_JP.md">Japanese (
 
 ## 対応言語・フレームレート
 
-| lang | model_type | frame_rate | `vap_mono` |
-| ---- | ---------- | ---------- | ---------- |
-| jp | `normal` (CPC エンコーダ) | 50 | ✅ |
-| jp | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ |
-| en | `normal` (CPC エンコーダ) | 50 | 準備中 |
-| en | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ |
-| ch | `normal` (CPC エンコーダ) | 50 | 準備中 |
-| ch | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ |
+`model_type` はモデル種別を指定します。`"normal-ver2"` は Mimi をエンコーダとして使用する新しいモデル、`"normal"` は CPC エンコーダを使用する既存モデルです。標準の [VAP モデル](vap_JP.md) とは異なり、`vap_mono` はエンコーダごとにフレームレートが1種類です。
 
-現在公開しているのは日本語・中国語の Mimi エンコーダのモデルです。その他の組み合わせは順次公開予定です。
+「準備中」の組み合わせは順次公開予定です。
 
-50 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。標準の [VAP モデル](vap_JP.md) とは異なり、`vap_mono` はエンコーダごとにフレームレートが1種類です。
+### `model_type="normal-ver2"`（Mimi エンコーダ）
+
+| lang | frame_rate | `vap_mono` |
+| ---- | ---------- | ---------- |
+| jp | 12.5 | ✅ |
+| en | 12.5 | ✅ |
+| ch | 12.5 | ✅ |
+
+### `model_type="normal"`（CPC エンコーダ）
+
+| lang | frame_rate | `vap_mono` |
+| ---- | ---------- | ---------- |
+| jp | 50 | ✅ |
+| en | 50 | 準備中 |
+| ch | 50 | 準備中 |
 
 ## 学習データ
 

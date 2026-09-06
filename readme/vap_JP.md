@@ -37,28 +37,35 @@ result["p_future"]  # 例: [0.62, 0.38]
 
 `Maai` クラスの `lang` パラメータで言語を指定してください。
 
-| lang | model_type | frame_rate |
-| ---- | ---------- | ---------- |
-| jp | `normal` (CPC エンコーダ) | 5, 10, 20 |
-| jp | `normal-ver2` (Mimi エンコーダ) | 12.5 |
-| jp_kyoto | `normal` (CPC エンコーダ) | 5, 10, 20 |
-| jp_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 |
-| en | `normal` (CPC エンコーダ) | 5, 10, 20 |
-| en | `normal-ver2` (Mimi エンコーダ) | 12.5 |
-| en_kyoto | `normal` (CPC エンコーダ) | 5, 10 |
-| en_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 |
-| ch | `normal` (CPC エンコーダ) | 5, 10, 20 |
-| ch | `normal-ver2` (Mimi エンコーダ) | 12.5 |
-| ch_kyoto | `normal` (CPC エンコーダ) | 5, 10 |
-| ch_kyoto | `normal-ver2` (Mimi エンコーダ) | 準備中 |
-| tri | `normal` (CPC エンコーダ) | 5, 10 |
-| tri | `normal-ver2` (Mimi エンコーダ) | 12.5 |
-| tri_kyoto | `normal` (CPC エンコーダ) | 5, 10 |
-| tri_kyoto | `normal-ver2` (Mimi エンコーダ) | 12.5 |
-
-`model_type` はモデル種別を指定します。`"normal"` はこれまでのリリースで使っていた既存モデル、`"normal-ver2"` は Mimi をエンコーダとして使用する新しいモデルです。5/10/20 Hz のモデルが CPC ベース (`model_type="normal"`)、12.5 Hz のモデルが Mimi ベース (`model_type="normal-ver2"`) である点にご注意ください。
+`model_type` はモデル種別を指定します。`"normal-ver2"` は Mimi をエンコーダとして使用する新しいモデル、`"normal"` はこれまでのリリースで使っていた既存モデル（CPC エンコーダ）です。
 
 `frame_rate` は VAP モデルが1秒あたりに処理するサンプル数を指定します。ご利用の計算環境に合わせて調整してください。
+
+### `model_type="normal-ver2"`（Mimi エンコーダ）
+
+| lang | frame_rate |
+| ---- | ---------- |
+| jp | 12.5 |
+| jp_kyoto | 12.5 |
+| en | 12.5 |
+| en_kyoto | 12.5 |
+| ch | 12.5 |
+| ch_kyoto | 準備中 |
+| tri | 12.5 |
+| tri_kyoto | 12.5 |
+
+### `model_type="normal"`（CPC エンコーダ）
+
+| lang | frame_rate |
+| ---- | ---------- |
+| jp | 5, 10, 20 |
+| jp_kyoto | 5, 10, 20 |
+| en | 5, 10, 20 |
+| en_kyoto | 5, 10 |
+| ch | 5, 10, 20 |
+| ch_kyoto | 5, 10 |
+| tri | 5, 10 |
+| tri_kyoto | 5, 10 |
 
 ## 学習データ
 
