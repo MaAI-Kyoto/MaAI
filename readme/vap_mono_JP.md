@@ -45,9 +45,9 @@ README: <a href="vap_mono.md">English </a> | <a href="vap_mono_JP.md">Japanese (
 
 | lang | frame_rate | `vap_mono` |
 | ---- | ---------- | ---------- |
-| jp | 50 | ✅ |
-| en | 50 | 準備中 |
-| ch | 50 | 準備中 |
+| jp | 10, 20, 50 | ✅ |
+| en | 10, 20, 50 | ✅ |
+| ch | 10, 20, 50 | ✅ |
 
 ## 学習データ
 

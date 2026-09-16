@@ -45,9 +45,9 @@ Combinations marked as "Coming soon" are in preparation and will follow.
 
 | lang | frame_rate | `vap_mono` |
 | ---- | ---------- | ---------- |
-| jp | 50 | ✅ |
-| en | 50 | Coming soon |
-| ch | 50 | Coming soon |
+| jp | 10, 20, 50 | ✅ |
+| en | 10, 20, 50 | ✅ |
+| ch | 10, 20, 50 | ✅ |
 
 ## Training Data
 
