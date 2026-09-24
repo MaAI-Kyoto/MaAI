@@ -120,6 +120,7 @@ while True:
 頷きは頭の上下運動で、相槌と関連します。発声を伴わず非言語的に聞き手反応を示すことができます。
 
 - [VAPベースの頷き予測モデル](readme/vap_nod_JP.md)
+- [VAPベースの頷き予測モデル（タイミング専用）](readme/vap_nod_timing_JP.md)
 - [VAPベースの頷きパラメーター予測モデル](readme/vap_nod_para_JP.md)
 
 ### 音声エンコーダを共有して複数モデルを同時実行
@@ -199,6 +200,8 @@ MaAIモデルへの入力は、`Maai`クラスインスタンスの`process`メ�
 - 頷き
     - 3種類の頷き予測
         - [1マイク入力](example/nod/nod_mic.py) 🎤
+    - 頷きのタイミングのみ予測
+        - [1マイク入力](example/nod_timing/nod_timing_mic.py) 🎤
     - 頷きの運動学的パラメーター予測
         - [1マイク入力](example/nod/nod_para_mic.py) 🎤
 

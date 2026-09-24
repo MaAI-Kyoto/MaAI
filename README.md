@@ -126,6 +126,7 @@ While the models above *predict* when a backchannel should occur, the backchanne
 Nodding refers to the up-and-down movement of the head and is closely related to backchanneling. Unlike backchannels that involve vocal responses, nodding allows the listener to express their reaction non-verbally.
 
 - [VAP-based Nodding Prediction Model](readme/vap_nod.md)
+- [VAP-based Nodding Prediction Model (Timing-only)](readme/vap_nod_timing.md)
 - [VAP-based Nodding Prediction Model with Kinematic Parameter](readme/vap_nod_para.md)
 
 ### Running Multiple Models with a Shared Encoder
@@ -208,6 +209,8 @@ You can find example implementations of MaAI models in the [example](example) di
 - Nodding
     - Prediction of three types of nodding 
         - [With 1 mic input](example/nod/nod_mic.py) 🎤
+    - Prediction of nod timing only
+        - [With 1 mic input](example/nod_timing/nod_timing_mic.py) 🎤
     - Prediction of kinematic parameter of nodding
         - [With 1 mic input](example/nod/nod_para_mic.py) 🎤
 

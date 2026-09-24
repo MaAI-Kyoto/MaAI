@@ -220,7 +220,7 @@ class _CausalStreamingResampler(nn.Module):
                 return x.new_zeros((batch_size, channels, 0))
 
             t = (
-                torch.arange(n_out, device=x.device, dtype=torch.float32) * float(step)
+                torch.arange(n_out, device=x.device, dtype=torch.float64) * float(step)
                 + float(self.state.next_t_in_samples)
             )
             t_floor = torch.floor(t)

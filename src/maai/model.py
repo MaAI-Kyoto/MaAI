@@ -17,6 +17,7 @@ from .models.bc_det import BcDetGPT, BcDetGPT_mono
 from .models.vap_bc import VapGPT_bc
 from .models.vap_bc_2type import VapGPT_bc_2type
 from .models.vap_nod import VapGPT_nod
+from .models.vap_nod_timing import VapGPT_nod_timing
 from .models.vap_nod_para import VapGPT_nod_para
 from .models.config import VapConfig
 # from .models.vap_prompt import VapGPT_prompt
@@ -243,6 +244,9 @@ class Maai():
         elif mode == "nod":
             self.vap = VapGPT_nod(conf)
 
+        elif mode == "nod_timing":
+            self.vap = VapGPT_nod_timing(conf)
+
         elif mode == "nod_para":
             conf.dropout = 0.2
             self.vap = VapGPT_nod_para(conf)
@@ -279,16 +283,15 @@ class Maai():
                 force_download,
                 model_type=model_type,
             )
-            if (
-                mode == "nod_para"
-                and isinstance(sd, dict)
-                and "state_dict" in sd
-            ):
+            if isinstance(sd, dict) and "state_dict" in sd:
                 nod_param_stats_from_file = sd.get("nod_param_stats")
                 nod_count_thresholds_from_file = sd.get("nod_count_thresholds") or sd.get(
                     "nod_repetitions_thresholds"
                 )
-                sd = sd["state_dict"]
+                merged_sd = {}
+                merged_sd.update(sd.get("encoder_state_dict") or {})
+                merged_sd.update(sd["state_dict"])
+                sd = merged_sd
         else:
             print("Loading model from local file:", local_model)
             raw = torch.load(local_model, map_location="cpu")
@@ -298,7 +301,10 @@ class Maai():
                     "nod_count_thresholds"
                 ) or raw.get("nod_repetitions_thresholds")
                 if "state_dict" in raw:
-                    sd = raw["state_dict"]
+                    merged_sd = {}
+                    merged_sd.update(raw.get("encoder_state_dict") or {})
+                    merged_sd.update(raw["state_dict"])
+                    sd = merged_sd
                 else:
                     sd = raw
             else:
@@ -802,6 +808,10 @@ class Maai():
                     "p_nod_short": out['p_nod_short'],
                     "p_nod_long": out['p_nod_long'],
                     "p_nod_long_p": out['p_nod_long_p']
+                },
+                "nod_timing": lambda: {
+                    "p_bc": out['p_bc'],
+                    "p_nod": out['p_nod'],
                 },
                 "nod_para": lambda: {
                     "p_nod": out["p_nod"],
