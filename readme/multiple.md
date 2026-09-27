@@ -51,14 +51,22 @@ Per-model differences are configured through the `configs` list. Each entry
 is a `dict` with:
 
 - `"mode"` (required): `"vap"`, `"vap_mc"`, `"vad"`, `"bc"`, `"bc_det"`,
-  `"bc_2type"`, `"nod"`, `"nod_para"` or `"vap_prompt"`.
+  `"bc_2type"`, `"nod"`, `"nod_para"` or `"vap_prompt"`, or one of the
+  single-channel modes `"vap_mono"`, `"vap_mc_mono"`, `"vad_mono"` or
+  `"bc_det_mono"` (see below).
 - `"lang"` (required): same value as for `Maai`.
 - `"label"` (optional): result-dict key for this sub-model. Defaults to
   `"mode"`. Use it to disambiguate when the same `mode` is registered twice
   (e.g., comparing two languages).
 - `"local_model"` (optional): path to a locally trained checkpoint.
 - `"return_p_bins"` (optional): same flag as in `Maai` (only meaningful for
-  `vap`/`vap_mc`).
+  `vap`/`vap_mc`/`vap_mono`/`vap_mc_mono`).
+
+Single-channel sub-models (`vap_mono`, `vap_mc_mono`, `vad_mono`,
+`bc_det_mono`) can be mixed with two-channel ones. They encode only
+`audio_ch1`; channel 2 is not encoded at all when every sub-model is
+single-channel. Since all sub-models share `audio_ch2`, a config list that
+includes a single-channel mode must pass `audio_ch2=MaaiInput.Zero()`.
 
 </br>
 

@@ -110,6 +110,8 @@ while True:
 Sample scripts:
 - [With 1 mic input (the second channel is a zero signal)](../example/vap_mc/vap_mc_mic.py) 🎤
 
+If only one speaker's audio is available, the dedicated [noise-robust single-channel model (`vap_mc_mono`)](vap_mc_mono.md) is recommended over feeding a zero signal to the second channel.
+
 ## 📚 Publication
 
 When publishing results using this model, please cite the following paper. 🙏

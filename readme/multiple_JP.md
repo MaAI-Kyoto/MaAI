@@ -46,12 +46,15 @@ Maai の各モデル（`vap`, `vap_mc`, `bc`, `bc_2type`, `nod`, `nod_para`, `va
 各要素は以下のキーを持つ `dict` です。
 
 - `"mode"`（必須）：`"vap"`, `"vap_mc"`, `"vad"`, `"bc"`, `"bc_det"`,
-  `"bc_2type"`, `"nod"`, `"nod_para"`, `"vap_prompt"` のいずれか
+  `"bc_2type"`, `"nod"`, `"nod_para"`, `"vap_prompt"`、または1チャネルモードの
+  `"vap_mono"`, `"vap_mc_mono"`, `"vad_mono"`, `"bc_det_mono"` のいずれか（下記参照）
 - `"lang"`（必須）：`Maai` と同じ指定
 - `"label"`（任意）：結果辞書のキー名。省略時は `"mode"` を使用。
   同じ `mode` を複数登録するとき（例：複数言語の `vap` を比較するとき）に区別するために使います。
 - `"local_model"`（任意）：ローカルに保存したチェックポイントのパス
-- `"return_p_bins"`（任意）：`Maai` と同じフラグ（`vap` / `vap_mc` のみ意味があります）
+- `"return_p_bins"`（任意）：`Maai` と同じフラグ（`vap` / `vap_mc` / `vap_mono` / `vap_mc_mono` のみ意味があります）
+
+1チャネルのサブモデル（`vap_mono`, `vap_mc_mono`, `vad_mono`, `bc_det_mono`）は2チャネルのサブモデルと混在させられます。これらは `audio_ch1` のみをエンコードし、すべてのサブモデルが1チャネルの場合は第2チャネルのエンコード自体を行いません。`audio_ch2` はすべてのサブモデルで共有されるため、1チャネルモードを含む場合は `audio_ch2=MaaiInput.Zero()` を渡してください。
 
 </br>
 

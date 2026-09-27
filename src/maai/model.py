@@ -25,6 +25,7 @@ from .models.config import VapConfig
 # 2-channel modes that have a dedicated single-channel (monaural) counterpart.
 MONO_ALTERNATIVE_MODES = {
     "vap": "vap_mono",
+    "vap_mc": "vap_mc_mono",
     "vad": "vad_mono",
     "bc_det": "bc_det_mono",
 }
@@ -74,7 +75,7 @@ class Maai():
 
     Most modes are two-channel: ``audio_ch1`` and ``audio_ch2`` carry the two
     speakers, and both are encoded and attended to jointly. The single-channel
-    modes (``vap_mono``, ``vad_mono``, ``bc_det_mono``) are separate models
+    modes (``vap_mono``, ``vap_mc_mono``, ``vad_mono``, ``bc_det_mono``) are separate models
     with their own pretrained weights that take one stream and run a single
     encoder; ``audio_ch2`` must be omitted for them (silence is fed internally
     so that ``x2`` remains present in the result dict for the output helpers).
@@ -124,8 +125,8 @@ class Maai():
             lang (str): Language setting (e.g., 'jp', 'en').
             audio_ch1 (Base): Audio input source for channel 1.
             audio_ch2 (Base): Audio input source for channel 2.
-                Not used by the single-channel modes ('vap_mono', 'vad_mono',
-                'bc_det_mono'); silence is fed internally instead.
+                Not used by the single-channel modes ('vap_mono', 'vap_mc_mono',
+                'vad_mono', 'bc_det_mono'); silence is fed internally instead.
             frame_rate (float): Frame rate for processing audio.
             context_len_sec (int): Audio context length in seconds.
             device (str): Device to run the model on ('cpu', 'cuda').
@@ -154,7 +155,7 @@ class Maai():
                 frame of each batch is emitted through ``get_result()``.
         """
 
-        if mode in ("vap_mono", "vad_mono", "bc_det_mono"):
+        if mode in ("vap_mono", "vap_mc_mono", "vad_mono", "bc_det_mono"):
             if audio_ch2 is None:
                 audio_ch2 = Zero()
             elif not isinstance(audio_ch2, Zero):
@@ -220,7 +221,7 @@ class Maai():
         if mode in ["vap", "vap_mc"]:
             self.vap = VapGPT(conf)
 
-        elif mode == "vap_mono":
+        elif mode in ["vap_mono", "vap_mc_mono"]:
             self.vap = VapGPT_mono(conf)
 
         elif mode == "vad":
@@ -778,6 +779,14 @@ class Maai():
                     "p_bins_now": out['p_bins_now'],
                     "p_bins_future": out['p_bins_future'],
                 },
+                "vap_mc_mono": lambda: {
+                    "p_now": out['p_now'],
+                    "p_future": out['p_future'],
+                    "vad": out['vad'],
+                    "p_bins": out['p_bins'],
+                    "p_bins_now": out['p_bins_now'],
+                    "p_bins_future": out['p_bins_future'],
+                },
                 "vad": lambda: {
                     "vad": out['vad'],
                 },
@@ -827,7 +836,7 @@ class Maai():
             # Get mode-specific outputs
             if self.mode in mode_outputs:
                 _out = mode_outputs[self.mode]()
-                if not self.return_p_bins and self.mode in ("vap", "vap_mc", "vap_mono"):
+                if not self.return_p_bins and self.mode in ("vap", "vap_mc", "vap_mono", "vap_mc_mono"):
                     for _k in ("p_bins", "p_bins_now", "p_bins_future"):
                         _out.pop(_k, None)
                 result_dict.update(_out)
@@ -922,12 +931,13 @@ class MaaiMultiple:
     ``mode``, ``lang``, ``local_model``, ``return_p_bins`` and an optional
     ``label`` used as the result key.
 
-    Single-channel sub-models (``vap_mono``, ``vad_mono``, ``bc_det_mono``)
-    can be mixed in. They encode one stream only, so the shared encoder is
-    taken from a two-channel sub-model when the list contains one, and channel
-    2 is not encoded at all when every sub-model is single-channel. Since all
-    sub-models share ``audio_ch2``, a config list that includes a
-    single-channel mode must pass ``audio_ch2=MaaiInput.Zero()``.
+    Single-channel sub-models (``vap_mono``, ``vap_mc_mono``, ``vad_mono``,
+    ``bc_det_mono``) can be mixed in. They encode one stream only, so the
+    shared encoder is taken from a two-channel sub-model when the list
+    contains one, and channel 2 is not encoded at all when every sub-model is
+    single-channel. Since all sub-models share ``audio_ch2``, a config list
+    that includes a single-channel mode must pass
+    ``audio_ch2=MaaiInput.Zero()``.
 
     Each call to :meth:`get_result` returns a single ``dict`` whose top level
     contains shared fields ``t``, ``x1``, ``x2`` plus one nested ``dict``
@@ -1425,7 +1435,7 @@ class MaaiMultiple:
 
     @staticmethod
     def _extract_outputs(mode: str, out: dict, return_p_bins: bool) -> dict:
-        if mode in ("vap", "vap_mc", "vap_mono"):
+        if mode in ("vap", "vap_mc", "vap_mono", "vap_mc_mono"):
             d = {
                 "p_now": out["p_now"],
                 "p_future": out["p_future"],

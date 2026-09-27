@@ -507,7 +507,7 @@ class TcpReceiver:
     def _bytearray_2_vapresult(self, data: bytes) -> Dict[str, Any]:
         if self.mode in ['vap', 'vap_mc', 'vap_prompt']:
             vap_result = util.conv_bytearray_2_vapresult(data)
-        elif self.mode == 'vap_mono':
+        elif self.mode in ['vap_mono', 'vap_mc_mono']:
             vap_result = util.conv_bytearray_2_vapresult_mono(data)
         elif self.mode == 'vad':
             vap_result = util.conv_bytearray_2_vapresult_vad(data)
@@ -584,7 +584,7 @@ class TcpTransmitter:
     def _vapresult_2_bytearray(self, result_dict: Dict[str, Any]) -> bytes:
         if self.mode in ['vap', 'vap_mc']:
             data_sent = util.conv_vapresult_2_bytearray(result_dict)
-        elif self.mode == 'vap_mono':
+        elif self.mode in ['vap_mono', 'vap_mc_mono']:
             data_sent = util.conv_vapresult_2_bytearray_mono(result_dict)
         elif self.mode == 'vad':
             data_sent = util.conv_vapresult_2_bytearray_vad(result_dict)

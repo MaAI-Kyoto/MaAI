@@ -27,6 +27,10 @@ class VapGPT_mono(nn.Module):
 
     It is intended for use cases where only one speaker's audio is available,
     e.g. a single microphone input for a spoken dialogue system.
+
+    The same class also serves ``mode="vap_mc_mono"``, whose checkpoints are
+    trained with noise and random-gain augmentation (multi-condition) for
+    robustness in real-world environments.
     """
 
     # Only channel 1 is encoded, so the runtime must not feed a second stream

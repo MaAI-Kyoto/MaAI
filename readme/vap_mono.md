@@ -11,6 +11,7 @@ Please set the `mode` parameter of the `Maai` class to `vap_mono`.
 
 This is a **dedicated single-channel model with its own pretrained weights** — not the standard two-speaker VAP model fed with a silent second channel. It encodes one audio stream, replaces the cross-channel transformer of the standard model with a plain causal transformer, and predicts the future activity of that one speaker directly.
 It is intended for use cases where only one speaker's audio is available (e.g., a single microphone input for a spoken dialogue system).
+For noisy real-world environments, the noise-robust variant [`vap_mc_mono`](vap_mc_mono.md) is also available.
 
 The input requires 1-channel, 16kHz audio data.
 

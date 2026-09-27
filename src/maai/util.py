@@ -84,7 +84,7 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
     """Load a pretrained VAP model from the Hugging Face hub.
     
     Args:
-        mode (str): The operational mode of the model (e.g., 'vap', 'vap_mc', 'bc', 'nod').
+        mode (str): The operational mode of the model (e.g., 'vap', 'vap_mc', 'vap_mc_mono', 'bc', 'nod').
         frame_rate (float): The frame rate expected by the model.
         context_len_sec (float): The context length in seconds.
         language (str): The language identifier for the model (e.g., 'jp', 'en').
@@ -199,7 +199,16 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
         else:
             supported_languages = ["jp", "en", "ch", "tri", "jp_kyoto", "en_kyoto", "ch_kyoto", "tri_kyoto", "fr"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
-    
+
+    # vap_mc_mono is the noise-robust single-channel model, stored with the vap_mc checkpoints
+    elif mode == "vap_mc_mono":
+        if language in ("jp", "en", "ch"):
+            repo_id = repo_ids[f"vap_mc_{language}"]
+            file_path = f"vap_mono_mc{encoder_suffix}_state_dict_{language}_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+        else:
+            supported_languages = ["jp", "en", "ch"]
+            raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
+
     elif mode == "vad":
         if language == "jp":
             repo_id = repo_ids["vad_jp"]
@@ -334,7 +343,7 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
         )
 
     else:
-        supported_modes = ["vap", "vap_mono", "vap_mc", "vad", "vad_mono", "bc_det", "bc_det_mono", "bc", "bc_2type", "nod", "nod_timing", "vap_prompt", "nod_para"]
+        supported_modes = ["vap", "vap_mono", "vap_mc", "vap_mc_mono", "vad", "vad_mono", "bc_det", "bc_det_mono", "bc", "bc_2type", "nod", "nod_timing", "vap_prompt", "nod_para"]
         raise ValueError(f"Invalid mode: {mode}. Supported modes are: {supported_modes}")
 
     try:
