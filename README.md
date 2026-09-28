@@ -35,7 +35,7 @@ For <b>system development or collaborative research using MaAI software</b>, ple
 
 <br>
 
-https://github.com/user-attachments/assets/e7d1b266-0613-4a46-8718-1808a3682bd3
+https://github.com/user-attachments/assets/a18d1ed7-d56e-4e68-8f55-182056f1d23d
 
 <br>
 
