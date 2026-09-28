@@ -31,10 +31,6 @@ Thanks to its lightweight design, MaAI operates efficiently, even exclusively on
 The name <b>MaAI</b> is derived from the Japanese words <b>Ma(間)</b> or <b>Maai(間合い)</b>, which refer to the subtle timing and spacing that humans adjust using various modalities during interactions.  
 The <b>AI</b> in MaAI literally stands for Artificial Intelligence, reflecting the aim to develop AI technologies related to these interactional dynamics.
 
-The currently supported models are mainly based on the Voice Activity Projection (VAP) model and its extensions.
-Details about the VAP model can be found in the following repository:
-https://github.com/ErikEkstedt/VoiceActivityProjection
-
 For <b>system development or collaborative research using MaAI software</b>, please contact [Koji Inoue](https://inokoj.github.io/) at Kyoto University.
 
 <br>

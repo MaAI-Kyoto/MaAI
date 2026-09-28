@@ -25,10 +25,6 @@ MaAI
 
 プロジェクトの名称の<b>MaAI</b>は、日本語の<b>間（ま）</b>や<b>間合い</b>に由来し、会話におけるタイミングや間合いの調整をAIで実現することを目指しています。
 
-現在サポートしているモデルは主にVoice Activity Projection（VAP）およびその拡張です。
-VAPモデルの詳細は以下のリポジトリを参照してください：
-https://github.com/ErikEkstedt/VoiceActivityProjection
-
 <b>MaAIソフトウェアを使用したシステム開発・共同研究</b>などは京都大学の[井上昂治](https://inokoj.github.io/)までご相談いただけますと幸いです。
 
 <br>
