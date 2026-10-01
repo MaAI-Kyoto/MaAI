@@ -143,35 +143,173 @@ Unlike `p_now` and `p_future`, these are not normalized between the speakers.
 - `model_type`: `"normal-ver2"` is the newer model that uses the Mimi encoder. `"normal"` is the existing model from previous releases, which uses the CPC encoder.
 - `frame_rate`: number of frames processed per second. Adjust it to your computing environment.
 
-Each cell lists the available `frame_rate` values. "–" means the variant is not available, in which case the [fallback](#fallback) applies.
+### `model_type="normal-ver2"` (Mimi encoder, `frame_rate=12.5`)
 
-### `model_type="normal-ver2"` (Mimi encoder)
-
-| lang | 2ch<br>`vap` | 2ch, mc<br>`vap_mc` | 1ch<br>`vap_mono` | 1ch, mc<br>`vap_mc_mono` |
-| ---- | ---- | ---- | ---- | ---- |
-| jp | 12.5 | 12.5 | 12.5 | 12.5 |
-| jp_kyoto | 12.5 | 12.5 | – | – |
-| en | 12.5 | 12.5 | 12.5 | 12.5 |
-| en_kyoto | 12.5 | 12.5 | – | – |
-| ch | 12.5 | 12.5 | 12.5 | 12.5 |
-| ch_kyoto | Coming soon | 12.5 | – | – |
-| tri | 12.5 | 12.5 | – | – |
-| tri_kyoto | 12.5 | 12.5 | – | – |
+<table>
+<thead>
+<tr>
+<th rowspan="2" align="left">Language</th>
+<th rowspan="2" align="left"><code>lang</code></th>
+<th colspan="2">🎧🎧 2-channel</th>
+<th colspan="2">🎧 1-channel</th>
+</tr>
+<tr>
+<th>Standard<br><sub><code>vap</code></sub></th>
+<th>Noise-robust<br><sub><code>vap_mc</code></sub></th>
+<th>Standard<br><sub><code>vap_mono</code></sub></th>
+<th>Noise-robust<br><sub><code>vap_mc_mono</code></sub></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="2"><b>Japanese</b></td>
+<td><code>jp</code></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td><code>jp_kyoto</code> <sub>MIT</sub></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>English</b></td>
+<td><code>en</code></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td><code>en_kyoto</code> <sub>MIT</sub></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>Chinese</b></td>
+<td><code>ch</code></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td><code>ch_kyoto</code> <sub>MIT</sub></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>Trilingual</b></td>
+<td><code>tri</code></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>tri_kyoto</code> <sub>MIT</sub></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+</tbody>
+</table>
 
 The 1-channel models are available only with a 20-second context (`context_len_sec=20`, the default).
 
 ### `model_type="normal"` (CPC encoder)
 
-| lang | 2ch<br>`vap` | 2ch, mc<br>`vap_mc` | 1ch<br>`vap_mono` | 1ch, mc<br>`vap_mc_mono` |
-| ---- | ---- | ---- | ---- | ---- |
-| jp | 5, 10, 20 | 5, 10, 20 | 10, 20, 50 | – |
-| jp_kyoto | 5, 10, 20 | 5, 10, 20 | – | – |
-| en | 5, 10, 20 | 5, 10, 20 | 10, 20, 50 | – |
-| en_kyoto | 5, 10 | 5, 10 | – | – |
-| ch | 5, 10, 20 | 5, 10, 20 | 10, 20, 50 | – |
-| ch_kyoto | 5, 10 | 5, 10 | – | – |
-| tri | 5, 10 | 5, 10 | – | – |
-| tri_kyoto | 5, 10 | 5, 10 | – | – |
+Each cell lists the available `frame_rate` values.
+
+<table>
+<thead>
+<tr>
+<th rowspan="2" align="left">Language</th>
+<th rowspan="2" align="left"><code>lang</code></th>
+<th colspan="2">🎧🎧 2-channel</th>
+<th colspan="2">🎧 1-channel</th>
+</tr>
+<tr>
+<th>Standard<br><sub><code>vap</code></sub></th>
+<th>Noise-robust<br><sub><code>vap_mc</code></sub></th>
+<th>Standard<br><sub><code>vap_mono</code></sub></th>
+<th>Noise-robust<br><sub><code>vap_mc_mono</code></sub></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="2"><b>Japanese</b></td>
+<td><code>jp</code></td>
+<td align="center">5, 10, 20</td>
+<td align="center">5, 10, 20</td>
+<td align="center">10, 20, 50</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>jp_kyoto</code> <sub>MIT</sub></td>
+<td align="center">5, 10, 20</td>
+<td align="center">5, 10, 20</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>English</b></td>
+<td><code>en</code></td>
+<td align="center">5, 10, 20</td>
+<td align="center">5, 10, 20</td>
+<td align="center">10, 20, 50</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>en_kyoto</code> <sub>MIT</sub></td>
+<td align="center">5, 10</td>
+<td align="center">5, 10</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>Chinese</b></td>
+<td><code>ch</code></td>
+<td align="center">5, 10, 20</td>
+<td align="center">5, 10, 20</td>
+<td align="center">10, 20, 50</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>ch_kyoto</code> <sub>MIT</sub></td>
+<td align="center">5, 10</td>
+<td align="center">5, 10</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>Trilingual</b></td>
+<td><code>tri</code></td>
+<td align="center">5, 10</td>
+<td align="center">5, 10</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>tri_kyoto</code> <sub>MIT</sub></td>
+<td align="center">5, 10</td>
+<td align="center">5, 10</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+</tbody>
+</table>
+
+✅ available ／ — not available (the [fallback](#fallback) applies) ／ <sub>MIT</sub> released under the MIT license
 
 <br>
 

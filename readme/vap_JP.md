@@ -143,35 +143,173 @@ result["p_now"]     # 例: 0.87  -> 入力話者が次の 600 ミリ秒で発話
 - `model_type`: `"normal-ver2"` は Mimi エンコーダを使用する新しいモデル、`"normal"` はこれまでのリリースで使っていた既存モデル（CPC エンコーダ）です。
 - `frame_rate`: 1秒あたりに処理するフレーム数です。ご利用の計算環境に合わせて調整してください。
 
-各セルは利用可能な `frame_rate` を表します。「–」はそのモデルが存在しないことを表し、その場合は[フォールバック](#フォールバック)が適用されます。
+### `model_type="normal-ver2"`（Mimi エンコーダ・`frame_rate=12.5`）
 
-### `model_type="normal-ver2"`（Mimi エンコーダ）
-
-| lang | 2ch<br>`vap` | 2ch・mc<br>`vap_mc` | 1ch<br>`vap_mono` | 1ch・mc<br>`vap_mc_mono` |
-| ---- | ---- | ---- | ---- | ---- |
-| jp | 12.5 | 12.5 | 12.5 | 12.5 |
-| jp_kyoto | 12.5 | 12.5 | – | – |
-| en | 12.5 | 12.5 | 12.5 | 12.5 |
-| en_kyoto | 12.5 | 12.5 | – | – |
-| ch | 12.5 | 12.5 | 12.5 | 12.5 |
-| ch_kyoto | 準備中 | 12.5 | – | – |
-| tri | 12.5 | 12.5 | – | – |
-| tri_kyoto | 12.5 | 12.5 | – | – |
+<table>
+<thead>
+<tr>
+<th rowspan="2" align="left">言語</th>
+<th rowspan="2" align="left"><code>lang</code></th>
+<th colspan="2">🎧🎧 2チャネル</th>
+<th colspan="2">🎧 1チャネル</th>
+</tr>
+<tr>
+<th>通常<br><sub><code>vap</code></sub></th>
+<th>ノイズロバスト<br><sub><code>vap_mc</code></sub></th>
+<th>通常<br><sub><code>vap_mono</code></sub></th>
+<th>ノイズロバスト<br><sub><code>vap_mc_mono</code></sub></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="2"><b>日本語</b></td>
+<td><code>jp</code></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td><code>jp_kyoto</code> <sub>MIT</sub></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>英語</b></td>
+<td><code>en</code></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td><code>en_kyoto</code> <sub>MIT</sub></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>中国語</b></td>
+<td><code>ch</code></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td><code>ch_kyoto</code> <sub>MIT</sub></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>3言語</b></td>
+<td><code>tri</code></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>tri_kyoto</code> <sub>MIT</sub></td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+</tbody>
+</table>
 
 1チャネルモデルは 20 秒のコンテキスト（`context_len_sec=20`、デフォルト）でのみ利用できます。
 
 ### `model_type="normal"`（CPC エンコーダ）
 
-| lang | 2ch<br>`vap` | 2ch・mc<br>`vap_mc` | 1ch<br>`vap_mono` | 1ch・mc<br>`vap_mc_mono` |
-| ---- | ---- | ---- | ---- | ---- |
-| jp | 5, 10, 20 | 5, 10, 20 | 10, 20, 50 | – |
-| jp_kyoto | 5, 10, 20 | 5, 10, 20 | – | – |
-| en | 5, 10, 20 | 5, 10, 20 | 10, 20, 50 | – |
-| en_kyoto | 5, 10 | 5, 10 | – | – |
-| ch | 5, 10, 20 | 5, 10, 20 | 10, 20, 50 | – |
-| ch_kyoto | 5, 10 | 5, 10 | – | – |
-| tri | 5, 10 | 5, 10 | – | – |
-| tri_kyoto | 5, 10 | 5, 10 | – | – |
+各セルは利用可能な `frame_rate` を表します。
+
+<table>
+<thead>
+<tr>
+<th rowspan="2" align="left">言語</th>
+<th rowspan="2" align="left"><code>lang</code></th>
+<th colspan="2">🎧🎧 2チャネル</th>
+<th colspan="2">🎧 1チャネル</th>
+</tr>
+<tr>
+<th>通常<br><sub><code>vap</code></sub></th>
+<th>ノイズロバスト<br><sub><code>vap_mc</code></sub></th>
+<th>通常<br><sub><code>vap_mono</code></sub></th>
+<th>ノイズロバスト<br><sub><code>vap_mc_mono</code></sub></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="2"><b>日本語</b></td>
+<td><code>jp</code></td>
+<td align="center">5, 10, 20</td>
+<td align="center">5, 10, 20</td>
+<td align="center">10, 20, 50</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>jp_kyoto</code> <sub>MIT</sub></td>
+<td align="center">5, 10, 20</td>
+<td align="center">5, 10, 20</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>英語</b></td>
+<td><code>en</code></td>
+<td align="center">5, 10, 20</td>
+<td align="center">5, 10, 20</td>
+<td align="center">10, 20, 50</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>en_kyoto</code> <sub>MIT</sub></td>
+<td align="center">5, 10</td>
+<td align="center">5, 10</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>中国語</b></td>
+<td><code>ch</code></td>
+<td align="center">5, 10, 20</td>
+<td align="center">5, 10, 20</td>
+<td align="center">10, 20, 50</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>ch_kyoto</code> <sub>MIT</sub></td>
+<td align="center">5, 10</td>
+<td align="center">5, 10</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td rowspan="2"><b>3言語</b></td>
+<td><code>tri</code></td>
+<td align="center">5, 10</td>
+<td align="center">5, 10</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+<tr>
+<td><code>tri_kyoto</code> <sub>MIT</sub></td>
+<td align="center">5, 10</td>
+<td align="center">5, 10</td>
+<td align="center">—</td>
+<td align="center">—</td>
+</tr>
+</tbody>
+</table>
+
+✅ 利用可能 ／ — 未提供（[フォールバック](#フォールバック)が適用されます）／ <sub>MIT</sub> MIT ライセンスで公開
 
 <br>
 
