@@ -224,8 +224,6 @@ result["p_now"]     # 例: 0.87  -> 入力話者が次の 600 ミリ秒で発話
 </tbody>
 </table>
 
-1チャネルモデルは 20 秒のコンテキスト（`context_len_sec=20`、デフォルト）でのみ利用できます。
-
 ### `model_type="normal"`（CPC エンコーダ）
 
 各セルは利用可能な `frame_rate` を表します。

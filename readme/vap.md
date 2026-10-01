@@ -224,8 +224,6 @@ Unlike `p_now` and `p_future`, these are not normalized between the speakers.
 </tbody>
 </table>
 
-The 1-channel models are available only with a 20-second context (`context_len_sec=20`, the default).
-
 ### `model_type="normal"` (CPC encoder)
 
 Each cell lists the available `frame_rate` values.
