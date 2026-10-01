@@ -1,13 +1,13 @@
 """
-This script is an example of how to use the mono BC detection model (bc_det_mono)
+This script is an example of how to use the single-channel BC detection model
 with a single WAV file.
 
-The bc_det_mono mode takes only one audio channel (audio_ch1).
+When audio_ch2 is omitted, mode="bc_det" automatically uses the single-channel model.
 The output p_bc_det is a single float value for the input audio.
 
 Note that the model relies on the interlocutor's speech to tell a backchannel apart
 from the beginning of a turn, so the mono variant is less accurate than the
-two-channel bc_det mode. Prefer bc_det when both channels are available.
+two-channel one. Pass audio_ch2 when both channels are available.
 
 This example uses the 12.5 Hz Mimi model (model_type="normal-ver2").
 """
@@ -30,7 +30,7 @@ def test():
     output = MaaiOutput.ConsoleBar()
 
     maai = Maai(
-        mode="bc_det_mono",
+        mode="bc_det",
         lang="jp",
         frame_rate=12.5,
         audio_ch1=wav,

@@ -8,7 +8,7 @@ README: <a href="multiple.md">English </a> | <a href="multiple_JP.md">Japanese (
 </p>
 
 `MaaiMultiple` は、複数の Maai モデルを 1 つの音声エンコーダを共有しながら同時に動作させるためのクラスです。
-Maai の各モデル（`vap`, `vap_mc`, `bc`, `bc_2type`, `nod`, `nod_para`, `vap_prompt`）は、いずれも同じ音声エンコーダ（`model_type="normal"` の場合は CPC、`model_type="normal-ver2"` の場合は Mimi）を入口として持っています。
+Maai の各モデル（`vap`, `vad`, `bc_det`, `bc`, `bc_2type`, `nod`, `nod_para`, `vap_prompt`）は、いずれも同じ音声エンコーダ（`model_type="normal"` の場合は CPC、`model_type="normal-ver2"` の場合は Mimi）を入口として持っています。
 モデルごとに別々の `Maai` を作る素朴な方法では、1 フレーム処理するたびに同じエンコーダを N 回走らせることになります。
 `MaaiMultiple` ではエンコーダを 1 回だけ実行し、その出力をすべてのサブモデルに配るので、特に CPU 実行時の処理コストを大幅に下げられます。
 
@@ -20,7 +20,7 @@ Maai の各モデル（`vap`, `vap_mc`, `bc`, `bc_2type`, `nod`, `nod_para`, `va
 
 - ターンテイキング ＋ 相槌 ＋ 頷きを同時に動かす
 - 2 種類の相槌モデル（`bc` と `bc_2type`）を同時に動かす
-- `vap` と `vap_mc` を並べて比較する
+- 通常版とノイズロバスト版の `vap` を並べて比較する（`{"mode": "vap", "mc": False, "label": "vap"}` と `{"mode": "vap", "label": "vap_mc"}`）
 
 1 モデルだけで十分な場合は、これまで通り `Maai` を直接使ってください。
 
@@ -45,16 +45,17 @@ Maai の各モデル（`vap`, `vap_mc`, `bc`, `bc_2type`, `nod`, `nod_para`, `va
 サブモデルごとに変えられる設定は `configs` リストで指定します。
 各要素は以下のキーを持つ `dict` です。
 
-- `"mode"`（必須）：`"vap"`, `"vap_mc"`, `"vad"`, `"bc"`, `"bc_det"`,
-  `"bc_2type"`, `"nod"`, `"nod_para"`, `"vap_prompt"`、または1チャネルモードの
-  `"vap_mono"`, `"vap_mc_mono"`, `"vad_mono"`, `"bc_det_mono"` のいずれか（下記参照）
+- `"mode"`（必須）：`"vap"`, `"vad"`, `"bc"`, `"bc_det"`, `"bc_2type"`,
+  `"nod"`, `"nod_para"`, `"vap_prompt"` のいずれか。旧名の `"vap_mc"`, `"vap_mono"`,
+  `"vap_mc_mono"`, `"vad_mono"`, `"bc_det_mono"` は非推奨のエイリアスです
 - `"lang"`（必須）：`Maai` と同じ指定
 - `"label"`（任意）：結果辞書のキー名。省略時は `"mode"` を使用。
   同じ `mode` を複数登録するとき（例：複数言語の `vap` を比較するとき）に区別するために使います。
+- `"mc"`（任意）：`Maai` と同じフラグ（デフォルト `True`。`vap` のみ意味があります）
 - `"local_model"`（任意）：ローカルに保存したチェックポイントのパス
-- `"return_p_bins"`（任意）：`Maai` と同じフラグ（`vap` / `vap_mc` / `vap_mono` / `vap_mc_mono` のみ意味があります）
+- `"return_p_bins"`（任意）：`Maai` と同じフラグ（`vap` のみ意味があります）
 
-1チャネルのサブモデル（`vap_mono`, `vap_mc_mono`, `vad_mono`, `bc_det_mono`）は2チャネルのサブモデルと混在させられます。これらは `audio_ch1` のみをエンコードし、すべてのサブモデルが1チャネルの場合は第2チャネルのエンコード自体を行いません。`audio_ch2` はすべてのサブモデルで共有されるため、1チャネルモードを含む場合は `audio_ch2=MaaiInput.Zero()` を渡してください。
+`audio_ch2` を省略した場合（または `MaaiInput.Zero()` を渡した場合）、`vap`・`vad`・`bc_det` のサブモデルは1チャネルモデルを使用し、`bc` や `nod` などの2チャネルのサブモデル（第2チャネルは無音）と混在させられます。1チャネルの `vap` モデルは `audio_ch1` のみをエンコードし、第2チャネルを必要とするサブモデルがない場合は第2チャネルのエンコード自体を行いません。
 
 </br>
 

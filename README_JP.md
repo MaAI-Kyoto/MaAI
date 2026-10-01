@@ -35,7 +35,8 @@ https://github.com/user-attachments/assets/a18d1ed7-d56e-4e68-8f55-182056f1d23d
 
 ## 🆕 新着情報
 
-- [1チャンネル入力専用に学習したターンテイキング（VAP）モデルを公開しました](readme/vap_mono_JP.md)（2026年8月30日）
+- `mode="vap"` で、ノイズロバスト版（`mc=True`、デフォルト）と1チャンネル版（`audio_ch2` 省略時）の[VAPモデル](readme/vap_JP.md)が自動で選択されるようになりました。`vap_mc`・`vap_mono`・`vap_mc_mono` は非推奨です
+- [1チャンネル入力専用に学習したターンテイキング（VAP）モデルを公開しました](readme/vap_JP.md)（2026年8月30日）
 - [チャンネル間アテンションを用いた音声区間検出（VAD）モデルを公開しました（1チャンネル版もあり）](readme/vad_JP.md)（2026年8月9日）
 - MaAIの新バージョン（0.2.0）をリリースしました！大幅な性能改善を実現しています（2026年4月17日）
 - [3言語対応相槌予測モデル（英語・中国語・日本語）を公開しました](readme/vap_bc_JP.md)（2025年11月19日）
@@ -56,15 +57,14 @@ pip install maai
 
 以下のように実行できます🏃‍♂️
 タスク（mode）に応じたモデルやパラメータは自動でダウンロードされます。
-下記は、１チャネル目はマイク入力（ユーザ）、２チャネル目は無音（システム）をターンテイキングモデル（VAP）に入力する例です。
+下記は、マイク1本の入力（ユーザ）をターンテイキングモデル（VAP）に入力する例です。`audio_ch2` を省略しているため、1チャネル専用モデルが自動的に使われます。2チャネルモデルを使う場合は `audio_ch2` （例: 2本目の `MaaiInput.Mic`）を指定してください。また `mc=True`（デフォルト）の場合、利用可能であればノイズロバストモデルが使われます。
 
 ```python
 from maai import Maai, MaaiInput, MaaiOutput
 
 mic = MaaiInput.Mic()
-zero = MaaiInput.Zero() 
 
-maai = Maai(mode="vap", lang="jp", frame_rate=10, audio_ch1=mic, audio_ch2=zero, device="cpu")
+maai = Maai(mode="vap", lang="jp", frame_rate=10, audio_ch1=mic, device="cpu")
 maai_output_bar = MaaiOutput.ConsoleBar()
 
 maai.start()
@@ -89,10 +89,7 @@ while True:
 
 ターンテイキングモデルはVAPを用い、次の瞬間にどちらが発話するかを予測します。
 
-- [VAPモデル](readme/vap_JP.md)
-- [ノイズロバストVAPモデル（<b>推奨</b>）](readme/vap_mc_JP.md)
-- [1チャンネルVAPモデル](readme/vap_mono_JP.md)
-- [ノイズロバスト1チャンネルVAPモデル](readme/vap_mc_mono_JP.md)
+- [VAPモデル](readme/vap_JP.md)（ノイズロバスト版・1チャンネル版は自動で選択されます）
 
 ### 音声区間検出
 
@@ -187,7 +184,11 @@ MaAIモデルへの入力は、`Maai`クラスインスタンスの`process`メ�
     - [1マイクチャンクTCP経由入力](example/vap/vap_mic_chunk_tcp.py) 🎤🌐
 
 - ノイズロバストターンテイキング（VAP）
-    - [1マイク入力](example/vap_mc/vap_mic.py) 🎤
+    - [1マイク入力](example/vap_mc/vap_mc_mic.py) 🎤
+
+- 1チャンネルターンテイキング（VAP）
+    - [1マイク入力](example/vap_mono/vap_mono_mic.py) 🎤
+    - [1wavファイル入力](example/vap_mono/vap_mono_wav.py) 🎧
 
 - 相槌
     - [1マイク入力](example/bc/bc_mic.py) 🎤

@@ -14,7 +14,7 @@ import os
 # This allows you to import modules from the src directory without pip installing the package.
 # Uncomment the line below if you need to run this script directly without installing the package.
 
-# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src/')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src/')))
 
 from maai import Maai, MaaiInput, MaaiOutput
 
@@ -24,7 +24,8 @@ def test():
     mic1 = MaaiInput.Mic(mic_device_index=0)
 
     # Use the second mic for the second channel
-    mic2 = MaaiInput.Mic(mic_device_index=1)
+    # mic2 = MaaiInput.Mic(mic_device_index=1)
+    mic2 = MaaiInput.Zero()
 
     output = MaaiOutput.ConsoleBar()
 

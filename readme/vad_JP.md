@@ -7,7 +7,7 @@
 README: <a href="vad.md">English </a> | <a href="vad_JP.md">Japanese (日本語) </a>
 </p>
 
-`Maai` クラスの `mode` パラメータに `vad` (2チャネル) または `vad_mono` (1チャネル) を指定してください。
+`Maai` クラスの `mode` パラメータに `vad` を指定してください。`audio_ch1` のみを渡した場合（または `audio_ch2` が `MaaiInput.Zero` の場合）は、1チャネル専用モデルが自動的に使われます。旧 mode 名 `vad_mono` も引き続き動作しますが、非推奨です。
 
 ターンテイキングのモデルとは異なり、このモデルは未来を予測しません。**各話者が今まさに発話しているかどうか**を検出します。
 
@@ -15,7 +15,7 @@ README: <a href="vad.md">English </a> | <a href="vad_JP.md">Japanese (日本語)
 
 学習時に雑音・残響 (RIR) の付与を行っているため、雑音に頑健な条件がデフォルトになっています。そのため `vad_mc` という別モードは用意しておらず、`vad` 自体がマルチコンディションのモデルです。
 
-入力は 2 チャネル(`vad_mono` の場合は 1 チャネル)・16kHz の音声データです。
+入力は 2 チャネル(または 1 チャネル)・16kHz の音声データです。
 
 ## 出力
 
@@ -25,7 +25,7 @@ README: <a href="vad.md">English </a> | <a href="vad_JP.md">Japanese (日本語)
 result["vad"]  # 例: [0.93, 0.02]  -> 話者1は発話中、話者2は発話していない
 ```
 
-`vad_mono` の場合、`vad` は入力チャネルに対する単一の float 値です。
+1チャネルモデルの場合、`vad` は入力チャネルに対する単一の float 値です。
 
 2値の判定を得るにはしきい値を適用してください。既定値は `0.5` です。学習時の開発データでは `0.54` が最も F1 スコアが高くなりました。
 
@@ -35,7 +35,7 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 
 ## 対応言語・フレームレート
 
-| lang | model_type | frame_rate | `vad` (2ch) | `vad_mono` (1ch) |
+| lang | model_type | frame_rate | 2ch | 1ch |
 | ---- | ---------- | ---------- | ----------- | ---------------- |
 | jp | `normal` (CPC エンコーダ) | 10, 20, 50 | ✅ | ✅ |
 | jp | `normal-ver2` (Mimi エンコーダ) | 12.5 | ✅ | ✅ |
@@ -80,7 +80,7 @@ while True:
     print(result["vad"])  # [float, float]
 ```
 
-1チャネル版を使う場合は `mode="vad_mono"` を指定し、`audio_ch1` のみを渡してください。このとき `result["vad"]` は単一の float になります。
+1チャネル版を使う場合は `audio_ch2` を省略し、`audio_ch1` のみを渡してください。このとき `result["vad"]` は単一の float になります。
 
 サンプルスクリプト:
 - [マイク2本の入力](../example/vad/vad_2mic.py) 🎤

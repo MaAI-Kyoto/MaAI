@@ -41,7 +41,8 @@ https://github.com/user-attachments/assets/a18d1ed7-d56e-4e68-8f55-182056f1d23d
 
 ## 🆕 Update
 
-- [Single-channel turn-taking (VAP) model](readme/vap_mono.md), trained specifically for single-channel input, is now available (August 30th, 2026)
+- `mode="vap"` now selects the noise-robust (`mc=True`, default) and single-channel (when `audio_ch2` is omitted) [VAP models](readme/vap.md) automatically; `vap_mc`, `vap_mono` and `vap_mc_mono` are deprecated
+- [Single-channel turn-taking (VAP) model](readme/vap.md), trained specifically for single-channel input, is now available (August 30th, 2026)
 - [Voice Activity Detection (VAD) model](readme/vad.md) with cross-channel attention (single-channel version also available) is now available (August 9th, 2026)
 - We released a new version of MaAI (version 0.2.0) with a significant performance improvement (April 17th, 2026)
 - [Backchannel prediction model](readme/vap_bc.md) supporting three languages (English, Chinese, and Japanese) is now available (November 19th, 2025)
@@ -62,15 +63,14 @@ pip install maai
 
 You can run it as follows🏃‍♂️
 The appropriate model for the task (mode) and parameters will be downloaded automatically.  
-Below is an example of using the turn-taking model (VAP) with the first channel as microphone input (user) and the second channel as silence (system).
+Below is an example of using the turn-taking model (VAP) with a single microphone input (user). Since `audio_ch2` is omitted, the dedicated single-channel model is used automatically; pass `audio_ch2` (e.g. a second `MaaiInput.Mic`) to use the 2-channel model. `mc=True` (the default) selects the noise-robust model when one is available.
 
 ```python
 from maai import Maai, MaaiInput, MaaiOutput
 
 mic = MaaiInput.Mic()
-zero = MaaiInput.Zero() 
 
-maai = Maai(mode="vap", lang="jp", frame_rate=10, audio_ch1=mic, audio_ch2=zero, device="cpu")
+maai = Maai(mode="vap", lang="jp", frame_rate=10, audio_ch1=mic, device="cpu")
 maai_output_bar = MaaiOutput.ConsoleBar()
 
 maai.start()
@@ -95,10 +95,7 @@ Currently available models can be found in [our HuggingFace repository](https://
 
 The turn-taking model uses the original VAP as is and predicts which participant will speak in the next moment.
 
-- [VAP Model](readme/vap.md)
-- [Noise-Robust VAP Model (<b>Recommended</b>)](readme/vap_mc.md)
-- [Single-Channel VAP Model](readme/vap_mono.md)
-- [Noise-Robust Single-Channel VAP Model](readme/vap_mc_mono.md)
+- [VAP Model](readme/vap.md) (noise-robust and single-channel variants are selected automatically)
 
 ### Voice Activity Detection
 
@@ -196,7 +193,11 @@ You can find example implementations of MaAI models in the [example](example) di
     - [With 1 mic chunk input via TCP](example/vap/vap_mic_chunk_tcp.py) 🎤🌐
 
 - Noise-Robust Turn-Taking (VAP)
-    - [With 1 mic input](example/vap_mc/vap_mic.py) 🎤
+    - [With 1 mic input](example/vap_mc/vap_mc_mic.py) 🎤
+
+- Single-Channel Turn-Taking (VAP)
+    - [With 1 mic input](example/vap_mono/vap_mono_mic.py) 🎤
+    - [With 1 wav file input](example/vap_mono/vap_mono_wav.py) 🎧
 
 - Backchannel
     - [With 1 mic input](example/bc/bc_mic.py) 🎤

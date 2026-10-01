@@ -6,10 +6,9 @@ import threading
 import queue
 import copy
 import os
-import sys
 
 from .input import Base, Zero
-from .util import load_vap_model, resolve_encoder_type
+from .util import resolve_and_load_model, resolve_encoder_type, mono_variant, MONO_CAPABLE_MODES
 from .models.vap import VapGPT
 from .models.vap_mono import VapGPT_mono
 from .models.vad import VadGPT, VadGPT_mono
@@ -22,49 +21,31 @@ from .models.vap_nod_para import VapGPT_nod_para
 from .models.config import VapConfig
 # from .models.vap_prompt import VapGPT_prompt
 
-# 2-channel modes that have a dedicated single-channel (monaural) counterpart.
-MONO_ALTERNATIVE_MODES = {
-    "vap": "vap_mono",
-    "vap_mc": "vap_mc_mono",
-    "vad": "vad_mono",
-    "bc_det": "bc_det_mono",
+# Deprecated mode names -> (unified mode, forced mc value or None, single-channel only).
+DEPRECATED_MODE_ALIASES = {
+    "vap_mc": ("vap", True, False),
+    "vap_mono": ("vap", False, True),
+    "vap_mc_mono": ("vap", True, True),
+    "vad_mono": ("vad", None, True),
+    "bc_det_mono": ("bc_det", None, True),
 }
 
-
-def _confirm_zero_second_channel(mode: str, mono_mode: str) -> None:
-    """Warn that a 2-channel mode is being fed a silent second channel.
-
-    Asks on stdin whether to keep going with `mode` or to quit so that the
-    dedicated monaural mode can be used instead. If stdin is not interactive
-    the warning is printed and processing continues.
-
-    Args:
-        mode (str): The 2-channel mode that was requested.
-        mono_mode (str): The recommended single-channel mode.
-
-    Raises:
-        SystemExit: If the user chooses not to continue.
-    """
-    print(
-        f"[WARNING] mode='{mode}' is a 2-channel model, but the second channel is "
-        "MaaiInput.Zero (silence). For single-channel (monaural) input, "
-        f"mode='{mono_mode}' is recommended."
-    )
-
-    if not sys.stdin or not sys.stdin.isatty():
-        print(f"[WARNING] stdin is not interactive; continuing with mode='{mode}'.")
-        return
-
-    while True:
-        try:
-            answer = input(f"Continue with mode='{mode}'? [y/N]: ").strip().lower()
-        except EOFError:
-            answer = ""
-        if answer in ("y", "yes"):
-            return
-        if answer in ("", "n", "no"):
-            raise SystemExit(f"Aborted. Please use mode='{mono_mode}' instead.")
-        print("Please answer 'y' or 'n'.")
+# Model class for each checkpoint variant.
+MODEL_CLASSES = {
+    "vap": VapGPT,
+    "vap_mc": VapGPT,
+    "vap_mono": VapGPT_mono,
+    "vap_mc_mono": VapGPT_mono,
+    "vad": VadGPT,
+    "vad_mono": VadGPT_mono,
+    "bc_det": BcDetGPT,
+    "bc_det_mono": BcDetGPT_mono,
+    "bc": VapGPT_bc,
+    "bc_2type": VapGPT_bc_2type,
+    "nod": VapGPT_nod,
+    "nod_timing": VapGPT_nod_timing,
+    "nod_para": VapGPT_nod_para,
+}
 
 
 class Maai():
@@ -74,11 +55,17 @@ class Maai():
     feature extraction, and VAP outputs in a background thread.
 
     Most modes are two-channel: ``audio_ch1`` and ``audio_ch2`` carry the two
-    speakers, and both are encoded and attended to jointly. The single-channel
-    modes (``vap_mono``, ``vap_mc_mono``, ``vad_mono``, ``bc_det_mono``) are separate models
+    speakers, and both are encoded and attended to jointly. The ``vap``,
+    ``vad`` and ``bc_det`` modes also have dedicated single-channel models
     with their own pretrained weights that take one stream and run a single
-    encoder; ``audio_ch2`` must be omitted for them (silence is fed internally
-    so that ``x2`` remains present in the result dict for the output helpers).
+    encoder. They are selected automatically when ``audio_ch2`` is omitted or
+    is a ``MaaiInput.Zero`` (silence is fed internally so that ``x2`` remains
+    present in the result dict for the output helpers).
+
+    For ``vap``, ``mc=True`` (the default) selects the noise-robust
+    (multi-condition) model when one exists for the language, and falls back
+    to the standard model otherwise. The checkpoint actually loaded is exposed
+    as ``self.variant`` (e.g. ``'vap_mc'``, ``'vap_mc_mono'``).
     """
     
     BINS_P_NOW = [0, 1]
@@ -117,16 +104,19 @@ class Maai():
         local_model = None,
         return_p_bins: bool = False,
         inference_chunk_frames: int = 1,
+        mc: bool = True,
     ):
         """Initialize the Maai instance.
-        
+
         Args:
-            mode (str): Operational mode (e.g., 'vap', 'bc', 'nod').
+            mode (str): Operational mode (e.g., 'vap', 'vad', 'bc_det', 'bc', 'nod').
+                The old names 'vap_mc', 'vap_mono', 'vap_mc_mono', 'vad_mono'
+                and 'bc_det_mono' are deprecated aliases.
             lang (str): Language setting (e.g., 'jp', 'en').
             audio_ch1 (Base): Audio input source for channel 1.
             audio_ch2 (Base): Audio input source for channel 2.
-                Not used by the single-channel modes ('vap_mono', 'vap_mc_mono',
-                'vad_mono', 'bc_det_mono'); silence is fed internally instead.
+                For 'vap', 'vad' and 'bc_det', omitting it (or passing a
+                MaaiInput.Zero) selects the single-channel model.
             frame_rate (float): Frame rate for processing audio.
             context_len_sec (int): Audio context length in seconds.
             device (str): Device to run the model on ('cpu', 'cuda').
@@ -153,20 +143,33 @@ class Maai():
             inference_chunk_frames (int): Number of Mimi/VAP frames evaluated
                 in one causal forward. When greater than one, only the final
                 frame of each batch is emitted through ``get_result()``.
+            mc (bool): Prefer the noise-robust (multi-condition) model in
+                'vap' mode. Falls back to the standard model when no mc model
+                exists for the language. Ignored by the other modes.
         """
 
-        if mode in ("vap_mono", "vap_mc_mono", "vad_mono", "bc_det_mono"):
-            if audio_ch2 is None:
-                audio_ch2 = Zero()
-            elif not isinstance(audio_ch2, Zero):
+        if mode in DEPRECATED_MODE_ALIASES:
+            new_mode, forced_mc, mono_only = DEPRECATED_MODE_ALIASES[mode]
+            if forced_mc is not None:
+                mc = forced_mc
+            if mono_only and audio_ch2 is not None and not isinstance(audio_ch2, Zero):
                 raise ValueError(
                     f"mode='{mode}' takes a single input channel; "
                     "audio_ch2 must be omitted (or a MaaiInput.Zero)."
                 )
-        elif audio_ch2 is None:
-            raise ValueError(f"audio_ch2 is required for mode '{mode}'.")
-        elif mode in MONO_ALTERNATIVE_MODES and isinstance(audio_ch2, Zero):
-            _confirm_zero_second_channel(mode, MONO_ALTERNATIVE_MODES[mode])
+            hint = f"mode='{new_mode}'"
+            if new_mode == "vap":
+                hint += f", mc={mc}"
+            if mono_only:
+                hint += " with audio_ch2 omitted"
+            print(f"[Warning] mode='{mode}' is deprecated; use {hint} instead.")
+            mode = new_mode
+
+        if audio_ch2 is None:
+            if mode not in MONO_CAPABLE_MODES:
+                raise ValueError(f"audio_ch2 is required for mode '{mode}'.")
+            audio_ch2 = Zero()
+        mono = mode in MONO_CAPABLE_MODES and isinstance(audio_ch2, Zero)
 
         self.return_p_bins = bool(return_p_bins)
         inference_chunk_frames = int(inference_chunk_frames)
@@ -218,44 +221,6 @@ class Maai():
         #     conf.cross_layers = 6
         #     conf.num_heads = 8
         
-        if mode in ["vap", "vap_mc"]:
-            self.vap = VapGPT(conf)
-
-        elif mode in ["vap_mono", "vap_mc_mono"]:
-            self.vap = VapGPT_mono(conf)
-
-        elif mode == "vad":
-            self.vap = VadGPT(conf)
-
-        elif mode == "vad_mono":
-            self.vap = VadGPT_mono(conf)
-
-        elif mode == "bc_det":
-            self.vap = BcDetGPT(conf)
-
-        elif mode == "bc_det_mono":
-            self.vap = BcDetGPT_mono(conf)
-
-        elif mode == "bc":
-            self.vap = VapGPT_bc(conf)
-        
-        elif mode == "bc_2type":
-            self.vap = VapGPT_bc_2type(conf)
-        
-        elif mode == "nod":
-            self.vap = VapGPT_nod(conf)
-
-        elif mode == "nod_timing":
-            self.vap = VapGPT_nod_timing(conf)
-
-        elif mode == "nod_para":
-            conf.dropout = 0.2
-            self.vap = VapGPT_nod_para(conf)
-        
-        elif mode == "vap_prompt":
-            from .models.vap_prompt import VapGPT_prompt
-            self.vap = VapGPT_prompt(conf)
-        
         try:
             self.device = str(torch.device(device))
         except RuntimeError as exc:
@@ -263,19 +228,16 @@ class Maai():
 
         if not (self.device == "cpu" or self.device.startswith("cuda")):
             raise ValueError("Device must be 'cpu', 'cuda', or 'cuda:N'.")
-        
-        # Models that encode and attend over a single channel only (their
-        # encode_audio / forward take one stream, and there is no encoder2).
-        self.single_tower = bool(getattr(self.vap, "is_single_tower", False))
 
-        # Store the initial state of the model to check for unchanged parameters
-        initial_state_dict = {name: param.clone() for name, param in self.vap.named_parameters()}
-
+        # Resolve the checkpoint variant (mc / mono) first, since it decides
+        # which model class to build.
         nod_param_stats_from_file = None
         nod_count_thresholds_from_file = None
         if local_model is None:
-            sd = load_vap_model(
+            variant, sd = resolve_and_load_model(
                 mode,
+                mc,
+                mono,
                 frame_rate,
                 context_len_sec,
                 lang,
@@ -294,6 +256,9 @@ class Maai():
                 merged_sd.update(sd["state_dict"])
                 sd = merged_sd
         else:
+            # mc and non-mc checkpoints share the architecture, so only the
+            # channel count matters for a local file.
+            variant = mono_variant(mode) if mono else mode
             print("Loading model from local file:", local_model)
             raw = torch.load(local_model, map_location="cpu")
             if isinstance(raw, dict):
@@ -310,6 +275,24 @@ class Maai():
                     sd = raw
             else:
                 sd = raw
+
+        if variant == "nod_para":
+            conf.dropout = 0.2
+
+        if variant == "vap_prompt":
+            from .models.vap_prompt import VapGPT_prompt
+            self.vap = VapGPT_prompt(conf)
+        elif variant in MODEL_CLASSES:
+            self.vap = MODEL_CLASSES[variant](conf)
+        else:
+            raise ValueError(f"Invalid mode: {mode}. Supported modes are: {list(MODEL_CLASSES) + ['vap_prompt']}")
+
+        # Models that encode and attend over a single channel only (their
+        # encode_audio / forward take one stream, and there is no encoder2).
+        self.single_tower = bool(getattr(self.vap, "is_single_tower", False))
+
+        # Store the initial state of the model to check for unchanged parameters
+        initial_state_dict = {name: param.clone() for name, param in self.vap.named_parameters()}
 
         if hasattr(self.vap, "conf"):
             setattr(self.vap.conf, "runtime_device", self.device)
@@ -381,6 +364,12 @@ class Maai():
         self.vap = self.vap.eval()
         
         self.mode = mode
+        # Checkpoint actually loaded, e.g. 'vap_mc' or 'vap_mc_mono'.
+        self.variant = variant
+        self.mc = variant in ("vap_mc", "vap_mc_mono")
+        # Single-channel model in use (vad_mono / bc_det_mono still run two
+        # towers internally, so this is not the same as single_tower).
+        self.is_mono = variant.endswith("_mono")
         self.model_type = model_type
         self.encoder_type = encoder_type
         self._use_mimi_onnx = bool(use_mimi_onnx)
@@ -763,40 +752,10 @@ class Maai():
                     "p_bins_now": out['p_bins_now'],
                     "p_bins_future": out['p_bins_future'],
                 },
-                "vap_mc": lambda: {
-                    "p_now": out['p_now'],
-                    "p_future": out['p_future'],
-                    "vad": out['vad'],
-                    "p_bins": out['p_bins'],
-                    "p_bins_now": out['p_bins_now'],
-                    "p_bins_future": out['p_bins_future'],
-                },
-                "vap_mono": lambda: {
-                    "p_now": out['p_now'],
-                    "p_future": out['p_future'],
-                    "vad": out['vad'],
-                    "p_bins": out['p_bins'],
-                    "p_bins_now": out['p_bins_now'],
-                    "p_bins_future": out['p_bins_future'],
-                },
-                "vap_mc_mono": lambda: {
-                    "p_now": out['p_now'],
-                    "p_future": out['p_future'],
-                    "vad": out['vad'],
-                    "p_bins": out['p_bins'],
-                    "p_bins_now": out['p_bins_now'],
-                    "p_bins_future": out['p_bins_future'],
-                },
                 "vad": lambda: {
                     "vad": out['vad'],
                 },
-                "vad_mono": lambda: {
-                    "vad": out['vad'],
-                },
                 "bc_det": lambda: {
-                    "p_bc_det": out['p_bc_det'],
-                },
-                "bc_det_mono": lambda: {
                     "p_bc_det": out['p_bc_det'],
                 },
                 "vap_prompt": lambda: {
@@ -836,7 +795,7 @@ class Maai():
             # Get mode-specific outputs
             if self.mode in mode_outputs:
                 _out = mode_outputs[self.mode]()
-                if not self.return_p_bins and self.mode in ("vap", "vap_mc", "vap_mono", "vap_mc_mono"):
+                if not self.return_p_bins and self.mode == "vap":
                     for _k in ("p_bins", "p_bins_now", "p_bins_future"):
                         _out.pop(_k, None)
                 result_dict.update(_out)
@@ -854,7 +813,7 @@ class Maai():
 
                 frame_budget = 1.0 / self.frame_rate
                 rtf = ave_proc_time / frame_budget
-                perf_message = f'[{self.mode}] Average processing time: {ave_proc_time:.5f} [sec], #process/sec: {num_process_frame:.3f}, RTF: {rtf:.2f}'
+                perf_message = f'[{self.variant}] Average processing time: {ave_proc_time:.5f} [sec], #process/sec: {num_process_frame:.3f}, RTF: {rtf:.2f}'
                 if self.encoder_type == "mimi":
                     perf_message += f', chunk_samples: {self.audio_frame_size}'
                 # High load warning (always shown when RTF > 1.0)
@@ -928,16 +887,15 @@ class MaaiMultiple:
     ``model_type``, ``frame_rate``, ``context_len_sec``, ``device``,
     ``inference_chunk_frames`` and the ``mimi_*`` parameters. Per-model
     differences allowed in ``configs`` are
-    ``mode``, ``lang``, ``local_model``, ``return_p_bins`` and an optional
-    ``label`` used as the result key.
+    ``mode``, ``lang``, ``mc``, ``local_model``, ``return_p_bins`` and an
+    optional ``label`` used as the result key.
 
-    Single-channel sub-models (``vap_mono``, ``vap_mc_mono``, ``vad_mono``,
-    ``bc_det_mono``) can be mixed in. They encode one stream only, so the
-    shared encoder is taken from a two-channel sub-model when the list
-    contains one, and channel 2 is not encoded at all when every sub-model is
-    single-channel. Since all sub-models share ``audio_ch2``, a config list
-    that includes a single-channel mode must pass
-    ``audio_ch2=MaaiInput.Zero()``.
+    When ``audio_ch2`` is omitted (or is a ``MaaiInput.Zero``), the ``vap``,
+    ``vad`` and ``bc_det`` sub-models use their single-channel models. The
+    single-channel ``vap`` model encodes one stream only, so the shared
+    encoder is taken from a two-tower sub-model when the list contains one,
+    and channel 2 is not encoded at all when no sub-model needs it. Modes without a
+    single-channel model (e.g. ``bc``, ``nod``) require ``audio_ch2``.
 
     Each call to :meth:`get_result` returns a single ``dict`` whose top level
     contains shared fields ``t``, ``x1``, ``x2`` plus one nested ``dict``
@@ -953,7 +911,7 @@ class MaaiMultiple:
         self,
         configs: list,
         audio_ch1: Base,
-        audio_ch2: Base,
+        audio_ch2: Base = None,
         frame_rate: float = 10,
         context_len_sec: int = 20,
         device: str = "cpu",
@@ -983,6 +941,11 @@ class MaaiMultiple:
         inference_chunk_frames = int(inference_chunk_frames)
         if inference_chunk_frames < 1:
             raise ValueError("inference_chunk_frames must be at least 1.")
+
+        # Create the silent channel here (not inside each Maai) so that every
+        # sub-model and self.mic2 share the same source.
+        if audio_ch2 is None:
+            audio_ch2 = Zero()
 
         shared_kwargs = dict(
             audio_ch1=audio_ch1,
@@ -1027,6 +990,7 @@ class MaaiMultiple:
             sub = Maai(
                 mode=cfg["mode"],
                 lang=cfg["lang"],
+                mc=cfg.get("mc", True),
                 local_model=cfg.get("local_model"),
                 return_p_bins=cfg.get("return_p_bins", False),
                 **shared_kwargs,
@@ -1435,7 +1399,7 @@ class MaaiMultiple:
 
     @staticmethod
     def _extract_outputs(mode: str, out: dict, return_p_bins: bool) -> dict:
-        if mode in ("vap", "vap_mc", "vap_mono", "vap_mc_mono"):
+        if mode == "vap":
             d = {
                 "p_now": out["p_now"],
                 "p_future": out["p_future"],
@@ -1448,9 +1412,9 @@ class MaaiMultiple:
                 for k in ("p_bins", "p_bins_now", "p_bins_future"):
                     d.pop(k, None)
             return d
-        if mode in ("vad", "vad_mono"):
+        if mode == "vad":
             return {"vad": out["vad"]}
-        if mode in ("bc_det", "bc_det_mono"):
+        if mode == "bc_det":
             return {"p_bc_det": out["p_bc_det"]}
         if mode == "vap_prompt":
             return {

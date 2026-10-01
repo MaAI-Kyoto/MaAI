@@ -1,7 +1,8 @@
 """
-This script is an example of using a single microphone with the mono VAP model (vap_mono).
+This script is an example of using a single microphone with the single-channel VAP model.
 
-The vap_mono mode takes only one audio channel (audio_ch1).
+When audio_ch2 is omitted, mode="vap" automatically uses the single-channel model.
+mc=True (the default) selects the noise-robust model; set mc=False for the standard one.
 The outputs p_now / p_future / vad are single float values for the input audio.
 """
 
@@ -24,7 +25,7 @@ def test():
     output = MaaiOutput.ConsoleBar()
 
     maai = Maai(
-        mode="vap_mono",
+        mode="vap",
         lang="jp",
         frame_rate=12.5,
         audio_ch1=mic,

@@ -1,5 +1,10 @@
 """
-This script is an example of using a single microphone with the VapGPT model.
+This script is an example of using a single microphone with the noise-robust VAP model.
+
+mc=True (the default) selects the noise-robust (multi-condition) model.
+Since audio_ch2 is a MaaiInput.Zero, the single-channel model is used when it
+is available for the given lang / frame_rate / model_type; otherwise the
+2-channel model is fed a silent second channel.
 """
 
 import sys
@@ -24,7 +29,8 @@ def test():
     output = MaaiOutput.ConsoleBar()
 
     maai = Maai(
-        mode="vap_mc",
+        mode="vap",
+        mc=True,
         lang="jp",
         frame_rate=10,
         audio_ch1=mic,

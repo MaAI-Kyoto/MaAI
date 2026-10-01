@@ -8,7 +8,7 @@ README: <a href="multiple.md">English </a> | <a href="multiple_JP.md">Japanese (
 </p>
 
 `MaaiMultiple` runs several Maai models in parallel that share a single audio
-encoder. Many Maai models (`vap`, `vap_mc`, `bc`, `bc_2type`, `nod`,
+encoder. Many Maai models (`vap`, `vad`, `bc_det`, `bc`, `bc_2type`, `nod`,
 `nod_para`, `vap_prompt`) start their forward pipeline with the same audio
 encoder (CPC for `model_type="normal"`, Mimi for `model_type="normal-ver2"`).
 Building one independent `Maai` per model would run that encoder N times per
@@ -24,7 +24,9 @@ audio stream, e.g.:
 
 - turn-taking + backchannel + nodding,
 - two backchannel variants (`bc` and `bc_2type`) at the same time,
-- a comparison of `vap` and `vap_mc` running side by side.
+- a comparison of the standard and noise-robust `vap` models running side by
+  side (`{"mode": "vap", "mc": False, "label": "vap"}` and
+  `{"mode": "vap", "label": "vap_mc"}`).
 
 If you only need a single model, use `Maai` directly.
 
@@ -50,23 +52,25 @@ applied to every sub-model:
 Per-model differences are configured through the `configs` list. Each entry
 is a `dict` with:
 
-- `"mode"` (required): `"vap"`, `"vap_mc"`, `"vad"`, `"bc"`, `"bc_det"`,
-  `"bc_2type"`, `"nod"`, `"nod_para"` or `"vap_prompt"`, or one of the
-  single-channel modes `"vap_mono"`, `"vap_mc_mono"`, `"vad_mono"` or
-  `"bc_det_mono"` (see below).
+- `"mode"` (required): `"vap"`, `"vad"`, `"bc"`, `"bc_det"`, `"bc_2type"`,
+  `"nod"`, `"nod_para"` or `"vap_prompt"`. The old names `"vap_mc"`,
+  `"vap_mono"`, `"vap_mc_mono"`, `"vad_mono"` and `"bc_det_mono"` are
+  deprecated aliases.
 - `"lang"` (required): same value as for `Maai`.
 - `"label"` (optional): result-dict key for this sub-model. Defaults to
   `"mode"`. Use it to disambiguate when the same `mode` is registered twice
   (e.g., comparing two languages).
+- `"mc"` (optional): same flag as in `Maai` (default `True`; only meaningful
+  for `vap`).
 - `"local_model"` (optional): path to a locally trained checkpoint.
 - `"return_p_bins"` (optional): same flag as in `Maai` (only meaningful for
-  `vap`/`vap_mc`/`vap_mono`/`vap_mc_mono`).
+  `vap`).
 
-Single-channel sub-models (`vap_mono`, `vap_mc_mono`, `vad_mono`,
-`bc_det_mono`) can be mixed with two-channel ones. They encode only
-`audio_ch1`; channel 2 is not encoded at all when every sub-model is
-single-channel. Since all sub-models share `audio_ch2`, a config list that
-includes a single-channel mode must pass `audio_ch2=MaaiInput.Zero()`.
+When `audio_ch2` is omitted (or is a `MaaiInput.Zero()`), the `vap`, `vad`
+and `bc_det` sub-models use their single-channel models, and can be mixed with
+two-channel ones such as `bc` and `nod` (which then receive a silent second
+channel). The single-channel `vap` model encodes only `audio_ch1`; channel 2
+is not encoded at all when no sub-model needs it.
 
 </br>
 

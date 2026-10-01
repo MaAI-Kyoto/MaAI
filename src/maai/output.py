@@ -334,7 +334,7 @@ class ConsoleBar:
                 except Exception:
                     pass
             else:
-                # vap_mono: スカラー vad は ch1 のみ
+                # 単一チャネル (mono) vap/vad: スカラー vad は ch1 のみ
                 local["vad(x1)"] = local["vad"]
 
         # p_bc_det も同様に展開する。2 要素だが確率分布ではなく話者ごとの
@@ -347,7 +347,7 @@ class ConsoleBar:
                 except Exception:
                     pass
             else:
-                # bc_det_mono: スカラー p_bc_det は ch1 のみ
+                # 単一チャネル (mono) bc_det: スカラー p_bc_det は ch1 のみ
                 local["p_bc_det(x1)"] = local["p_bc_det"]
 
         skip_nod_para: set = set()
@@ -488,6 +488,18 @@ class ConsoleBar:
         if header is None:
             print("-" * (self.bar_length + 30))
 
+# Mode names (unified and deprecated) for each TCP wire format. Single-channel
+# results share the 2-channel wire format, with length-1 arrays in place of the
+# scalar values, so the channel count is detected from the data itself.
+_TCP_VAP_MODES = ('vap', 'vap_mc', 'vap_mono', 'vap_mc_mono')
+_TCP_VAD_MODES = ('vad', 'vad_mono')
+_TCP_BC_DET_MODES = ('bc_det', 'bc_det_mono')
+
+
+def _is_scalar(value) -> bool:
+    return not isinstance(value, (list, tuple, np.ndarray))
+
+
 class TcpReceiver:
     """Receives VAP results over a TCP connection from a remote server."""
     def __init__(self, ip, port, mode):
@@ -497,6 +509,7 @@ class TcpReceiver:
             ip (str): IP address to connect to.
             port (int): Port to connect to.
             mode (str): Mode for decoding the results (e.g., 'vap', 'bc_2type', 'nod').
+                Single-channel results are detected automatically.
         """
         self.ip = ip
         self.port = port
@@ -505,18 +518,21 @@ class TcpReceiver:
         self.result_queue = queue.Queue()
     
     def _bytearray_2_vapresult(self, data: bytes) -> Dict[str, Any]:
-        if self.mode in ['vap', 'vap_mc', 'vap_prompt']:
+        if self.mode in _TCP_VAP_MODES:
             vap_result = util.conv_bytearray_2_vapresult(data)
-        elif self.mode in ['vap_mono', 'vap_mc_mono']:
-            vap_result = util.conv_bytearray_2_vapresult_mono(data)
-        elif self.mode == 'vad':
+            if len(vap_result['p_now']) == 1:
+                for k in ('p_now', 'p_future', 'vad'):
+                    vap_result[k] = vap_result[k][0]
+        elif self.mode == 'vap_prompt':
+            vap_result = util.conv_bytearray_2_vapresult(data)
+        elif self.mode in _TCP_VAD_MODES:
             vap_result = util.conv_bytearray_2_vapresult_vad(data)
-        elif self.mode == 'vad_mono':
-            vap_result = util.conv_bytearray_2_vapresult_vad_mono(data)
-        elif self.mode == 'bc_det':
+            if len(vap_result['vad']) == 1:
+                vap_result['vad'] = vap_result['vad'][0]
+        elif self.mode in _TCP_BC_DET_MODES:
             vap_result = util.conv_bytearray_2_vapresult_bc_det(data)
-        elif self.mode == 'bc_det_mono':
-            vap_result = util.conv_bytearray_2_vapresult_bc_det_mono(data)
+            if len(vap_result['p_bc_det']) == 1:
+                vap_result['p_bc_det'] = vap_result['p_bc_det'][0]
         elif self.mode == 'bc_2type':
             vap_result = util.conv_bytearray_2_vapresult_bc_2type(data)
         elif self.mode == 'nod':
@@ -575,6 +591,7 @@ class TcpTransmitter:
             ip (str): IP address to bind to.
             port (int): Port to bind to.
             mode (str): Mode for encoding the results (e.g., 'vap', 'bc_2type', 'nod').
+                Single-channel results are detected automatically.
         """
         self.ip = ip
         self.port = port
@@ -582,18 +599,21 @@ class TcpTransmitter:
         self.result_queue = queue.Queue()
     
     def _vapresult_2_bytearray(self, result_dict: Dict[str, Any]) -> bytes:
-        if self.mode in ['vap', 'vap_mc']:
-            data_sent = util.conv_vapresult_2_bytearray(result_dict)
-        elif self.mode in ['vap_mono', 'vap_mc_mono']:
-            data_sent = util.conv_vapresult_2_bytearray_mono(result_dict)
-        elif self.mode == 'vad':
-            data_sent = util.conv_vapresult_2_bytearray_vad(result_dict)
-        elif self.mode == 'vad_mono':
-            data_sent = util.conv_vapresult_2_bytearray_vad_mono(result_dict)
-        elif self.mode == 'bc_det':
-            data_sent = util.conv_vapresult_2_bytearray_bc_det(result_dict)
-        elif self.mode == 'bc_det_mono':
-            data_sent = util.conv_vapresult_2_bytearray_bc_det_mono(result_dict)
+        if self.mode in _TCP_VAP_MODES:
+            if _is_scalar(result_dict['p_now']):
+                data_sent = util.conv_vapresult_2_bytearray_mono(result_dict)
+            else:
+                data_sent = util.conv_vapresult_2_bytearray(result_dict)
+        elif self.mode in _TCP_VAD_MODES:
+            if _is_scalar(result_dict['vad']):
+                data_sent = util.conv_vapresult_2_bytearray_vad_mono(result_dict)
+            else:
+                data_sent = util.conv_vapresult_2_bytearray_vad(result_dict)
+        elif self.mode in _TCP_BC_DET_MODES:
+            if _is_scalar(result_dict['p_bc_det']):
+                data_sent = util.conv_vapresult_2_bytearray_bc_det_mono(result_dict)
+            else:
+                data_sent = util.conv_vapresult_2_bytearray_bc_det(result_dict)
         elif self.mode == 'bc_2type':
             data_sent = util.conv_vapresult_2_bytearray_bc_2type(result_dict)
         elif self.mode == 'nod':
@@ -1027,7 +1047,7 @@ class GuiPlot:
             elif key in ("p_now", "p_future") and isinstance(
                 val, (int, float, np.floating, np.integer)
             ):
-                # vap_mono: スカラー値は単一カーブ(0–1)で描画
+                # 単一チャネル (mono) vap: スカラー値は単一カーブ(0–1)で描画
                 t = "p_now (short-term)" if key == "p_now" else "p_future (long-term)"
                 self._cfg(p, t)
                 p.setYRange(0.0, 1.0, padding=0.0)
@@ -1079,7 +1099,7 @@ class GuiPlot:
             elif key in ("vad", "p_bc_det") and isinstance(
                 val, (int, float, np.floating, np.integer)
             ):
-                # vap_mono / bc_det_mono: ch1 のみのスカラー値を単一カーブ(0–1)で描画
+                # 単一チャネル (mono) vap / bc_det: ch1 のみのスカラー値を単一カーブ(0–1)で描画
                 self._cfg(p, self._MIRROR_PLOT_TITLES[key])
                 p.setYRange(0.0, 1.0, padding=0.0)
                 buf = np.zeros(self.MAX_CONTEXT_LEN, dtype=float)
@@ -1187,7 +1207,7 @@ class GuiPlot:
                 self.curves[key] = c
                 self.data_buffer[key] = list(buf)
             elif key == "p_bins":
-                # vap_mono の 1 次元ビン列は 1 行として描画
+                # 単一チャネル (mono) vap の 1 次元ビン列は 1 行として描画
                 arr = np.atleast_2d(np.asarray(val, dtype=float))
                 self.data_buffer[key] = arr
                 self.curves[key] = None
@@ -1290,10 +1310,10 @@ class GuiPlot:
                         self.curves[key]["hi"].setData(x, hi)
                         self.curves[key]["lo"].setData(x, lo)
                     else:
-                        # vap_mono: 単一カーブ
+                        # 単一チャネル (mono) vap: 単一カーブ
                         self.curves[key].setData(x, arr)
             elif key in ("vad", "p_bc_det") and key in self.curves and not isinstance(self.curves[key], tuple):
-                # vap_mono / bc_det_mono: スカラー値を単一カーブで描画
+                # 単一チャネル (mono) vap / bc_det: スカラー値を単一カーブで描画
                 buf = self.data_buffer[key]
                 try:
                     fv = float(np.asarray(val).reshape(-1)[0])

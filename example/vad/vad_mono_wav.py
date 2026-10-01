@@ -1,7 +1,7 @@
 """
-This script is an example of how to use the mono VAD model (vad_mono) with a single WAV file.
+This script is an example of how to use the single-channel VAD model with a single WAV file.
 
-The vad_mono mode takes only one audio channel (audio_ch1).
+When audio_ch2 is omitted, mode="vad" automatically uses the single-channel model.
 The output vad is a single float value for the input audio.
 
 This example uses the 50 Hz CPC model (model_type="normal").
@@ -25,7 +25,7 @@ def test():
     output = MaaiOutput.ConsoleBar()
 
     maai = Maai(
-        mode="vad_mono",
+        mode="vad",
         lang="jp",
         frame_rate=50,
         audio_ch1=wav,

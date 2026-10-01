@@ -10,6 +10,8 @@ MODEL_TYPE_TO_ENCODER_TYPE = {
 }
 
 repo_ids = {
+    # Each vap_{lang} repo holds every VAP variant of that language
+    # (vap, vap_mc, vap_mono, vap_mono_mc checkpoints).
     "vap_jp": "maai-kyoto/vap_jp",
     "vap_en": "maai-kyoto/vap_en",
     "vap_ch": "maai-kyoto/vap_ch",
@@ -21,16 +23,6 @@ repo_ids = {
     "vap_tri_kyoto": "maai-kyoto/vap_tri_kyoto",
 
     "vap_ca": "maai-kyoto/vap_ca",
-
-    "vap_mc_jp": "maai-kyoto/vap_mc_jp",
-    "vap_mc_en": "maai-kyoto/vap_mc_en",
-    "vap_mc_ch": "maai-kyoto/vap_mc_ch",
-    "vap_mc_fr": "maai-kyoto/vap_mc_fr",
-    "vap_mc_tri": "maai-kyoto/vap_mc_tri",
-    "vap_mc_jp_kyoto": "maai-kyoto/vap_mc_jp_kyoto",
-    "vap_mc_en_kyoto": "maai-kyoto/vap_mc_en_kyoto",
-    "vap_mc_ch_kyoto": "maai-kyoto/vap_mc_ch_kyoto",
-    "vap_mc_tri_kyoto": "maai-kyoto/vap_mc_tri_kyoto",
 
     "vap_bc_jp": "maai-kyoto/vap_bc_jp",
     "vap_bc_en": "maai-kyoto/vap_bc_en",
@@ -84,7 +76,8 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
     """Load a pretrained VAP model from the Hugging Face hub.
     
     Args:
-        mode (str): The operational mode of the model (e.g., 'vap', 'vap_mc', 'vap_mc_mono', 'bc', 'nod').
+        mode (str): The checkpoint variant to load (e.g., 'vap', 'vap_mc', 'vap_mc_mono', 'bc', 'nod').
+            See :func:`resolve_and_load_model` for picking the variant from a public mode.
         frame_rate (float): The frame rate expected by the model.
         context_len_sec (float): The context length in seconds.
         language (str): The language identifier for the model (e.g., 'jp', 'en').
@@ -159,51 +152,20 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
             supported_languages = ["jp", "en", "ch"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
+    # vap_mc is the noise-robust (multi-condition) model, stored with the vap checkpoints
     elif mode == "vap_mc":
-        if language == "jp":
-            repo_id = repo_ids["vap_mc_jp"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_jp_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
-        
-        elif language == "en":
-            repo_id = repo_ids["vap_mc_en"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_en_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
-        
-        elif language == "ch":
-            repo_id = repo_ids["vap_mc_ch"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_ch_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
-        
-        elif language == "tri":
-            repo_id = repo_ids["vap_mc_tri"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_tri_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
-        
-        elif language == "fr":
-            repo_id = repo_ids["vap_mc_fr"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_fr_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
-        
-        elif language == "jp_kyoto":
-            repo_id = repo_ids["vap_mc_jp_kyoto"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_jp_kyoto_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
-        
-        elif language == "en_kyoto":
-            repo_id = repo_ids["vap_mc_en_kyoto"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_en_kyoto_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
-        
-        elif language == "ch_kyoto":
-            repo_id = repo_ids["vap_mc_ch_kyoto"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_ch_kyoto_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
-        
-        elif language == "tri_kyoto":
-            repo_id = repo_ids["vap_mc_tri_kyoto"]
-            file_path = f"vap_mc{encoder_suffix}_state_dict_tri_kyoto_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
+        if language in ("jp", "en", "ch", "tri", "fr", "jp_kyoto", "en_kyoto", "ch_kyoto", "tri_kyoto"):
+            repo_id = repo_ids[f"vap_{language}"]
+            file_path = f"vap_mc{encoder_suffix}_state_dict_{language}_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
 
         else:
             supported_languages = ["jp", "en", "ch", "tri", "jp_kyoto", "en_kyoto", "ch_kyoto", "tri_kyoto", "fr"]
             raise ValueError(f"Invalid language: {language}. Mode {mode} supports languages are: {supported_languages}")
 
-    # vap_mc_mono is the noise-robust single-channel model, stored with the vap_mc checkpoints
+    # vap_mc_mono is the noise-robust single-channel model, stored with the vap checkpoints
     elif mode == "vap_mc_mono":
         if language in ("jp", "en", "ch"):
-            repo_id = repo_ids[f"vap_mc_{language}"]
+            repo_id = repo_ids[f"vap_{language}"]
             file_path = f"vap_mono_mc{encoder_suffix}_state_dict_{language}_{frame_rate_label}hz_{int(context_len_sec*1000)}msec.pt"
         else:
             supported_languages = ["jp", "en", "ch"]
@@ -353,8 +315,79 @@ def load_vap_model(mode: str, frame_rate: float, context_len_sec: float, languag
         raise ValueError(f"Invalid model: mode: {mode}, frame_rate: {frame_rate}, context_len_sec: {context_len_sec}, language: {language}. Run get_available_models() for available models.")
     
     sd = torch.load(sd, map_location=torch.device(device))
-    
+
     return sd
+
+# Public modes that have a dedicated single-channel (mono) checkpoint variant.
+MONO_CAPABLE_MODES = ("vap", "vad", "bc_det")
+
+# Public modes that have a noise-robust (multi-condition) checkpoint variant.
+MC_CAPABLE_MODES = ("vap",)
+
+
+def mono_variant(mode: str) -> str:
+    """Return the single-channel checkpoint variant name of a public mode."""
+    return "vap_mc_mono" if mode == "vap_mc" else f"{mode}_mono"
+
+
+def candidate_variants(mode: str, mc: bool, mono: bool) -> list:
+    """List the checkpoint variants to try for a public mode, best first.
+
+    Args:
+        mode (str): Public mode ('vap', 'vad', 'bc_det', 'bc', ...).
+        mc (bool): Prefer the noise-robust (multi-condition) variant.
+        mono (bool): Prefer the single-channel variant.
+
+    Returns:
+        List[str]: Variant names, e.g. ``['vap_mc_mono', 'vap_mono', 'vap_mc', 'vap']``.
+    """
+    stereo = [mode]
+    if mc and mode in MC_CAPABLE_MODES:
+        stereo = [f"{mode}_mc", mode]
+    if mono and mode in MONO_CAPABLE_MODES:
+        return [mono_variant(v) for v in stereo] + stereo
+    return stereo
+
+
+def resolve_and_load_model(mode: str, mc: bool, mono: bool, frame_rate: float, context_len_sec: float, language: str = "jp", device: str = "cpu", cache_dir: str = None, force_download: bool = False, model_type: str = "normal"):
+    """Pick the best available checkpoint variant for a public mode and load it.
+
+    Variants from :func:`candidate_variants` are tried in order, so a missing
+    noise-robust model falls back to the standard one, and a missing
+    single-channel model falls back to the 2-channel one (which is then fed a
+    silent second channel).
+
+    Args:
+        mode (str): Public mode ('vap', 'vad', 'bc_det', 'bc', ...).
+        mc (bool): Prefer the noise-robust (multi-condition) variant.
+        mono (bool): Prefer the single-channel variant.
+        frame_rate (float): The frame rate expected by the model.
+        context_len_sec (float): The context length in seconds.
+        language (str): The language identifier for the model.
+        device (str): The device to load the model onto.
+        cache_dir (str, optional): Directory to cache the downloaded model.
+        force_download (bool): If True, forces download even if cached.
+        model_type (str): The general model architecture type.
+
+    Returns:
+        Tuple[str, Dict[str, Any]]: The chosen variant and its loaded state dictionary.
+    """
+    candidates = candidate_variants(mode, mc, mono)
+    last_error = None
+    for variant in candidates:
+        try:
+            sd = load_vap_model(variant, frame_rate, context_len_sec, language, device, cache_dir, force_download, model_type=model_type)
+        except ValueError as e:
+            last_error = e
+            continue
+
+        if mc and mode in MC_CAPABLE_MODES and "mc" not in variant:
+            print(f"[Info] No noise-robust (mc) model for mode='{mode}', lang='{language}'; using the standard model.")
+        if mono and mode in MONO_CAPABLE_MODES and not variant.endswith("_mono"):
+            print(f"[Warning] No single-channel model for mode='{mode}', lang='{language}'; using the 2-channel model with a silent channel 2.")
+        return variant, sd
+
+    raise ValueError(f"No model found for mode: {mode} (tried {candidates}), language: {language}. {last_error}")
 
 def get_available_models():
     """Retrieve a dictionary of available pre-trained models from the Hugging Face hub.

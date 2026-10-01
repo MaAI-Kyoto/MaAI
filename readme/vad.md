@@ -7,7 +7,7 @@ Voice Activity Detection (VAD) Model
 README: <a href="vad.md">English </a> | <a href="vad_JP.md">Japanese (日本語) </a>
 </p>
 
-Please set the `mode` parameter of the `Maai` class to `vad` (two channels) or `vad_mono` (single channel).
+Please set the `mode` parameter of the `Maai` class to `vad`. When only `audio_ch1` is passed (or `audio_ch2` is a `MaaiInput.Zero`), the dedicated single-channel model is used automatically. The old mode name `vad_mono` still works but is deprecated.
 
 Unlike the turn-taking models, this model does not predict the future: it detects **whether each speaker is talking right now**.
 
@@ -15,7 +15,7 @@ The model takes both speaker channels and processes them jointly with cross-chan
 
 The models were trained with noise and reverberation (RIR) augmentation, so the noise-robust recipe is the default. For this reason there is no separate `vad_mc` mode — `vad` *is* the multi-condition model.
 
-The input requires 2-channel (or 1-channel for `vad_mono`), 16kHz audio data.
+The input requires 2-channel (or 1-channel), 16kHz audio data.
 
 ## Output
 
@@ -25,7 +25,7 @@ The input requires 2-channel (or 1-channel for `vad_mono`), 16kHz audio data.
 result["vad"]  # e.g. [0.93, 0.02]  -> speaker 1 is talking, speaker 2 is not
 ```
 
-For `vad_mono`, `vad` is a single float value for the input channel.
+For the single-channel model, `vad` is a single float value for the input channel.
 
 To obtain a binary decision, apply a threshold. `0.5` is the default; `0.54` gave the best F1 score on the development set used during training.
 
@@ -35,7 +35,7 @@ is_speaking = [v >= 0.5 for v in result["vad"]]
 
 ## Supported Languages and Frame Rates
 
-| lang | model_type | frame_rate | `vad` (2ch) | `vad_mono` (1ch) |
+| lang | model_type | frame_rate | 2ch | 1ch |
 | ---- | ---------- | ---------- | ----------- | ---------------- |
 | jp | `normal` (CPC encoder) | 10, 20, 50 | ✅ | ✅ |
 | jp | `normal-ver2` (Mimi encoder) | 12.5 | ✅ | ✅ |
@@ -80,7 +80,7 @@ while True:
     print(result["vad"])  # [float, float]
 ```
 
-For the single-channel version, set `mode="vad_mono"` and pass only `audio_ch1`; `result["vad"]` is then a single float.
+For the single-channel version, pass only `audio_ch1` (omit `audio_ch2`); `result["vad"]` is then a single float.
 
 Sample scripts:
 - [With 2 mic inputs](../example/vad/vad_2mic.py) 🎤

@@ -26,11 +26,13 @@ class VapGPT_mono(nn.Module):
     ``p_bins_future``; ``p_bins`` is a list with one value per bin.
 
     It is intended for use cases where only one speaker's audio is available,
-    e.g. a single microphone input for a spoken dialogue system.
+    e.g. a single microphone input for a spoken dialogue system. ``Maai`` uses
+    it for ``mode="vap"`` when ``audio_ch2`` is omitted (or is a
+    ``MaaiInput.Zero``).
 
-    The same class also serves ``mode="vap_mc_mono"``, whose checkpoints are
-    trained with noise and random-gain augmentation (multi-condition) for
-    robustness in real-world environments.
+    The same class also serves the ``vap_mc_mono`` checkpoints (selected with
+    ``mc=True``), which are trained with noise and random-gain augmentation
+    (multi-condition) for robustness in real-world environments.
     """
 
     # Only channel 1 is encoded, so the runtime must not feed a second stream
