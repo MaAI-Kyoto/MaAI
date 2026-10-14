@@ -18,6 +18,7 @@ dependencies = [
     "onnxruntime-gpu>=1.20.0; sys_platform != 'darwin'",
     "onnxruntime>=1.20.0; sys_platform == 'darwin'",
     "numpy",
+    "scipy",
     "einops>=0.7.0",
     "soundfile",
     "pygame",

@@ -584,3 +584,219 @@ class Chunk(Base):
 
     def start(self):
         pass
+
+
+class BleedCancel(Base):
+    """Real-time speaker-bleed removal for two face-to-face lapel microphones.
+
+    When two people talk face to face with lapel mics, each mic also picks up the partner's voice.
+    This wraps a 2-channel source (or two mono sources) and removes the bleed using the partner's
+    mic as the reference (2-pass linear AEC + residual suppression, see :mod:`maai.bleed`).
+    The output is a 2-channel source in the same format as ``Mic(channels=2)``; use
+    ``get_channel(0)`` / ``get_channel(1)`` to feed it to ``Maai``.
+
+    The canceller keeps running while disabled (so it stays adapted), and the disabled output is
+    the raw input delayed by the same latency, so toggling never shifts the timeline.
+
+    Notes:
+        - The filters need about 3 s (in total) of speech where only the partner talks before
+          they converge; bleed remains until then.
+        - Both mics should share the same clock (e.g. two inputs of one audio interface).
+        - Algorithmic latency is about 44 ms (see :attr:`latency_ms`).
+
+    Example:
+        >>> mic = MaaiInput.Mic(mic_device_index=0, channels=2)
+        >>> bc = MaaiInput.BleedCancel(mic)          # or BleedCancel(mic1, mic2)
+        >>> maai = Maai(mode="vap", audio_ch1=bc.get_channel(0), audio_ch2=bc.get_channel(1), ...)
+        >>> bc.set_enabled(False)                    # switch off at runtime
+    """
+
+    QUEUE_WARN_SIZE = 100
+
+    def __init__(self, source, source_ch2=None, enabled=True, **params):
+        """Initialize the bleed canceller.
+
+        Args:
+            source (Base): A 2-channel source (L = speaker 1, R = speaker 2), or the mono source
+                of speaker 1 when ``source_ch2`` is given.
+            source_ch2 (Base, optional): Mono source of speaker 2.
+            enabled (bool): Whether bleed removal is applied to the output initially.
+            **params: Parameters of :class:`maai.bleed.BleedCanceller`
+                (e.g. ``aes_beta``, ``aes=False``, ``hpf_hz``, ``margin``).
+        """
+        super().__init__()
+        if source_ch2 is None and getattr(source, 'channels', 1) != 2:
+            raise ValueError(
+                "BleedCancel needs a 2-channel source (e.g. Mic(channels=2)) or two mono sources "
+                "(BleedCancel(source_ch1, source_ch2))."
+            )
+        self.source = source
+        self.source_ch2 = source_ch2
+        self.channels = 2
+        self._params = dict(params)
+        self._enabled = bool(enabled)
+        self._reset_requested = False
+        self._monitor_queues = []
+        self._last_queue_warn = 0.0
+
+        # Subscribe now so that no data is missed once the sources start
+        self._q1 = source.subscribe()
+        self._q2 = source_ch2.subscribe() if source_ch2 is not None else None
+        self._in_pending = [np.zeros(0), np.zeros(0)]  # per-channel buffers (two mono sources)
+
+        self._init_engine()
+
+    def _init_engine(self):
+        from scipy.signal import butter, sosfilt_zi
+        from .bleed import BleedCanceller
+        from .bleed.realtime.engine import DelayLine
+
+        self._engine = BleedCanceller(**dict(self._params, sr=self.SAMPLING_RATE))
+        p = self._engine.p
+        if p["hpf_hz"]:
+            self._sos = butter(2, p["hpf_hz"], "highpass", fs=self.SAMPLING_RATE, output="sos")
+            self._zi = np.stack([sosfilt_zi(self._sos) * 0.0] * 2, axis=-1)
+        else:
+            self._sos = None
+        self._raw_delay = [DelayLine(self._engine.latency) for _ in range(2)]
+        self._pending = np.zeros((0, 2))       # raw input waiting for a full block
+        self._buf_raw = np.zeros((0, 2))       # latency-aligned raw output not yet emitted
+        self._buf_clean = np.zeros((0, 2))     # processed output not yet emitted
+
+    def _feed(self, x):
+        """Process raw stereo samples (n, 2) and return the completed output frames.
+
+        Returns:
+            list: dicts with ``raw`` (latency-aligned input), ``clean`` (processed), ``output``
+            (what is published) as (FRAME_SIZE, 2) arrays, and ``enabled``.
+        """
+        from scipy.signal import sosfilt
+
+        if self._reset_requested:
+            self._reset_requested = False
+            self._init_engine()
+        self._pending = np.concatenate([self._pending, np.asarray(x, np.float64).reshape(-1, 2)], 0)
+        B = self._engine.block
+        nb = len(self._pending) // B
+        if nb:
+            raw = self._pending[:nb * B]
+            self._pending = self._pending[nb * B:]
+            filt = raw
+            if self._sos is not None:
+                filt, self._zi = sosfilt(self._sos, raw, axis=0, zi=self._zi)
+            clean, raw_d = [], []
+            for i in range(nb):
+                blk = filt[i * B:(i + 1) * B]
+                oa, ob = self._engine.process(blk[:, 0], blk[:, 1])
+                clean.append(np.stack([oa, ob], 1))
+                rblk = raw[i * B:(i + 1) * B]
+                raw_d.append(np.stack([self._raw_delay[c].process(rblk[:, c]) for c in range(2)], 1))
+            self._buf_clean = np.concatenate([self._buf_clean] + clean, 0)
+            self._buf_raw = np.concatenate([self._buf_raw] + raw_d, 0)
+
+        frames = []
+        F = self.FRAME_SIZE
+        nf = len(self._buf_clean) // F
+        for i in range(nf):
+            r = self._buf_raw[i * F:(i + 1) * F]
+            c = self._buf_clean[i * F:(i + 1) * F]
+            enabled = self._enabled
+            frames.append(dict(raw=r, clean=c, output=c if enabled else r, enabled=enabled))
+        self._buf_clean = self._buf_clean[nf * F:]
+        self._buf_raw = self._buf_raw[nf * F:]
+        return frames
+
+    @staticmethod
+    def _to_stereo(d):
+        x = np.asarray(d, np.float64)
+        return x.reshape(-1, 2) if x.ndim == 1 else x[:, :2]
+
+    @staticmethod
+    def _to_mono(d):
+        x = np.asarray(d, np.float64)
+        return x if x.ndim == 1 else x[:, 0]
+
+    def _read_input(self):
+        """Block until new input is available and return it as (n, 2)."""
+        if self._q2 is None:
+            while True:
+                d = self._q1.get()
+                if d is not None:
+                    return self._to_stereo(d)
+        # Two mono sources: read from the channel that is behind, so that arbitrary chunk sizes
+        # stay sample-synchronous
+        while True:
+            c = 0 if len(self._in_pending[0]) <= len(self._in_pending[1]) else 1
+            d = (self._q1 if c == 0 else self._q2).get()
+            if d is None:
+                continue
+            self._in_pending[c] = np.concatenate([self._in_pending[c], self._to_mono(d)])
+            n = min(len(self._in_pending[0]), len(self._in_pending[1]))
+            if n:
+                x = np.stack([self._in_pending[0][:n], self._in_pending[1][:n]], 1)
+                self._in_pending = [p[n:] for p in self._in_pending]
+                return x
+
+    def _check_queue(self):
+        size = self._q1.qsize() + (self._q2.qsize() if self._q2 is not None else 0)
+        if size > self.QUEUE_WARN_SIZE and time.time() - self._last_queue_warn > 5.0:
+            self._last_queue_warn = time.time()
+            print(f"[Warning] BleedCancel cannot keep up with the input ({size} chunks queued).")
+
+    def _process(self):
+        while True:
+            try:
+                x = self._read_input()
+                for fr in self._feed(x):
+                    self._put_to_all_queues(fr["output"].reshape(-1).tolist())
+                    if self._monitor_queues:
+                        with self._lock:
+                            for q in self._monitor_queues:
+                                q.put(fr)
+                self._check_queue()
+            except Exception as e:
+                print('[BleedCancel] Error:', e)
+                time.sleep(0.01)
+
+    def start(self):
+        self.source.start()
+        if self.source_ch2 is not None:
+            self.source_ch2.start()
+        if not self._is_thread_started:
+            threading.Thread(target=self._process, daemon=True).start()
+            self._is_thread_started = True
+
+    def set_enabled(self, enabled):
+        """Turn bleed removal on/off at runtime (processing keeps running either way)."""
+        self._enabled = bool(enabled)
+
+    @property
+    def enabled(self):
+        """bool: Whether bleed removal is currently applied to the output."""
+        return self._enabled
+
+    @property
+    def latency_ms(self):
+        """float: Algorithmic latency in ms (processing + block buffering, excluding device buffers)."""
+        return 1000.0 * (self._engine.latency + self._engine.block) / self.SAMPLING_RATE
+
+    def status(self):
+        """Return the adaptation state of the canceller (delays, AEC convergence, AES gain, warnings)."""
+        return self._engine.status()
+
+    def reset(self):
+        """Discard the adapted filters and start adapting from scratch (e.g. after moving the mics)."""
+        self._reset_requested = True
+
+    def subscribe_monitor(self):
+        """Subscribe to per-frame monitoring data (for visualization / recording).
+
+        Returns:
+            queue.Queue: receives dicts with ``raw`` (input aligned to the output latency),
+            ``clean`` (processed, regardless of the on/off state), ``output`` (what is published)
+            as (FRAME_SIZE, 2) float arrays, and ``enabled`` (bool).
+        """
+        q = queue.Queue()
+        with self._lock:
+            self._monitor_queues.append(q)
+        return q

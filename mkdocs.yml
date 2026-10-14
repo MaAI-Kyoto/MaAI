@@ -29,6 +29,7 @@ plugins:
 nav:
   - Home: index.md
   - API Reference:
+    - bleed: api/bleed.md
     - encoder: api/encoder.md
     - encoder_components: api/encoder_components.md
     - input: api/input.md

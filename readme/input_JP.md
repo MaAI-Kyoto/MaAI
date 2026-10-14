@@ -21,6 +21,7 @@ WAVファイル、マイク、TCP通信による音声入力をサポートし�
 - `Zero` : 無音（ゼロ埋め）データを生成（システム側の音声を一時的に埋めることを想定）
 - `Chunk` : チャンク入力
 - `TcpChunk` : TCP経由で音声データをチャンク送信（クライアント）
+- `BleedCancel` : 対面2者のピンマイク間の回り込み音声をリアルタイムで除去（他の入力をラップして使用）
 
 </br>
 
@@ -68,6 +69,68 @@ mic_input.put_chunk(mic_chunk)
 ```python
 tcp_chunk = MaaiInput.TcpChunk(server_ip="送信先IP", port=12345, mic_device_index=0)
 tcp_chunk.start()
+```
+
+</br>
+
+## ピンマイク2本の回り込み除去（`BleedCancel`）
+
+2人が対面でピンマイクを使うと、それぞれのマイクに相手の声が回り込んで入ります。
+`BleedCancel` はこの回り込みをリアルタイムで除去します。相手のマイクを参照信号とするAEC（線形AEC×2パス＋残留抑圧）を用いるため、
+同時発話中も自分の声は保持されます。
+
+```python
+from maai import Maai, MaaiInput
+
+# 2本のピンマイクを1台のオーディオインタフェースの2chに接続（L=話者1, R=話者2）
+mic = MaaiInput.Mic(mic_device_index=0, channels=2)
+bc = MaaiInput.BleedCancel(mic)
+# モノラル入力2つでも可: MaaiInput.BleedCancel(MaaiInput.Mic(mic_device_index=0), MaaiInput.Mic(mic_device_index=1))
+
+maai = Maai(mode="vap", lang="jp", audio_ch1=bc.get_channel(0), audio_ch2=bc.get_channel(1), device="cpu")
+maai.start()
+
+bc.set_enabled(False)   # 実行中に OFF / ON を切り替え
+print(bc.status())      # 適応状態（AECの収束、回り込み遅延、警告）
+```
+
+- 任意の MaaiInput と組み合わせ可能: 2chの入力1つ（`Mic(channels=2)`）、またはモノラル入力2つ（`Mic`, `Wav`, `Tcp`, `Chunk` など）
+- OFF の間も内部の処理は動き続けるため、フィルタは適応したまま保たれます。OFF 時の出力は同じ遅延だけ遅らせた生の入力なので、切り替えても時間軸はずれません
+- 遅延: 約 44 ms（`bc.latency_ms`）
+- 起動後、相手だけが話す区間が合計 3 秒ほどたまるまでフィルタが収束せず、その間は回り込みが残ります。マイクの位置を変えたときなどは `bc.reset()` で適応をやり直せます
+- 2本のマイクは同じクロックで録る必要があります（同じオーディオインタフェースの2入力を推奨）
+- 主なパラメータ（キーワード引数）: `aes_beta`（残留抑圧の強さ、既定 0.7）、`aes=False`（線形AECのみ、歪みが最小）、`margin`（入力系の遅延差の警告が出たら増やす）
+- `bc.subscribe_monitor()` で、フレームごとの `raw` / `clean` / `output` を取得できます（可視化・録音用）
+
+### デモ・サンプル（`example/bleed/`）
+
+```bash
+# GUI: 両チャネルの波形表示、ON/OFF 切り替え、録音ボタン
+python example/bleed/bleed_demo_gui.py --list_devices
+python example/bleed/bleed_demo_gui.py --device 2                  # 2chデバイス1つ
+python example/bleed/bleed_demo_gui.py --device1 1 --device2 3     # モノラルマイク2本
+python example/bleed/bleed_demo_gui.py --wav1 s1.wav --wav2 s2.wav # 16kHzの録音ファイル
+
+# 回り込み除去 + VAP
+python example/bleed/vap_2mic_bleed.py
+```
+
+GUI の録音では `{timestamp}_raw.wav`（入力）、`{timestamp}_clean.wav`（処理後）、`{timestamp}_output.wav`（実際の出力、ON/OFF に従う）を保存します（いずれも 16kHz・2ch・時刻同期済み）。
+
+### オフライン処理（録音済みファイル）
+
+ピンマイクで録音済みの音声に対して、後から回り込み除去を適用できます。オフライン版はファイル全体から遅延・クロックずれを推定するため、リアルタイム版よりやや高性能です。入力のサンプリングレートは任意で、出力は 16kHz です。
+
+```bash
+python example/bleed/bleed_offline.py --s1 speaker1.wav --s2 speaker2.wav --out_dir out/
+python example/bleed/bleed_offline.py --stereo session.wav --out_dir out/   # L=話者1, R=話者2
+```
+
+```python
+from maai.bleed import process_files, process_pair
+
+process_files(s1="speaker1.wav", s2="speaker2.wav", out_dir="out")   # *_s1.wav, *_s2.wav, *_stereo.wav を出力
+a_clean, b_clean, log = process_pair(a, b, sr_in=44100)              # numpy 配列（出力は 16kHz）
 ```
 
 </br>

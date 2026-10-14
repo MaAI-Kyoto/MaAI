@@ -21,6 +21,7 @@ It supports audio input via WAV files, microphone, and TCP communication.
 - `Zero`: Generates silent (zero-filled) audio data (intended for temporarily filling system-side audio)
 - `Chunk`: Chunk input
 - `TcpChunk`: Transmit audio data via TCP in chunks as a client
+- `BleedCancel`: Removes the bleed (cross-talk) between two face-to-face lapel mics in real time (wraps other inputs)
 
 </br>
 
@@ -67,6 +68,68 @@ mic_input.put_chunk(mic_chunk)
 ```python
 tcp_chunk = MaaiInput.TcpChunk(server_ip="Destination IP", port=12345, mic_device_index=0)
 tcp_chunk.start()
+```
+
+</br>
+
+## Bleed Removal for Two Lapel Mics (`BleedCancel`)
+
+When two people talk face to face with lapel (pin) mics, each mic also picks up the partner's voice.
+`BleedCancel` removes this bleed in real time. It uses the partner's mic as the reference
+(2-pass linear AEC + residual suppression), so the own voice is kept even during overlapping speech.
+
+```python
+from maai import Maai, MaaiInput
+
+# Two lapel mics on one 2ch audio interface (L = speaker 1, R = speaker 2)
+mic = MaaiInput.Mic(mic_device_index=0, channels=2)
+bc = MaaiInput.BleedCancel(mic)
+# or two mono sources: MaaiInput.BleedCancel(MaaiInput.Mic(mic_device_index=0), MaaiInput.Mic(mic_device_index=1))
+
+maai = Maai(mode="vap", lang="jp", audio_ch1=bc.get_channel(0), audio_ch2=bc.get_channel(1), device="cpu")
+maai.start()
+
+bc.set_enabled(False)   # switch OFF / ON at runtime
+print(bc.status())      # adaptation state (AEC convergence, bleed delay, warnings)
+```
+
+- Any MaaiInput source works: one 2ch source (`Mic(channels=2)`), or two mono sources (`Mic`, `Wav`, `Tcp`, `Chunk`, ...)
+- Processing keeps running while disabled, so the filters stay adapted; the disabled output is the raw input delayed by the same latency (toggling does not shift the timeline)
+- Latency: about 44 ms (`bc.latency_ms`)
+- The filters converge after about 3 s (in total) of speech where only the partner talks; bleed remains until then. `bc.reset()` restarts the adaptation (e.g. after moving the mics)
+- Both mics should share the same clock (two inputs of one audio interface work best)
+- Main parameters (keyword arguments): `aes_beta` (residual suppression strength, default 0.7), `aes=False` (linear AEC only, least distortion), `margin` (increase it if the input-path delay warning appears)
+- `bc.subscribe_monitor()` gives per-frame `raw` / `clean` / `output` arrays for visualization and recording
+
+### Demo and examples (`example/bleed/`)
+
+```bash
+# GUI: waveforms of both channels, ON/OFF toggle, recording button
+python example/bleed/bleed_demo_gui.py --list_devices
+python example/bleed/bleed_demo_gui.py --device 2                  # one 2ch device
+python example/bleed/bleed_demo_gui.py --device1 1 --device2 3     # two mono mics
+python example/bleed/bleed_demo_gui.py --wav1 s1.wav --wav2 s2.wav # 16 kHz recordings
+
+# VAP with bleed removal
+python example/bleed/vap_2mic_bleed.py
+```
+
+The GUI saves `{timestamp}_raw.wav` (input), `{timestamp}_clean.wav` (processed) and `{timestamp}_output.wav` (what was output, follows the toggle), all 16 kHz 2ch and time-aligned.
+
+### Offline (recorded files)
+
+The bleed can also be removed from recordings afterwards. The offline version uses the whole file for the delay / clock-drift estimate and is slightly better than the real-time one. Any input sample rate is accepted; the output is 16 kHz.
+
+```bash
+python example/bleed/bleed_offline.py --s1 speaker1.wav --s2 speaker2.wav --out_dir out/
+python example/bleed/bleed_offline.py --stereo session.wav --out_dir out/   # L = speaker 1, R = speaker 2
+```
+
+```python
+from maai.bleed import process_files, process_pair
+
+process_files(s1="speaker1.wav", s2="speaker2.wav", out_dir="out")   # writes *_s1.wav, *_s2.wav, *_stereo.wav
+a_clean, b_clean, log = process_pair(a, b, sr_in=44100)              # numpy arrays (output: 16 kHz)
 ```
 
 </br>
