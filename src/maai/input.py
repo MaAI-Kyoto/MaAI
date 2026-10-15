@@ -1,5 +1,9 @@
 import socket
-import pyaudio
+try:
+    import pyaudio
+except ImportError:
+    # Windows + Python 3.14+: PyAudio has no wheel, use the API-compatible PyAudioWPatch
+    import pyaudiowpatch as pyaudio
 import queue
 import threading
 import soundfile as sf
