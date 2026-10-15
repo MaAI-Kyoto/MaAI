@@ -11,3 +11,4 @@ __pycache__/
 tflite_vap/
 tfjs_vap/
 /.claude
+/example/bleed/rec

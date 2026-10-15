@@ -33,8 +33,10 @@ import soundfile as sf
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src/')))
 
-import pyqtgraph as pg
+# PyQt5 must be imported before pyqtgraph: otherwise pyqtgraph picks PyQt6 (if installed), and mixing
+# it with the PyQt5 QApplication crashes silently when the window is created
 from PyQt5 import QtCore, QtWidgets
+import pyqtgraph as pg
 
 from maai import MaaiInput
 
