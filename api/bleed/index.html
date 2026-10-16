@@ -1,0 +1,2840 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="API Documentation for MaAI (Real-time and Continuous Non-Linguistic Behavior Generation Software)">
+      
+      
+      
+        <link rel="canonical" href="https://MaAI-Kyoto.github.io/MaAI/api/bleed/">
+      
+      
+        <link rel="prev" href="../..">
+      
+      
+        <link rel="next" href="../encoder/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>bleed - MaAI API Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#bleed-api" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MaAI API Documentation" class="md-header__button md-logo" aria-label="MaAI API Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MaAI API Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              bleed
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/MaAI-Kyoto/MaAI" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    MaAI-Kyoto/MaAI
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MaAI API Documentation" class="md-nav__button md-logo" aria-label="MaAI API Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MaAI API Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/MaAI-Kyoto/MaAI" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    MaAI-Kyoto/MaAI
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bleed
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bleed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#maai.bleed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bleed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.BleedCanceller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BleedCanceller
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BleedCanceller">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.BleedCanceller.process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.BleedCanceller.status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.StreamProcessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StreamProcessor
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="StreamProcessor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.StreamProcessor.latency_ms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        latency_ms
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.VariableDelay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VariableDelay
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline.aes_stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        aes_stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline.linear_stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        linear_stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline.process_files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        process_files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline.process_pair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        process_pair
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encoder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    encoder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encoder_components/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    encoder_components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../objective/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    objective
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../util/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    util
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_10" id="__nav_2_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/bc_det/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bc_det
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vad/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vad
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_bc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_bc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_bc_2type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_bc_2type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_mono/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_mono
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_nod/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_nod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_nod_timing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_nod_timing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_nod_para/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_nod_para
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vap_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vap_prompt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#maai.bleed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bleed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.BleedCanceller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BleedCanceller
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BleedCanceller">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.BleedCanceller.process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.BleedCanceller.status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.StreamProcessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StreamProcessor
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="StreamProcessor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.StreamProcessor.latency_ms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        latency_ms
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.realtime.engine.VariableDelay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VariableDelay
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline.aes_stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        aes_stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline.linear_stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        linear_stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline.process_files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        process_files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maai.bleed.offline.pipeline.process_pair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        process_pair
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="bleed-api">bleed API</h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="maai.bleed" class="doc doc-heading">
+            <code>maai.bleed</code>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Speaker-bleed removal for two face-to-face lapel microphones.</p>
+<p>When two people talk face to face with lapel mics, each mic also picks up the partner's voice.
+This package removes that bleed with an AEC-style approach that uses the partner's mic as the
+reference (2-pass linear AEC + residual suppression v2), so the near-end voice is kept even
+during overlapping speech.</p>
+
+
+<details class="real-time" open>
+  <summary>Real-time</summary>
+  <ul>
+<li>:class:<code>BleedCanceller</code> / :class:<code>StreamProcessor</code> (low level)</li>
+<li><code>maai.input.BleedCancel</code> wraps any MaaiInput source(s) (recommended)</li>
+</ul>
+</details>        <p>Offline (recorded files):
+    - :func:<code>process_pair</code> for numpy arrays, :func:<code>process_files</code> for WAV files</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="maai.bleed.realtime.engine" class="doc doc-heading">
+            <code>maai.bleed.realtime.engine</code>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Real-time 2ch (two lapel mics) speaker-bleed canceller.</p>
+
+
+<details class="bleedcanceller--" open>
+  <summary>core processor working on <code>block</code> samples at 16 kHz</summary>
+  <p>(bidirectional x 2-pass linear AEC + residual suppression v2)</p>
+</details>        <p>StreamProcessor : wrapper accepting any sample rate / chunk length (resampling, HPF, blocking)</p>
+<p>Signal flow (side A; side B is symmetric):
+    A mic --delay m--&gt; AEC1(ref = B mic)                -&gt; e_A1 --+ (reference of B's 2nd pass)
+    A mic --delay 2m-&gt; AEC2(ref = e_B1) -&gt; AES -&gt; A out
+    m = margin (default 32 samples = 2 ms). The mic is delayed slightly relative to the reference
+    so that a causal filter can model the bleed even if the two input paths differ a little in delay.
+Algorithmic latency: passes * margin + AES latency
+    = 64 + (nfft - hop) + look-ahead = 64 + 384 + 0 samples = 28 ms at 16 kHz (no look-ahead by default).</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="maai.bleed.realtime.engine.BleedCanceller" class="doc doc-heading">
+            <code>BleedCanceller</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Core real-time bleed canceller for two synchronized 16 kHz channels.</p>
+<p>Keyword arguments override :data:<code>DEFAULTS</code>. Call :meth:<code>process</code> with <code>block</code> samples
+per channel; the output is delayed by :attr:<code>latency</code> samples.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/maai/bleed/realtime/engine.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BleedCanceller</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Core real-time bleed canceller for two synchronized 16 kHz channels.</span>
+
+<span class="sd">    Keyword arguments override :data:`DEFAULTS`. Call :meth:`process` with ``block`` samples</span>
+<span class="sd">    per channel; the output is delayed by :attr:`latency` samples.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">kw</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">DEFAULTS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown bleed canceller parameter(s): </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DEFAULTS</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="n">B</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"block"</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">"sr"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">block</span> <span class="o">=</span> <span class="n">B</span>
+        <span class="n">aec_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">n_part</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"n_part"</span><span class="p">],</span> <span class="n">mu_max</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"mu_max"</span><span class="p">],</span> <span class="n">dtd_ratio_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"dtd_ratio_db"</span><span class="p">],</span>
+                      <span class="n">near_hold_ms</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"near_hold_ms"</span><span class="p">],</span> <span class="n">sr</span><span class="o">=</span><span class="n">sr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aec</span> <span class="o">=</span> <span class="p">[[</span><span class="n">PBFDAFStream</span><span class="p">(</span><span class="o">**</span><span class="n">aec_kw</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"passes"</span><span class="p">])]</span>  <span class="c1"># [pass][ch]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mic_delay</span> <span class="o">=</span> <span class="p">[[</span><span class="n">DelayLine</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"margin"</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"passes"</span><span class="p">])]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">"aes"</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span> <span class="o">=</span> <span class="n">ResidualSuppressorV2Pair</span><span class="p">(</span>
+                <span class="n">block</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">sr</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_beta"</span><span class="p">],</span> <span class="n">floor_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_floor_db"</span><span class="p">],</span> <span class="n">t60</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_t60"</span><span class="p">],</span>
+                <span class="n">dtd_ratio_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"dtd_ratio_db"</span><span class="p">],</span> <span class="n">near_hold_ms</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"near_hold_ms"</span><span class="p">],</span> <span class="n">use_pow_path</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_pow_path"</span><span class="p">],</span>
+                <span class="n">n_bands</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_n_bands"</span><span class="p">],</span> <span class="n">dd_alpha</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_dd_alpha"</span><span class="p">],</span> <span class="n">absent_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_absent_db"</span><span class="p">],</span>
+                <span class="n">near_thr_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_near_thr_db"</span><span class="p">],</span> <span class="n">lookahead_ms</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_lookahead_ms"</span><span class="p">],</span>
+                <span class="n">post_ms</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_post_ms"</span><span class="p">],</span> <span class="n">cng</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_cng"</span><span class="p">],</span> <span class="n">refine</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_refine"</span><span class="p">],</span> <span class="n">res_cap</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_res_cap"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay_est</span> <span class="o">=</span> <span class="p">[</span><span class="n">OnlineDelayEstimator</span><span class="p">(</span><span class="n">hop</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">sr</span><span class="p">,</span> <span class="n">dtd_ratio_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"dtd_ratio_db"</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="c1"># The AES reference is aligned with the estimated delay (bleed lags the reference by margin, as</span>
+        <span class="c1"># in the offline version). The AEC reference is not re-aligned: its long filter absorbs the delay</span>
+        <span class="c1"># and re-aligning on the fly would shift the filter taps.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_lag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_est</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max_lag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span> <span class="o">=</span> <span class="p">[</span><span class="n">VariableDelay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_lag</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="n">aes_lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span><span class="o">.</span><span class="n">latency</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">latency</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"passes"</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="s2">"margin"</span><span class="p">]</span> <span class="o">+</span> <span class="n">aes_lat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_blocks</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""a, b: 16 kHz signals of length ``block``. Returns (a_out, b_out), delayed by ``latency`` samples."""</span>
+        <span class="n">mics</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+        <span class="c1"># Delay estimation for monitoring (ch0: B-&gt;A, ch1: A-&gt;B)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_est</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">mics</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">mics</span><span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="n">c</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_lag</span><span class="p">))</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">target</span>
+
+        <span class="n">refs</span> <span class="o">=</span> <span class="p">(</span><span class="n">mics</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mics</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># 1st-pass reference = partner's raw mic</span>
+        <span class="k">for</span> <span class="n">it</span><span class="p">,</span> <span class="p">(</span><span class="n">aecs</span><span class="p">,</span> <span class="n">dls</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mic_delay</span><span class="p">)):</span>
+            <span class="n">lin</span><span class="p">,</span> <span class="n">est</span><span class="p">,</span> <span class="n">mic_d</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">dls</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">mics</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+                <span class="n">e</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">aecs</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">refs</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+                <span class="n">lin</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="n">est</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+                <span class="n">mic_d</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="n">last_refs</span> <span class="o">=</span> <span class="n">refs</span>
+            <span class="n">refs</span> <span class="o">=</span> <span class="p">(</span><span class="n">lin</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lin</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># next-pass reference = partner's linear AEC output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_blocks</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">lin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">aes_refs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">last_refs</span><span class="p">[</span><span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">lin</span><span class="p">,</span> <span class="n">est</span><span class="p">,</span> <span class="n">mic_d</span><span class="p">,</span> <span class="n">aes_refs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Return a dict describing the current adaptation state (for monitoring)."""</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">blocks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_blocks</span><span class="p">,</span> <span class="n">latency_ms</span><span class="o">=</span><span class="mi">1000</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">latency</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s2">"sr"</span><span class="p">],</span>
+                  <span class="n">delay_b_to_a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_est</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="n">delay_a_to_b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_est</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span>
+                  <span class="n">aes_ref_delay</span><span class="o">=</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">delay</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span><span class="p">],</span>
+                  <span class="n">aec</span><span class="o">=</span><span class="p">[[</span><span class="n">a</span><span class="o">.</span><span class="n">stats</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aecs</span><span class="p">]</span> <span class="k">for</span> <span class="n">aecs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aec</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">st</span><span class="p">[</span><span class="s2">"aes_gain"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aes2</span><span class="o">.</span><span class="n">last_gain</span><span class="p">)</span>
+            <span class="n">st</span><span class="p">[</span><span class="s2">"near_presence"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aes2</span><span class="o">.</span><span class="n">last_presence</span><span class="p">)</span>
+        <span class="n">warn</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"B-&gt;A"</span><span class="p">,</span> <span class="n">st</span><span class="p">[</span><span class="s2">"delay_b_to_a"</span><span class="p">]),</span> <span class="p">(</span><span class="s2">"A-&gt;B"</span><span class="p">,</span> <span class="n">st</span><span class="p">[</span><span class="s2">"delay_a_to_b"</span><span class="p">])):</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s2">"margin"</span><span class="p">]:</span>
+                <span class="n">warn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> delay </span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> &lt; -margin: the delay difference between the two mic "</span>
+                            <span class="sa">f</span><span class="s2">"input paths is too large (increase margin)"</span><span class="p">)</span>
+        <span class="n">st</span><span class="p">[</span><span class="s2">"warnings"</span><span class="p">]</span> <span class="o">=</span> <span class="n">warn</span>
+        <span class="k">return</span> <span class="n">st</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="maai.bleed.realtime.engine.BleedCanceller.process" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">process</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>a, b: 16 kHz signals of length <code>block</code>. Returns (a_out, b_out), delayed by <code>latency</code> samples.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/maai/bleed/realtime/engine.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""a, b: 16 kHz signals of length ``block``. Returns (a_out, b_out), delayed by ``latency`` samples."""</span>
+    <span class="n">mics</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+    <span class="c1"># Delay estimation for monitoring (ch0: B-&gt;A, ch1: A-&gt;B)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_est</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">mics</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">mics</span><span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="n">c</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_lag</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">target</span>
+
+    <span class="n">refs</span> <span class="o">=</span> <span class="p">(</span><span class="n">mics</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mics</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># 1st-pass reference = partner's raw mic</span>
+    <span class="k">for</span> <span class="n">it</span><span class="p">,</span> <span class="p">(</span><span class="n">aecs</span><span class="p">,</span> <span class="n">dls</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mic_delay</span><span class="p">)):</span>
+        <span class="n">lin</span><span class="p">,</span> <span class="n">est</span><span class="p">,</span> <span class="n">mic_d</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">dls</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">mics</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+            <span class="n">e</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">aecs</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">refs</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+            <span class="n">lin</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">est</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+            <span class="n">mic_d</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">last_refs</span> <span class="o">=</span> <span class="n">refs</span>
+        <span class="n">refs</span> <span class="o">=</span> <span class="p">(</span><span class="n">lin</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lin</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># next-pass reference = partner's linear AEC output</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">n_blocks</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">lin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">aes_refs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">last_refs</span><span class="p">[</span><span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">lin</span><span class="p">,</span> <span class="n">est</span><span class="p">,</span> <span class="n">mic_d</span><span class="p">,</span> <span class="n">aes_refs</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="maai.bleed.realtime.engine.BleedCanceller.status" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">status</span><span class="p">()</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return a dict describing the current adaptation state (for monitoring).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/maai/bleed/realtime/engine.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return a dict describing the current adaptation state (for monitoring)."""</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">blocks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_blocks</span><span class="p">,</span> <span class="n">latency_ms</span><span class="o">=</span><span class="mi">1000</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">latency</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s2">"sr"</span><span class="p">],</span>
+              <span class="n">delay_b_to_a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_est</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="n">delay_a_to_b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_est</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span>
+              <span class="n">aes_ref_delay</span><span class="o">=</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">delay</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes_ref_delay</span><span class="p">],</span>
+              <span class="n">aec</span><span class="o">=</span><span class="p">[[</span><span class="n">a</span><span class="o">.</span><span class="n">stats</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aecs</span><span class="p">]</span> <span class="k">for</span> <span class="n">aecs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aec</span><span class="p">])</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aes2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">st</span><span class="p">[</span><span class="s2">"aes_gain"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aes2</span><span class="o">.</span><span class="n">last_gain</span><span class="p">)</span>
+        <span class="n">st</span><span class="p">[</span><span class="s2">"near_presence"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aes2</span><span class="o">.</span><span class="n">last_presence</span><span class="p">)</span>
+    <span class="n">warn</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"B-&gt;A"</span><span class="p">,</span> <span class="n">st</span><span class="p">[</span><span class="s2">"delay_b_to_a"</span><span class="p">]),</span> <span class="p">(</span><span class="s2">"A-&gt;B"</span><span class="p">,</span> <span class="n">st</span><span class="p">[</span><span class="s2">"delay_a_to_b"</span><span class="p">])):</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s2">"margin"</span><span class="p">]:</span>
+            <span class="n">warn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> delay </span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> &lt; -margin: the delay difference between the two mic "</span>
+                        <span class="sa">f</span><span class="s2">"input paths is too large (increase margin)"</span><span class="p">)</span>
+    <span class="n">st</span><span class="p">[</span><span class="s2">"warnings"</span><span class="p">]</span> <span class="o">=</span> <span class="n">warn</span>
+    <span class="k">return</span> <span class="n">st</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="maai.bleed.realtime.engine.StreamProcessor" class="doc doc-heading">
+            <code>StreamProcessor</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Process 2ch chunks of any sample rate and length.</p>
+<p><code>push(x)</code>: x is a float array of shape (n, 2) at <code>sr_in</code>. Returns the processed (m, 2) at
+<code>out_sr</code> (m varies because samples are buffered up to block boundaries).</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/maai/bleed/realtime/engine.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StreamProcessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Process 2ch chunks of any sample rate and length.</span>
+
+<span class="sd">    ``push(x)``: x is a float array of shape (n, 2) at ``sr_in``. Returns the processed (m, 2) at</span>
+<span class="sd">    ``out_sr`` (m varies because samples are buffered up to block boundaries).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sr_in</span><span class="p">,</span> <span class="n">out_sr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">engine</span> <span class="o">=</span> <span class="n">BleedCanceller</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sr</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"sr"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sr_in</span> <span class="o">=</span> <span class="n">sr_in</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_sr</span> <span class="o">=</span> <span class="n">out_sr</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">sr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">down</span> <span class="o">=</span> <span class="n">StreamResampler</span><span class="p">(</span><span class="n">sr_in</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sr</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">up</span> <span class="o">=</span> <span class="n">StreamResampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_sr</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">"hpf_hz"</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sos</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">"hpf_hz"</span><span class="p">],</span> <span class="s2">"highpass"</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sr</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">"sos"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">sosfilt_zi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sos</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (sections, 2, ch)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sos</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+            <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zi</span> <span class="o">=</span> <span class="n">sosfilt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sos</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">zi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zi</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">block</span>
+        <span class="n">nb</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">)</span> <span class="o">//</span> <span class="n">B</span>
+        <span class="n">outs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb</span><span class="p">):</span>
+            <span class="n">blk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">B</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">B</span><span class="p">]</span>
+            <span class="n">oa</span><span class="p">,</span> <span class="n">ob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">blk</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">blk</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">outs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">oa</span><span class="p">,</span> <span class="n">ob</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">[</span><span class="n">nb</span> <span class="o">*</span> <span class="n">B</span><span class="p">:]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">outs</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">outs</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="k">else</span> <span class="n">out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">latency_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Algorithmic latency incl. block buffering and resampler group delay (excl. device buffers)."""</span>
+        <span class="n">lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">latency</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">block</span>  <span class="c1"># processing latency + max wait for a full block</span>
+        <span class="n">ms</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="n">lat</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sr</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="o">.</span><span class="n">passthrough</span><span class="p">:</span>
+            <span class="n">ms</span> <span class="o">+=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="o">.</span><span class="n">delay_in_samples</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sr_in</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="o">.</span><span class="n">passthrough</span><span class="p">:</span>
+            <span class="n">ms</span> <span class="o">+=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="o">.</span><span class="n">delay_in_samples</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sr</span>
+        <span class="k">return</span> <span class="n">ms</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="maai.bleed.realtime.engine.StreamProcessor.latency_ms" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">latency_ms</span><span class="p">()</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Algorithmic latency incl. block buffering and resampler group delay (excl. device buffers).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/maai/bleed/realtime/engine.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">latency_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Algorithmic latency incl. block buffering and resampler group delay (excl. device buffers)."""</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">latency</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">block</span>  <span class="c1"># processing latency + max wait for a full block</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="n">lat</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sr</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="o">.</span><span class="n">passthrough</span><span class="p">:</span>
+        <span class="n">ms</span> <span class="o">+=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="o">.</span><span class="n">delay_in_samples</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sr_in</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="o">.</span><span class="n">passthrough</span><span class="p">:</span>
+        <span class="n">ms</span> <span class="o">+=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="o">.</span><span class="n">delay_in_samples</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sr</span>
+    <span class="k">return</span> <span class="n">ms</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="maai.bleed.realtime.engine.VariableDelay" class="doc doc-heading">
+            <code>VariableDelay</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Delay line whose delay can change on the fly (up to <code>max_delay</code>).</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/maai/bleed/realtime/engine.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VariableDelay</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Delay line whose delay can change on the fly (up to ``max_delay``)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_delay</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_delay</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buf</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):]</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span>
+        <span class="k">return</span> <span class="n">y</span><span class="p">[</span><span class="n">end</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span><span class="n">end</span><span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="maai.bleed.offline.pipeline" class="doc doc-heading">
+            <code>maai.bleed.offline.pipeline</code>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Offline bleed removal for one recorded session (two lapel mics).</p>
+<pre><code>mic A --+
+        +- delay estimation -&gt; reference alignment -&gt; linear AEC (PBFDAF) -&gt; residual suppression -&gt; A cleaned
+mic B --+ (reference)
+</code></pre>
+<p>Side B is processed symmetrically with A as the reference.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.bleed.offline.pipeline.aes_stage" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">aes_stage</span><span class="p">(</span><span class="n">mic</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">ref_al</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">log</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Residual suppression. Returns (output, output without comfort noise).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/maai/bleed/offline/pipeline.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">aes_stage</span><span class="p">(</span><span class="n">mic</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">ref_al</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Residual suppression. Returns (output, output without comfort noise)."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="p">[</span><span class="s2">"aes"</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">res</span><span class="p">[</span><span class="s2">"e"</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="s2">"e"</span><span class="p">]</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">out</span><span class="p">,</span> <span class="n">st</span><span class="p">,</span> <span class="n">clean</span> <span class="o">=</span> <span class="n">residual_echo_suppress_v2</span><span class="p">(</span>
+        <span class="n">res</span><span class="p">[</span><span class="s2">"e"</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="s2">"y"</span><span class="p">],</span> <span class="n">mic</span><span class="p">,</span> <span class="n">ref_al</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"sr"</span><span class="p">],</span> <span class="n">beta</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_beta"</span><span class="p">],</span> <span class="n">floor_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_floor_db"</span><span class="p">],</span>
+        <span class="n">t60</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_t60"</span><span class="p">],</span> <span class="n">dtd_ratio_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"dtd_ratio_db"</span><span class="p">],</span> <span class="n">near_hold_ms</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"near_hold_ms"</span><span class="p">],</span>
+        <span class="n">use_pow_path</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_pow_path"</span><span class="p">],</span> <span class="n">dd_alpha</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_dd_alpha"</span><span class="p">],</span> <span class="n">absent_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_absent_db"</span><span class="p">],</span>
+        <span class="n">near_thr_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_near_thr_db"</span><span class="p">],</span> <span class="n">pre_ms</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_pre_ms"</span><span class="p">],</span> <span class="n">post_ms</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_post_ms"</span><span class="p">],</span>
+        <span class="n">cng</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_cng"</span><span class="p">],</span> <span class="n">n_bands</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_n_bands"</span><span class="p">],</span> <span class="n">res_cap</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_res_cap"</span><span class="p">],</span> <span class="n">return_clean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">log</span><span class="p">[</span><span class="s2">"aes"</span><span class="p">]</span> <span class="o">=</span> <span class="n">st</span>
+    <span class="n">log</span><span class="p">[</span><span class="s2">"aes_sec"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">clean</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.bleed.offline.pipeline.linear_stage" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">linear_stage</span><span class="p">(</span><span class="n">mic</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">clock_drift</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">log</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Linear AEC. Returns (pbfdaf result dict, aligned reference).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/maai/bleed/offline/pipeline.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">linear_stage</span><span class="p">(</span><span class="n">mic</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">clock_drift</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Linear AEC. Returns (pbfdaf result dict, aligned reference)."""</span>
+    <span class="n">ref_al</span> <span class="o">=</span> <span class="n">align_reference</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">mic</span><span class="p">),</span> <span class="n">delay</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">"margin"</span><span class="p">],</span> <span class="n">clock_drift</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">"drift_threshold"</span><span class="p">])</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">pbfdaf</span><span class="p">(</span><span class="n">mic</span><span class="p">,</span> <span class="n">ref_al</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"block"</span><span class="p">],</span> <span class="n">n_part</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"n_part"</span><span class="p">],</span> <span class="n">mu_max</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"mu_max"</span><span class="p">],</span>
+                 <span class="n">dtd_ratio_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"dtd_ratio_db"</span><span class="p">],</span> <span class="n">adapt_mode</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"adapt_mode"</span><span class="p">],</span>
+                 <span class="n">near_hold_ms</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"near_hold_ms"</span><span class="p">],</span> <span class="n">sr</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"sr"</span><span class="p">])</span>
+    <span class="n">log</span><span class="p">[</span><span class="s2">"aec"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s2">"stats"</span><span class="p">]</span>
+    <span class="n">log</span><span class="p">[</span><span class="s2">"aec_sec"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">ref_al</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.bleed.offline.pipeline.process_files" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">process_files</span><span class="p">(</span><span class="n">s1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">s2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stereo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">=</span><span class="s1">'.'</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Apply offline bleed removal to recorded files and write the results.</p>
+<p>Give either two mono files (<code>s1</code>, <code>s2</code>) or one stereo file (<code>stereo</code>, L=s1, R=s2).
+Writes <code>{prefix}_s1.wav</code>, <code>{prefix}_s2.wav</code>, <code>{prefix}_stereo.wav</code> (16 kHz, PCM16)
+and <code>{prefix}_bleed_log.json</code> into <code>out_dir</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>s1</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mono WAV of speaker 1's mic.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>s2</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mono WAV of speaker 2's mic.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stereo</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Stereo WAV (L = speaker 1, R = speaker 2).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>out_dir</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Output directory.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;.&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>prefix</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Output file prefix (defaults to the input file name).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**params</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Overrides of :data:<code>DEFAULTS</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>dict</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Paths of the written files (keys: s1, s2, stereo, log).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/maai/bleed/offline/pipeline.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">process_files</span><span class="p">(</span><span class="n">s1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">s2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stereo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">=</span><span class="s2">"."</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Apply offline bleed removal to recorded files and write the results.</span>
+
+<span class="sd">    Give either two mono files (``s1``, ``s2``) or one stereo file (``stereo``, L=s1, R=s2).</span>
+<span class="sd">    Writes ``{prefix}_s1.wav``, ``{prefix}_s2.wav``, ``{prefix}_stereo.wav`` (16 kHz, PCM16)</span>
+<span class="sd">    and ``{prefix}_bleed_log.json`` into ``out_dir``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        s1 (str, optional): Mono WAV of speaker 1's mic.</span>
+<span class="sd">        s2 (str, optional): Mono WAV of speaker 2's mic.</span>
+<span class="sd">        stereo (str, optional): Stereo WAV (L = speaker 1, R = speaker 2).</span>
+<span class="sd">        out_dir (str): Output directory.</span>
+<span class="sd">        prefix (str, optional): Output file prefix (defaults to the input file name).</span>
+<span class="sd">        **params: Overrides of :data:`DEFAULTS`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Paths of the written files (keys: s1, s2, stereo, log).</span>
+<span class="sd">    """</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">stereo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">sr_in</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">stereo</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stereo</span><span class="si">}</span><span class="s2">: expected a file with at least 2 channels"</span><span class="p">)</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">stereo</span>
+    <span class="k">elif</span> <span class="n">s1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">s2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">sr_in</span> <span class="o">=</span> <span class="n">_read_mono</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">sr_b</span> <span class="o">=</span> <span class="n">_read_mono</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sr_in</span> <span class="o">!=</span> <span class="n">sr_b</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sample rate mismatch: </span><span class="si">{</span><span class="n">sr_in</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">sr_b</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">s1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Specify either stereo=... or both s1=... and s2=..."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length mismatch </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s2">; truncating to the shorter one"</span><span class="p">)</span>
+
+    <span class="n">a_out</span><span class="p">,</span> <span class="n">b_out</span><span class="p">,</span> <span class="n">log</span> <span class="o">=</span> <span class="n">process_pair</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sr_in</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">sr</span> <span class="o">=</span> <span class="n">log</span><span class="p">[</span><span class="s2">"params"</span><span class="p">][</span><span class="s2">"sr"</span><span class="p">]</span>
+
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">src</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">.wav"</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"s1"</span><span class="p">,</span> <span class="s2">"s2"</span><span class="p">,</span> <span class="s2">"stereo"</span><span class="p">)}</span>
+    <span class="n">paths</span><span class="p">[</span><span class="s2">"log"</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_bleed_log.json"</span><span class="p">)</span>
+    <span class="n">ia</span><span class="p">,</span> <span class="n">ib</span> <span class="o">=</span> <span class="n">_to_int16</span><span class="p">(</span><span class="n">a_out</span><span class="p">),</span> <span class="n">_to_int16</span><span class="p">(</span><span class="n">b_out</span><span class="p">)</span>
+    <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s2">"s1"</span><span class="p">],</span> <span class="n">ia</span><span class="p">,</span> <span class="n">sr</span><span class="p">,</span> <span class="n">subtype</span><span class="o">=</span><span class="s2">"PCM_16"</span><span class="p">)</span>
+    <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s2">"s2"</span><span class="p">],</span> <span class="n">ib</span><span class="p">,</span> <span class="n">sr</span><span class="p">,</span> <span class="n">subtype</span><span class="o">=</span><span class="s2">"PCM_16"</span><span class="p">)</span>
+    <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s2">"stereo"</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">ia</span><span class="p">,</span> <span class="n">ib</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span> <span class="n">sr</span><span class="p">,</span> <span class="n">subtype</span><span class="o">=</span><span class="s2">"PCM_16"</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">input_s1</span><span class="o">=</span><span class="n">s1</span><span class="p">,</span> <span class="n">input_s2</span><span class="o">=</span><span class="n">s2</span><span class="p">,</span> <span class="n">input_stereo</span><span class="o">=</span><span class="n">stereo</span><span class="p">,</span> <span class="n">input_sr</span><span class="o">=</span><span class="n">sr_in</span><span class="p">,</span>
+               <span class="n">clipped_samples</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">a_out</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">b_out</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">)),</span>
+               <span class="n">elapsed_sec</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s2">"log"</span><span class="p">],</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">paths</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="maai.bleed.offline.pipeline.process_pair" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">process_pair</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sr_in</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Remove the mutual bleed between two synchronized lapel-mic recordings.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mono signal of speaker 1's mic.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>b</code>
+            </td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mono signal of speaker 2's mic (same clock / start as <code>a</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>sr_in</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sample rate of <code>a</code> and <code>b</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kw</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Overrides of :data:<code>DEFAULTS</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>tuple</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>(a_clean, b_clean, log). The outputs are float32 at <code>sr</code> (16 kHz by default).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/maai/bleed/offline/pipeline.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">process_pair</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sr_in</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Remove the mutual bleed between two synchronized lapel-mic recordings.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        a (np.ndarray): Mono signal of speaker 1's mic.</span>
+<span class="sd">        b (np.ndarray): Mono signal of speaker 2's mic (same clock / start as ``a``).</span>
+<span class="sd">        sr_in (int): Sample rate of ``a`` and ``b``.</span>
+<span class="sd">        **kw: Overrides of :data:`DEFAULTS`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: (a_clean, b_clean, log). The outputs are float32 at ``sr`` (16 kHz by default).</span>
+<span class="sd">    """</span>
+    <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">kw</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">DEFAULTS</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown bleed removal parameter(s): </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DEFAULTS</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="n">sr</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"sr"</span><span class="p">]</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">sr_in</span><span class="p">,</span> <span class="n">sr</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">"hpf_hz"</span><span class="p">])</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">sr_in</span><span class="p">,</span> <span class="n">sr</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">"hpf_hz"</span><span class="p">])</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="p">[:</span><span class="n">n</span><span class="p">],</span> <span class="n">b</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+
+    <span class="c1"># peak normalization (as in Seamless Interaction); the original scale is restored at the end</span>
+    <span class="n">ga</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="o">+</span> <span class="mf">1e-12</span>
+    <span class="n">gb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">+</span> <span class="mf">1e-12</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="n">ga</span><span class="p">,</span> <span class="n">b</span> <span class="o">/</span> <span class="n">gb</span>
+
+    <span class="c1"># Delay estimation: half the difference of the two directions' slopes = clock drift</span>
+    <span class="c1"># (distance changes due to speaker movement have the same sign in both directions)</span>
+    <span class="n">dBA</span> <span class="o">=</span> <span class="n">estimate_delay</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sr</span><span class="p">,</span> <span class="n">ratio_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"dtd_ratio_db"</span><span class="p">])</span>
+    <span class="n">dAB</span> <span class="o">=</span> <span class="n">estimate_delay</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">sr</span><span class="p">,</span> <span class="n">ratio_db</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"dtd_ratio_db"</span><span class="p">])</span>
+    <span class="n">clock_drift</span> <span class="o">=</span> <span class="p">(</span><span class="n">dBA</span><span class="p">[</span><span class="s2">"drift"</span><span class="p">]</span> <span class="o">-</span> <span class="n">dAB</span><span class="p">[</span><span class="s2">"drift"</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">log</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">peak_a</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">ga</span><span class="p">),</span> <span class="n">peak_b</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">gb</span><span class="p">),</span> <span class="n">clock_drift</span><span class="o">=</span><span class="n">clock_drift</span><span class="p">,</span>
+               <span class="n">delay_b_to_a</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dBA</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"block_delays"</span><span class="p">},</span>
+               <span class="n">delay_a_to_b</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dAB</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"block_delays"</span><span class="p">},</span>
+               <span class="n">a</span><span class="o">=</span><span class="p">{},</span> <span class="n">b</span><span class="o">=</span><span class="p">{})</span>
+    <span class="n">dl_a</span> <span class="o">=</span> <span class="p">(</span><span class="n">dBA</span><span class="p">[</span><span class="s2">"bulk_delay"</span><span class="p">],</span> <span class="n">clock_drift</span><span class="p">)</span>   <span class="c1"># delay of the B reference relative to A's mic</span>
+    <span class="n">dl_b</span> <span class="o">=</span> <span class="p">(</span><span class="n">dAB</span><span class="p">[</span><span class="s2">"bulk_delay"</span><span class="p">],</span> <span class="o">-</span><span class="n">clock_drift</span><span class="p">)</span>
+
+    <span class="c1"># Linear AEC. From the 2nd pass on, the partner's linear AEC output is the reference (less of our</span>
+    <span class="c1"># own voice in the reference). The non-linear AES output is not used for the linear filter.</span>
+    <span class="n">ref_b</span><span class="p">,</span> <span class="n">ref_a</span> <span class="o">=</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span>
+    <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"passes"</span><span class="p">]):</span>
+        <span class="n">la</span> <span class="o">=</span> <span class="n">log</span><span class="p">[</span><span class="s2">"a"</span><span class="p">]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="sa">f</span><span class="s2">"pass</span><span class="si">{</span><span class="n">it</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">lb</span> <span class="o">=</span> <span class="n">log</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="sa">f</span><span class="s2">"pass</span><span class="si">{</span><span class="n">it</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">res_a</span><span class="p">,</span> <span class="n">ral_a</span> <span class="o">=</span> <span class="n">linear_stage</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">ref_b</span><span class="p">,</span> <span class="o">*</span><span class="n">dl_a</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">la</span><span class="p">)</span>
+        <span class="n">res_b</span><span class="p">,</span> <span class="n">ral_b</span> <span class="o">=</span> <span class="n">linear_stage</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">ref_a</span><span class="p">,</span> <span class="o">*</span><span class="n">dl_b</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">lb</span><span class="p">)</span>
+        <span class="n">ref_b</span><span class="p">,</span> <span class="n">ref_a</span> <span class="o">=</span> <span class="n">res_b</span><span class="p">[</span><span class="s2">"e"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">res_a</span><span class="p">[</span><span class="s2">"e"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="c1"># Residual suppression</span>
+    <span class="n">a_out</span><span class="p">,</span> <span class="n">a_cl</span> <span class="o">=</span> <span class="n">aes_stage</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">res_a</span><span class="p">,</span> <span class="n">ral_a</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">la</span><span class="p">)</span>
+    <span class="n">b_out</span><span class="p">,</span> <span class="n">b_cl</span> <span class="o">=</span> <span class="n">aes_stage</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">res_b</span><span class="p">,</span> <span class="n">ral_b</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">lb</span><span class="p">)</span>
+    <span class="c1"># aes_refine: re-run AES using the partner's AES output (without comfort noise) as the reference.</span>
+    <span class="c1"># Less of our own voice remains in the reference, so it no longer leaks into the power-domain bleed</span>
+    <span class="c1"># estimate (the power model ignores phase, so a non-linearly processed reference is fine).</span>
+    <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"aes_refine"</span><span class="p">]):</span>
+        <span class="n">lr_a</span> <span class="o">=</span> <span class="n">log</span><span class="p">[</span><span class="s2">"a"</span><span class="p">]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="sa">f</span><span class="s2">"refine</span><span class="si">{</span><span class="n">it</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">lr_b</span> <span class="o">=</span> <span class="n">log</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="sa">f</span><span class="s2">"refine</span><span class="si">{</span><span class="n">it</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">rb</span> <span class="o">=</span> <span class="n">align_reference</span><span class="p">(</span><span class="n">b_cl</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">n</span><span class="p">,</span> <span class="n">dl_a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">"margin"</span><span class="p">],</span> <span class="n">dl_a</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">"drift_threshold"</span><span class="p">])</span>
+        <span class="n">ra</span> <span class="o">=</span> <span class="n">align_reference</span><span class="p">(</span><span class="n">a_cl</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">n</span><span class="p">,</span> <span class="n">dl_b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">"margin"</span><span class="p">],</span> <span class="n">dl_b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">"drift_threshold"</span><span class="p">])</span>
+        <span class="n">a_out</span><span class="p">,</span> <span class="n">a_cl2</span> <span class="o">=</span> <span class="n">aes_stage</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">res_a</span><span class="p">,</span> <span class="n">rb</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">lr_a</span><span class="p">)</span>
+        <span class="n">b_out</span><span class="p">,</span> <span class="n">b_cl</span> <span class="o">=</span> <span class="n">aes_stage</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">res_b</span><span class="p">,</span> <span class="n">ra</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">lr_b</span><span class="p">)</span>
+        <span class="n">a_cl</span> <span class="o">=</span> <span class="n">a_cl2</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">a_out</span> <span class="o">*</span> <span class="n">ga</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="p">(</span><span class="n">b_out</span> <span class="o">*</span> <span class="n">gb</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">log</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
