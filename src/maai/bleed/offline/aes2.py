@@ -25,7 +25,7 @@ def residual_echo_suppress_v2(e, y, mic, ref, sr=16000, nfft=512, hop=None, beta
                               t60=0.3, dtd_ratio_db=6.0, near_hold_ms=300.0, leak_alpha=0.005,
                               leak_min=1e-3, n_pow_taps=None, pow_mu=0.1, use_pow_path=True,
                               n_bands=48, dd_alpha=0.6, absent_db=-30.0, near_thr_db=3.0,
-                              pre_ms=60.0, post_ms=250.0, cng=1.0, seed=0, return_clean=False):
+                              pre_ms=60.0, post_ms=250.0, cng=1.0, res_cap=True, seed=0, return_clean=False):
     hop = hop or nfft // 4
     K = nfft // 2 + 1
     win = np.sqrt(np.hanning(nfft + 1)[:nfft])
@@ -92,6 +92,10 @@ def residual_echo_suppress_v2(e, y, mic, ref, sr=16000, nfft=512, hop=None, beta
             R = np.maximum(leak * Yp, decay * R)
             if use_pow_path:
                 R = np.maximum(R, Hx)
+            if res_cap:
+                # the residual bleed cannot exceed the observed power (the power path can overestimate
+                # it during double talk and hide the near-end talker from the speech decision)
+                R = np.minimum(R, Ep)
             N = ms.update(Ep)
 
             # band powers

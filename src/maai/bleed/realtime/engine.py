@@ -43,6 +43,8 @@ DEFAULTS = dict(
     aes_n_bands=48,           # number of ERB bands for the gain
     aes_cng=1.0,              # comfort noise level (0 disables)
     aes_refine=True,          # second stage using the partner's first-stage output
+    aes_res_cap=True,         # cap the residual estimate at the observed power (prevents over-suppression
+                              # of the near-end talker during double talk)
 )
 
 
@@ -98,7 +100,7 @@ class BleedCanceller:
                 dtd_ratio_db=p["dtd_ratio_db"], near_hold_ms=p["near_hold_ms"], use_pow_path=p["aes_pow_path"],
                 n_bands=p["aes_n_bands"], dd_alpha=p["aes_dd_alpha"], absent_db=p["aes_absent_db"],
                 near_thr_db=p["aes_near_thr_db"], lookahead_ms=p["aes_lookahead_ms"],
-                post_ms=p["aes_post_ms"], cng=p["aes_cng"], refine=p["aes_refine"])
+                post_ms=p["aes_post_ms"], cng=p["aes_cng"], refine=p["aes_refine"], res_cap=p["aes_res_cap"])
         self.delay_est = [OnlineDelayEstimator(hop=B, sr=sr, dtd_ratio_db=p["dtd_ratio_db"]) for _ in range(2)]
         # The AES reference is aligned with the estimated delay (bleed lags the reference by margin, as
         # in the offline version). The AEC reference is not re-aligned: its long filter absorbs the delay

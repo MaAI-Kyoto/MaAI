@@ -43,6 +43,8 @@ DEFAULTS = dict(
     aes_n_bands=48,      # number of ERB bands for the gain
     aes_cng=1.0,         # comfort noise level (0 disables, 1 = input background level)
     aes_refine=1,        # times to re-run AES with the partner's AES output as the reference
+    aes_res_cap=True,    # cap the residual estimate at the observed power (prevents over-suppression
+                         # of the near-end talker during double talk)
 )
 
 
@@ -77,7 +79,7 @@ def aes_stage(mic, res, ref_al, p, log):
         t60=p["aes_t60"], dtd_ratio_db=p["dtd_ratio_db"], near_hold_ms=p["near_hold_ms"],
         use_pow_path=p["aes_pow_path"], dd_alpha=p["aes_dd_alpha"], absent_db=p["aes_absent_db"],
         near_thr_db=p["aes_near_thr_db"], pre_ms=p["aes_pre_ms"], post_ms=p["aes_post_ms"],
-        cng=p["aes_cng"], n_bands=p["aes_n_bands"], return_clean=True)
+        cng=p["aes_cng"], n_bands=p["aes_n_bands"], res_cap=p["aes_res_cap"], return_clean=True)
     log["aes"] = st
     log["aes_sec"] = round(time.time() - t0, 1)
     return out, clean

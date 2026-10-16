@@ -29,10 +29,11 @@ class _Stage:
     """Residual bleed model of one stage (leak + power path + reverb tail) and its DD gain."""
 
     def __init__(self, K, W, n_pow_taps, beta, floor, decay, dd_alpha, leak_alpha, leak_min, pow_mu,
-                 use_pow_path):
+                 use_pow_path, res_cap=True):
         self.W = W
         self.beta, self.floor, self.decay, self.dd_alpha = beta, floor, decay, dd_alpha
         self.leak_alpha, self.leak_min, self.pow_mu, self.use_pow_path = leak_alpha, leak_min, pow_mu, use_pow_path
+        self.res_cap = res_cap
         self.num = np.full(K, 1e-10)
         self.den = np.full(K, 1e-9)
         self.H = np.zeros((n_pow_taps, K))
@@ -59,6 +60,11 @@ class _Stage:
         R = np.maximum(leak * Yp, self.decay * self.R)
         if self.use_pow_path:
             R = np.maximum(R, Hx)
+        if self.res_cap:
+            # The residual bleed cannot exceed the observed power. Without the cap the power path can
+            # overestimate it by >10 dB during double talk, which hides the near-end talker from the
+            # speech decision and suppresses short backchannels almost completely.
+            R = np.minimum(R, Ep)
         self.R = R
         return R
 
@@ -80,7 +86,7 @@ class ResidualSuppressorV2Pair:
     def __init__(self, block=256, sr=16000, nfft=512, hop=None, beta=0.7, floor_db=-25.0, t60=0.3,
                  dtd_ratio_db=6.0, near_hold_ms=300.0, leak_alpha=0.005, leak_min=1e-3, n_pow_taps=None,
                  pow_mu=0.1, use_pow_path=True, n_bands=48, dd_alpha=0.6, absent_db=-30.0, near_thr_db=3.0,
-                 lookahead_ms=0.0, post_ms=250.0, cng=1.0, refine=True, seed=0):
+                 lookahead_ms=0.0, post_ms=250.0, cng=1.0, refine=True, res_cap=True, seed=0):
         hop = hop or nfft // 4
         assert block % hop == 0, "block must be a multiple of hop"
         self.block, self.hop, self.nfft = block, hop, nfft
@@ -103,7 +109,7 @@ class ResidualSuppressorV2Pair:
 
         st = lambda: _Stage(K, self.W, n_pow_taps, beta, 10 ** (floor_db / 10),
                             10 ** (-6.0 * hop / sr / t60) if t60 > 0 else 0.0, dd_alpha,
-                            leak_alpha, leak_min, pow_mu, use_pow_path)
+                            leak_alpha, leak_min, pow_mu, use_pow_path, res_cap)
         self.st1 = [st() for _ in range(2)]
         self.st2 = [st() for _ in range(2)] if refine else None
         self.ms = [_MinStat(K, sub_len=max(1, int(0.25 * sr / hop)), n_sub=6) for _ in range(2)]
