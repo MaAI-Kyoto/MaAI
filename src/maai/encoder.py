@@ -1732,6 +1732,7 @@ def build_audio_encoder(conf, cpc_model: str = ""):
                 cache_dir=hf_cache_dir,
                 force_download=hf_force,
                 frames_per_call=getattr(conf, "mimi_onnx_frames_per_call", 1),
+                variant=getattr(conf, "mimi_onnx_variant", None),
             )
         return EncoderMimiOnnx(
             frame_hz=getattr(conf, "frame_hz", 12.5),

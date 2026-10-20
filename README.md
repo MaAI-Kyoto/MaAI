@@ -96,6 +96,7 @@ Currently available models can be found in [our HuggingFace repository](https://
 The turn-taking model uses the original VAP as is and predicts which participant will speak in the next moment.
 
 - [VAP Model](readme/vap.md) (noise-robust and single-channel variants are selected automatically)
+- [Three-Party VAP Model (`MaaiTri`)](readme/vap_tri.md) — 🚧 **Under development.** Prediction quality has not been fully evaluated, and the API, model and file names may change without notice.
 
 ### Voice Activity Detection
 

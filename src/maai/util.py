@@ -46,6 +46,31 @@ repo_ids = {
 
 # Streaming Mimi ONNX weights (same hub pattern as VAP checkpoints).
 CONTINUOUS_MIMI_ONNX_REPO_ID = "maai-kyoto/continuous-mimi-onnx"
+# Fine-tuned Mimi ONNX files on the hub whose names do not follow
+# continuous_mimi_{variant}_{precision}.onnx: (variant, precision, frames_per_call) -> (onnx, json)
+CONTINUOUS_MIMI_ONNX_VARIANT_FILES = {
+    ("ft-zoom-tri", "fp32", 1): ("continuous_mimi_fp32_ckpt_fixed.onnx", "continuous_mimi_fp32_ckpt_fixed.onnx.json"),
+}
+
+# Experimental three-party VAP (MaaiTri). Not to be confused with "vap_tri",
+# the trilingual two-party model. One repository per language.
+VAP_3PARTY_REPO_ID = "maai-kyoto/vap_3party_{lang}"
+
+
+def load_vap_tri_model(language: str = "jp", cache_dir: str = None, force_download: bool = False):
+    """Download and load the three-party VAP checkpoint used by MaaiTri.
+
+    Returns the checkpoint dict
+    (``state_dict``, ``maai_tri_config``, ``source``).
+    """
+    filename = f"vap_3party_mimi_state_dict_{language}_12.5hz_20000msec.pt"
+    path = hf_hub_download(
+        repo_id=VAP_3PARTY_REPO_ID.format(lang=language),
+        filename=filename,
+        cache_dir=cache_dir,
+        force_download=force_download,
+    )
+    return torch.load(path, map_location="cpu")
 
 def _format_frame_rate(frame_rate: float) -> str:
     frame_rate = float(frame_rate)
@@ -1013,6 +1038,7 @@ def download_continuous_mimi_onnx(
     cache_dir: str | None = None,
     force_download: bool = False,
     frames_per_call: int = 1,
+    variant: str | None = None,
 ) -> tuple[str, str]:
     """
     Resolve paths to the streaming Mimi ONNX model and JSON sidecar on disk.
@@ -1024,20 +1050,23 @@ def download_continuous_mimi_onnx(
     original one-frame-per-call export (``continuous_mimi_{precision}.onnx``); N > 1
     selects the N-frames-per-call export (``continuous_mimi_{precision}_{N}f.onnx``),
     which produces N VAP frames per ONNX call.
+
+    ``variant`` selects a fine-tuned Mimi (e.g. ``"ft-zoom-tri"`` ->
+    ``continuous_mimi_ft-zoom-tri_{precision}.onnx``). None is the original Mimi.
     """
     precision = str(precision).strip().lower()
     frames_per_call = int(frames_per_call)
     if frames_per_call < 1:
         raise ValueError("frames_per_call must be at least 1.")
-    suffix = "" if frames_per_call == 1 else f"_{frames_per_call}f"
-    if precision == "fp32":
-        onnx_fn = f"continuous_mimi_fp32{suffix}.onnx"
-        meta_fn = f"continuous_mimi_fp32{suffix}.json"
-    elif precision == "int8":
-        onnx_fn = f"continuous_mimi_int8{suffix}.onnx"
-        meta_fn = f"continuous_mimi_int8{suffix}.json"
-    else:
+    if precision not in ("fp32", "int8"):
         raise ValueError(f"Unsupported precision for continuous Mimi ONNX: {precision}")
+    suffix = "" if frames_per_call == 1 else f"_{frames_per_call}f"
+    if (variant, precision, frames_per_call) in CONTINUOUS_MIMI_ONNX_VARIANT_FILES:
+        onnx_fn, meta_fn = CONTINUOUS_MIMI_ONNX_VARIANT_FILES[(variant, precision, frames_per_call)]
+    else:
+        prefix = "continuous_mimi_" if not variant else f"continuous_mimi_{variant}_"
+        onnx_fn = f"{prefix}{precision}{suffix}.onnx"
+        meta_fn = f"{prefix}{precision}{suffix}.json"
 
     onnx_path = hf_hub_download(
         repo_id=CONTINUOUS_MIMI_ONNX_REPO_ID,

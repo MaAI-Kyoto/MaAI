@@ -232,16 +232,51 @@ class Wav(Base):
             d = data[i:i+self.FRAME_SIZE]
             self.raw_wav_queue.put(d)
 
+        self._pause_lock = threading.Lock()
+        self._paused = False
+        self._playing = False
+        self.finished = False
+
+    def pause(self):
+        """Pause playback and the audio feed (resume with ``resume``)."""
+        with self._pause_lock:
+            self._paused = True
+            if self._playing:
+                pygame.mixer.pause()
+
+    def resume(self):
+        """Resume playback and the audio feed after ``pause``."""
+        with self._pause_lock:
+            self._paused = False
+            if self._playing:
+                pygame.mixer.unpause()
+
+    @property
+    def paused(self):
+        return self._paused
+
     def _read_wav(self):
-        start_time = time.time()
         frame_duration = self.FRAME_SIZE / self.SAMPLING_RATE
         pygame.mixer.init(frequency=16000, size=-16, channels=1, buffer=512)
         sound = pygame.mixer.Sound(self.wav_file_path)
-        sound.play()
+        with self._pause_lock:
+            sound.play()
+            self._playing = True
+            if self._paused:
+                pygame.mixer.pause()
+        # Start the feed clock at playback; mixer init and loading take a few hundred ms.
+        start_time = time.time()
         frame_count = 0
         while True:
             if self.raw_wav_queue.empty():
                 break
+            if self._paused:
+                # Shift the feed clock by the paused time so it stays in step with playback.
+                t_pause = time.time()
+                while self._paused:
+                    time.sleep(0.005)
+                start_time += time.time() - t_pause
+                continue
             expected_time = start_time + frame_count * frame_duration
             current_time = time.time()
             if current_time < expected_time:
@@ -252,6 +287,7 @@ class Wav(Base):
             if data is None:
                 continue
             self._put_to_all_queues(data)
+        self.finished = True
 
     def start(self):
         if not self._is_thread_started:

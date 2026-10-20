@@ -304,6 +304,13 @@ class ConsoleBar:
         if header is not None:
             print(header)
 
+        # 3 話者 (MaaiTri) の結果は専用の描画にする
+        if "x3" in result:
+            self._render_tri_section(result, render_audio=render_audio)
+            if header is None:
+                print("-" * (self.bar_length + 30))
+            return
+
         is_nod_para = _is_nod_para_style_repetitions(result)
 
         if (
@@ -487,6 +494,30 @@ class ConsoleBar:
         # 単一モデル時のみ末尾に区切り線を引く（multi 時は呼び出し側で線を引く）
         if header is None:
             print("-" * (self.bar_length + 30))
+
+    def _render_tri_section(self, result: Dict[str, Any], *, render_audio: bool) -> None:
+        """3 話者 (MaaiTri) の結果を話者ごとのバーで描画する。
+
+        p_now / p_future は話者間で正規化された次話者確率、vad は話者ごとの
+        独立した確率、p_bins は [話者][ビン] の確率。
+        """
+        if render_audio:
+            for k in ("x1", "x2", "x3"):
+                if k in result:
+                    val = np.squeeze(np.array(result[k])).tolist()
+                    bar, value = _get_bar_for_value(k, val, self.bar_length, "normal")
+                    print(f"{k:15}: {bar} ({value:.3f})")
+        for key in ("p_now", "p_future", "vad"):
+            if key not in result:
+                continue
+            for si, v in enumerate(result[key]):
+                label = f"{key}(spk{si + 1})"
+                print(f"{label:15}: {_draw_bar(float(v), self.bar_length)} ({float(v):.3f})")
+        if "p_bins" in result:
+            for si, spk_bins in enumerate(result["p_bins"]):
+                bins_str = ", ".join(f"{b:.3f}" for b in spk_bins)
+                bar = _draw_bar(float(np.mean(spk_bins)), self.bar_length)
+                print(f"{'p_bins(spk' + str(si + 1) + ')':15}: {bar} [{bins_str}]")
 
 # Mode names (unified and deprecated) for each TCP wire format. Single-channel
 # results share the 2-channel wire format, with length-1 arrays in place of the
