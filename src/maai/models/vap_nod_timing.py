@@ -143,16 +143,20 @@ class VapGPT_nod_timing(nn.Module):
         return ret, new_cache
 
     def forward_batch(self, x1: Tensor, x2: Tensor) -> dict:
-        """Non-streaming, full-context forward (no cache), for validating
-        streaming-vs-batch numerical equivalence. Equivalent to calling
-        forward() with cache=None and return_all_frames=True, but without
-        threading a cache dict through (single shot over the whole sequence).
+        """Non-streaming, full-context forward (no cache), used for offline
+        batch inference and for validating streaming-vs-batch numerical
+        equivalence. Equivalent to calling forward() with cache=None and
+        return_all_frames=True, but without threading a cache dict through
+        (single shot over the whole sequence).
+
+        Returns:
+            dict: ``p_bc`` and ``p_nod`` of shape (B, T).
         """
         o1 = self.self_attention(x1)
         o2 = self.self_attention(x2)
         out = self.cross_attention(o1["x"], o2["x"])
 
-        p_bc = self.bc_head(out["x"]).sigmoid()
-        p_nod = self.gt_head(out["x"]).sigmoid()
+        p_bc = self.bc_head(out["x"]).sigmoid().squeeze(-1)
+        p_nod = self.gt_head(out["x"]).sigmoid().squeeze(-1)
 
         return {"p_bc": p_bc, "p_nod": p_nod}

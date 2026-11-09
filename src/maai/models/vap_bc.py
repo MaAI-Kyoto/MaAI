@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 import torch.nn.functional as F
 
 from .config import VapConfig
@@ -174,7 +174,7 @@ class VapGPT_bc(nn.Module):
 
         p_bc_all = self.bc_head(out["x"]).sigmoid().to("cpu").tolist()[0]
         p_bc_detect_all = self.bc_detect_head(out["x"]).sigmoid().to("cpu").tolist()[0]
-        print(f"p_bc: {p_bc_all[-1][0]:.4f}, p_bc_detect: {p_bc_detect_all[-1][0]:.4f}")
+        # print(f"p_bc: {p_bc_all[-1][0]:.4f}, p_bc_detect: {p_bc_detect_all[-1][0]:.4f}")
 
         frames = [
             {"p_bc": p_bc_all[t][0], "p_bc_detect": p_bc_detect_all[t][0]}
@@ -183,3 +183,22 @@ class VapGPT_bc(nn.Module):
         ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache
+
+    def forward_batch(self, x1: Tensor, x2: Tensor) -> Dict[str, Tensor]:
+        """Full-sequence forward without a KV cache (offline batch inference).
+
+        Computes the same values as ``forward(x1, x2, return_all_frames=True)``
+        but keeps them as tensors with a batch dimension. ``x1`` / ``x2`` are
+        already in model order (see the channel swap in :meth:`encode_audio`).
+
+        Returns:
+            dict: ``p_bc`` and ``p_bc_detect`` of shape (B, T).
+        """
+        o1 = self.ar_channel(x1)
+        o2 = self.ar_channel(x2)
+        out = self.ar(o1["x"], o2["x"])
+
+        return {
+            "p_bc": self.bc_head(out["x"]).sigmoid().squeeze(-1),
+            "p_bc_detect": self.bc_detect_head(out["x"]).sigmoid().squeeze(-1),
+        }

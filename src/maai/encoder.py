@@ -1691,6 +1691,9 @@ def build_audio_encoder(conf, cpc_model: str = ""):
                 frame_hz=getattr(conf, "frame_hz", 10),
                 freeze=conf.freeze_encoder,
                 mimi_model_name=getattr(conf, "mimi_model_name", "kyutai/mimi"),
+                # False builds only the model-specific part (frame_rate_conv);
+                # MaaiBatch runs one shared Mimi core for all of its models.
+                load_hf_weights=bool(int(getattr(conf, "mimi_load_hf_weights", 1))),
             )
 
         def _opt_str(name: str) -> str | None:

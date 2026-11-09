@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 import torch.nn.functional as F
 
 from .config import VapConfig
@@ -190,3 +190,20 @@ class VapGPT_bc_2type(nn.Module):
         ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache
+
+    def forward_batch(self, x1: Tensor, x2: Tensor) -> Dict[str, Tensor]:
+        """Full-sequence forward without a KV cache (offline batch inference).
+
+        Computes the same values as ``forward(x1, x2, return_all_frames=True)``
+        but keeps them as tensors with a batch dimension. ``x1`` / ``x2`` are
+        already in model order (see the channel swap in :meth:`encode_audio`).
+
+        Returns:
+            dict: ``p_bc_react`` and ``p_bc_emo`` of shape (B, T).
+        """
+        o1 = self.ar_channel(x1)
+        o2 = self.ar_channel(x2)
+        out = self.ar(o1["x"], o2["x"])
+
+        bc = self.bc_head(out["x"]).softmax(dim=-1)
+        return {"p_bc_react": bc[..., 1], "p_bc_emo": bc[..., 2]}

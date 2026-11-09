@@ -220,11 +220,12 @@ class MultiHeadAttentionAlibi(MultiHeadAttention):
             if self.mask is None or self.mask.shape[-1] < T_total:
                 mask = self.get_alibi_mask(T_total, device=qk.device, dtype=qk.dtype)
                 if self.context_limit > 0:
-                    for j in range(mask.shape[2]):
-                        del_mask_start = 0
-                        del_mask_end = max(0, j - self.context_limit + 1)
-                        for n in range(del_mask_start, del_mask_end):
-                            mask[..., j, n] = float("-inf")
+                    # Query j only attends to keys [j - context_limit + 1, j].
+                    # Vectorized: the element-wise loop is O(T^2) Python calls,
+                    # which matters for full-sequence (batch) inference.
+                    idx = torch.arange(T_total, device=mask.device)
+                    band = idx.view(1, -1) < (idx.view(-1, 1) - self.context_limit + 1)
+                    mask = mask.masked_fill(band, float("-inf"))
 
                 self.mask = mask
             else:

@@ -142,6 +142,25 @@ maai = Maai(
 )
 ```
 
+### 録音済み音声のバッチ推論
+
+録音済みの音声には `MaaiBatch` を使うと、1フレームずつではなく録音全体をまとめて推論できます。
+Mimi エンコーダは長いチャンク単位で複数の録音を並列に処理し、各モデルの Transformer は系列全体を1回の順伝播で処理します。
+出力はリアルタイムの `Maai` とフレームごとに一致する値を numpy 配列で返します。
+複数モデル（`configs`）を指定するとエンコーダ処理を1回で共有します。
+Mimi のモデル（`model_type="normal-ver2"`、既定）と CPC のモデル（`model_type="normal"`）の両方に対応しています。
+
+```python
+from maai import MaaiBatch
+
+batch = MaaiBatch(mode="vap", lang="jp", device="cuda")
+result = batch.process(wav_ch1, wav_ch2)    # 16 kHz の float32 配列
+result["p_now"]      # (フレーム数, 2)
+result["time_sec"]   # 各予測の時刻
+```
+
+- [MaaiBatch - 録音済み音声のバッチ推論](readme/batch_JP.md)
+
 <br>
 
 ## 🎚️ 入出力

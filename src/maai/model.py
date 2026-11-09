@@ -48,6 +48,163 @@ MODEL_CLASSES = {
 }
 
 
+def _load_vap_model(
+    conf: VapConfig,
+    mode: str,
+    lang: str,
+    *,
+    mono: bool,
+    mc: bool,
+    frame_rate: float,
+    context_len_sec: float,
+    device: str,
+    cpc_model: str,
+    model_type: str,
+    local_model=None,
+    cache_dir: str = None,
+    force_download: bool = False,
+):
+    """Build the model for ``mode`` and load its pretrained (or local) weights.
+
+    Shared by :class:`Maai` and :class:`maai.batch.MaaiBatch`. ``conf`` must
+    already carry the frame rate, context limit and encoder settings.
+
+    Returns:
+        tuple: (model on ``device`` in eval mode, checkpoint variant name such
+        as ``'vap_mc'`` or ``'vap_mc_mono'``).
+    """
+    # Resolve the checkpoint variant (mc / mono) first, since it decides
+    # which model class to build.
+    nod_param_stats_from_file = None
+    nod_count_thresholds_from_file = None
+    if local_model is None:
+        variant, sd = resolve_and_load_model(
+            mode,
+            mc,
+            mono,
+            frame_rate,
+            context_len_sec,
+            lang,
+            device,
+            cache_dir,
+            force_download,
+            model_type=model_type,
+        )
+        if isinstance(sd, dict) and "state_dict" in sd:
+            nod_param_stats_from_file = sd.get("nod_param_stats")
+            nod_count_thresholds_from_file = sd.get("nod_count_thresholds") or sd.get(
+                "nod_repetitions_thresholds"
+            )
+            merged_sd = {}
+            merged_sd.update(sd.get("encoder_state_dict") or {})
+            merged_sd.update(sd["state_dict"])
+            sd = merged_sd
+    else:
+        # mc and non-mc checkpoints share the architecture, so only the
+        # channel count matters for a local file.
+        variant = mono_variant(mode) if mono else mode
+        print("Loading model from local file:", local_model)
+        raw = torch.load(local_model, map_location="cpu")
+        if isinstance(raw, dict):
+            nod_param_stats_from_file = raw.get("nod_param_stats")
+            nod_count_thresholds_from_file = raw.get(
+                "nod_count_thresholds"
+            ) or raw.get("nod_repetitions_thresholds")
+            if "state_dict" in raw:
+                merged_sd = {}
+                merged_sd.update(raw.get("encoder_state_dict") or {})
+                merged_sd.update(raw["state_dict"])
+                sd = merged_sd
+            else:
+                sd = raw
+        else:
+            sd = raw
+
+    if variant == "nod_para":
+        conf.dropout = 0.2
+
+    if variant == "vap_prompt":
+        from .models.vap_prompt import VapGPT_prompt
+        vap = VapGPT_prompt(conf)
+    elif variant in MODEL_CLASSES:
+        vap = MODEL_CLASSES[variant](conf)
+    else:
+        raise ValueError(f"Invalid mode: {mode}. Supported modes are: {list(MODEL_CLASSES) + ['vap_prompt']}")
+
+    # Store the initial state of the model to check for unchanged parameters
+    initial_state_dict = {name: param.clone() for name, param in vap.named_parameters()}
+
+    if hasattr(vap, "conf"):
+        setattr(vap.conf, "runtime_device", device)
+    vap.load_encoder(cpc_model=cpc_model)
+    if mode == "nod_para" and isinstance(sd, dict):
+        remapped_sd: dict = {}
+        for _k, _v in sd.items():
+            if _k.startswith("nod_count_head."):
+                remapped_sd[
+                    "nod_repetitions_head." + _k[len("nod_count_head.") :]
+                ] = _v
+            else:
+                remapped_sd[_k] = _v
+        sd = remapped_sd
+    vap.load_state_dict(sd, strict=False)
+
+    if (
+        mode == "nod_para"
+        and nod_param_stats_from_file is not None
+        and isinstance(nod_param_stats_from_file, dict)
+    ):
+        for _k in ("range_mean", "range_std", "speed_mean", "speed_std"):
+            if _k in nod_param_stats_from_file:
+                vap.nod_param_stats[_k] = float(nod_param_stats_from_file[_k])
+    if (
+        mode == "nod_para"
+        and nod_count_thresholds_from_file is not None
+        and isinstance(nod_count_thresholds_from_file, dict)
+    ):
+        for _k in ("t0", "t1", "t2"):
+            if _k in nod_count_thresholds_from_file:
+                vap.nod_repetitions_thresholds[_k] = float(
+                    nod_count_thresholds_from_file[_k]
+                )
+        if "t_swing" in nod_count_thresholds_from_file:
+            vap.nod_swing_up_threshold = float(nod_count_thresholds_from_file["t_swing"])
+
+    if conf.encoder_type == "cpc" and 'encoder.downsample.1.weight' in sd:
+        vap.encoder1.downsample[1].weight = nn.Parameter(sd['encoder.downsample.1.weight'])
+        vap.encoder1.downsample[1].bias = nn.Parameter(sd['encoder.downsample.1.bias'])
+        vap.encoder1.downsample[2].ln.weight = nn.Parameter(sd['encoder.downsample.2.ln.weight'])
+        vap.encoder1.downsample[2].ln.bias = nn.Parameter(sd['encoder.downsample.2.ln.bias'])
+
+        if getattr(vap, "encoder2", None) is not None:
+            vap.encoder2.downsample[1].weight = nn.Parameter(sd['encoder.downsample.1.weight'])
+            vap.encoder2.downsample[1].bias = nn.Parameter(sd['encoder.downsample.1.bias'])
+            vap.encoder2.downsample[2].ln.weight = nn.Parameter(sd['encoder.downsample.2.ln.weight'])
+            vap.encoder2.downsample[2].ln.bias = nn.Parameter(sd['encoder.downsample.2.ln.bias'])
+
+    # print(sd.keys())
+    # input("Model loaded. Press Enter to continue...")
+    if conf.encoder_type == "mimi" and 'encoder.frame_rate_conv.weight' in sd:
+        vap.encoder1.frame_rate_conv.weight = nn.Parameter(sd['encoder.frame_rate_conv.weight'])
+        vap.encoder1.frame_rate_conv.bias = nn.Parameter(sd['encoder.frame_rate_conv.bias'])
+
+        if getattr(vap, "encoder2", None) is not None:
+            vap.encoder2.frame_rate_conv.weight = nn.Parameter(sd['encoder.frame_rate_conv.weight'])
+            vap.encoder2.frame_rate_conv.bias = nn.Parameter(sd['encoder.frame_rate_conv.bias'])
+
+    # Check for parameters that were not updated from their initial values
+    for name, param in vap.named_parameters():
+        if name in initial_state_dict:
+            if torch.equal(param.data, initial_state_dict[name].data):
+                # Exclude encoder parameters that are loaded separately
+                if not name.startswith('encoder.'):
+                    print(f"Warning: Parameter '{name}' was not updated from its initial value.")
+
+    vap.to(device)
+    vap = vap.eval()
+    return vap, variant
+
+
 class Maai():
     """Main wrapper class for running the MaAI model.
 
@@ -229,140 +386,26 @@ class Maai():
         if not (self.device == "cpu" or self.device.startswith("cuda")):
             raise ValueError("Device must be 'cpu', 'cuda', or 'cuda:N'.")
 
-        # Resolve the checkpoint variant (mc / mono) first, since it decides
-        # which model class to build.
-        nod_param_stats_from_file = None
-        nod_count_thresholds_from_file = None
-        if local_model is None:
-            variant, sd = resolve_and_load_model(
-                mode,
-                mc,
-                mono,
-                frame_rate,
-                context_len_sec,
-                lang,
-                device,
-                cache_dir,
-                force_download,
-                model_type=model_type,
-            )
-            if isinstance(sd, dict) and "state_dict" in sd:
-                nod_param_stats_from_file = sd.get("nod_param_stats")
-                nod_count_thresholds_from_file = sd.get("nod_count_thresholds") or sd.get(
-                    "nod_repetitions_thresholds"
-                )
-                merged_sd = {}
-                merged_sd.update(sd.get("encoder_state_dict") or {})
-                merged_sd.update(sd["state_dict"])
-                sd = merged_sd
-        else:
-            # mc and non-mc checkpoints share the architecture, so only the
-            # channel count matters for a local file.
-            variant = mono_variant(mode) if mono else mode
-            print("Loading model from local file:", local_model)
-            raw = torch.load(local_model, map_location="cpu")
-            if isinstance(raw, dict):
-                nod_param_stats_from_file = raw.get("nod_param_stats")
-                nod_count_thresholds_from_file = raw.get(
-                    "nod_count_thresholds"
-                ) or raw.get("nod_repetitions_thresholds")
-                if "state_dict" in raw:
-                    merged_sd = {}
-                    merged_sd.update(raw.get("encoder_state_dict") or {})
-                    merged_sd.update(raw["state_dict"])
-                    sd = merged_sd
-                else:
-                    sd = raw
-            else:
-                sd = raw
-
-        if variant == "nod_para":
-            conf.dropout = 0.2
-
-        if variant == "vap_prompt":
-            from .models.vap_prompt import VapGPT_prompt
-            self.vap = VapGPT_prompt(conf)
-        elif variant in MODEL_CLASSES:
-            self.vap = MODEL_CLASSES[variant](conf)
-        else:
-            raise ValueError(f"Invalid mode: {mode}. Supported modes are: {list(MODEL_CLASSES) + ['vap_prompt']}")
+        self.vap, variant = _load_vap_model(
+            conf,
+            mode,
+            lang,
+            mono=mono,
+            mc=mc,
+            frame_rate=frame_rate,
+            context_len_sec=context_len_sec,
+            device=self.device,
+            cpc_model=cpc_model,
+            model_type=model_type,
+            local_model=local_model,
+            cache_dir=cache_dir,
+            force_download=force_download,
+        )
 
         # Models that encode and attend over a single channel only (their
         # encode_audio / forward take one stream, and there is no encoder2).
         self.single_tower = bool(getattr(self.vap, "is_single_tower", False))
 
-        # Store the initial state of the model to check for unchanged parameters
-        initial_state_dict = {name: param.clone() for name, param in self.vap.named_parameters()}
-
-        if hasattr(self.vap, "conf"):
-            setattr(self.vap.conf, "runtime_device", self.device)
-        self.vap.load_encoder(cpc_model=cpc_model)
-        if mode == "nod_para" and isinstance(sd, dict):
-            remapped_sd: dict = {}
-            for _k, _v in sd.items():
-                if _k.startswith("nod_count_head."):
-                    remapped_sd[
-                        "nod_repetitions_head." + _k[len("nod_count_head.") :]
-                    ] = _v
-                else:
-                    remapped_sd[_k] = _v
-            sd = remapped_sd
-        self.vap.load_state_dict(sd, strict=False)
-
-        if (
-            mode == "nod_para"
-            and nod_param_stats_from_file is not None
-            and isinstance(nod_param_stats_from_file, dict)
-        ):
-            for _k in ("range_mean", "range_std", "speed_mean", "speed_std"):
-                if _k in nod_param_stats_from_file:
-                    self.vap.nod_param_stats[_k] = float(nod_param_stats_from_file[_k])
-        if (
-            mode == "nod_para"
-            and nod_count_thresholds_from_file is not None
-            and isinstance(nod_count_thresholds_from_file, dict)
-        ):
-            for _k in ("t0", "t1", "t2"):
-                if _k in nod_count_thresholds_from_file:
-                    self.vap.nod_repetitions_thresholds[_k] = float(
-                        nod_count_thresholds_from_file[_k]
-                    )
-            if "t_swing" in nod_count_thresholds_from_file:
-                self.vap.nod_swing_up_threshold = float(nod_count_thresholds_from_file["t_swing"])
-
-        if conf.encoder_type == "cpc" and 'encoder.downsample.1.weight' in sd:
-            self.vap.encoder1.downsample[1].weight = nn.Parameter(sd['encoder.downsample.1.weight'])
-            self.vap.encoder1.downsample[1].bias = nn.Parameter(sd['encoder.downsample.1.bias'])
-            self.vap.encoder1.downsample[2].ln.weight = nn.Parameter(sd['encoder.downsample.2.ln.weight'])
-            self.vap.encoder1.downsample[2].ln.bias = nn.Parameter(sd['encoder.downsample.2.ln.bias'])
-            
-            if getattr(self.vap, "encoder2", None) is not None:
-                self.vap.encoder2.downsample[1].weight = nn.Parameter(sd['encoder.downsample.1.weight'])
-                self.vap.encoder2.downsample[1].bias = nn.Parameter(sd['encoder.downsample.1.bias'])
-                self.vap.encoder2.downsample[2].ln.weight = nn.Parameter(sd['encoder.downsample.2.ln.weight'])
-                self.vap.encoder2.downsample[2].ln.bias = nn.Parameter(sd['encoder.downsample.2.ln.bias'])
-        
-        # print(sd.keys())
-        # input("Model loaded. Press Enter to continue...")
-        if conf.encoder_type == "mimi" and 'encoder.frame_rate_conv.weight' in sd:
-            self.vap.encoder1.frame_rate_conv.weight = nn.Parameter(sd['encoder.frame_rate_conv.weight'])
-            self.vap.encoder1.frame_rate_conv.bias = nn.Parameter(sd['encoder.frame_rate_conv.bias'])
-            
-            if getattr(self.vap, "encoder2", None) is not None:
-                self.vap.encoder2.frame_rate_conv.weight = nn.Parameter(sd['encoder.frame_rate_conv.weight'])
-                self.vap.encoder2.frame_rate_conv.bias = nn.Parameter(sd['encoder.frame_rate_conv.bias'])
-
-        # Check for parameters that were not updated from their initial values
-        for name, param in self.vap.named_parameters():
-            if name in initial_state_dict:
-                if torch.equal(param.data, initial_state_dict[name].data):
-                    # Exclude encoder parameters that are loaded separately
-                    if not name.startswith('encoder.'):
-                        print(f"Warning: Parameter '{name}' was not updated from its initial value.")
-
-        self.vap.to(self.device)
-        self.vap = self.vap.eval()
-        
         self.mode = mode
         # Checkpoint actually loaded, e.g. 'vap_mc' or 'vap_mc_mono'.
         self.variant = variant

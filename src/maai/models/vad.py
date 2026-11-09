@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from .config import VapConfig
 from ..encoder import build_audio_encoder
@@ -158,6 +158,22 @@ class VadGPT(nn.Module):
 
         return ret, new_cache
 
+    def forward_batch(self, x1: Tensor, x2: Tensor) -> Dict[str, Tensor]:
+        """Full-sequence forward without a KV cache (offline batch inference).
+
+        Computes the same values as ``forward(x1, x2, return_all_frames=True)``
+        but keeps them as tensors with a batch dimension.
+
+        Returns:
+            dict: ``vad`` of shape (B, T, 2).
+        """
+        o1 = self.ar_channel(x1)
+        o2 = self.ar_channel(x2)
+        out = self.ar(o1["x"], o2["x"])
+
+        vad = torch.cat((self.va_classifier(out["x1"]), self.va_classifier(out["x2"])), dim=-1)
+        return {"vad": vad.sigmoid()}
+
 
 class VadGPT_mono(VadGPT):
     """Single-channel (mono) variant of the VAD model.
@@ -200,3 +216,9 @@ class VadGPT_mono(VadGPT):
         ret["vad"] = ret["vad"][0]
 
         return ret, new_cache
+
+    def forward_batch(self, x1: Tensor, x2: Tensor) -> Dict[str, Tensor]:
+        """Batch counterpart of :meth:`forward`: ``vad`` of shape (B, T) for channel 1."""
+        ret = super().forward_batch(x1, x2)
+        ret["vad"] = ret["vad"][..., 0]
+        return ret

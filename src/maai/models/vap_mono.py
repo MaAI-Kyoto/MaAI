@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from .config import VapConfig
 from ..encoder import build_audio_encoder
@@ -210,3 +210,30 @@ class VapGPT_mono(nn.Module):
         ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache
+
+    def forward_batch(self, x1: Tensor) -> Dict[str, Tensor]:
+        """Full-sequence forward without a KV cache (offline batch inference).
+
+        Computes the same values as ``forward(x1, return_all_frames=True)``
+        but keeps them as tensors with a batch dimension.
+
+        Returns:
+            dict: ``p_now``, ``p_future``, ``vad``, ``p_bins_now`` and
+            ``p_bins_future`` of shape (B, T), ``p_bins`` of shape (B, T, n_bins).
+        """
+        o1 = self.ar_channel(x1)
+        out = self.ar(o1["x"])
+
+        probs = self.vap_head(out["x"]).softmax(dim=-1)
+        p_bins = self.objective.probs_bins(probs)
+        i0, i1 = self.BINS_P_NOW[0], self.BINS_P_NOW[-1]
+        j0, j1 = self.BINS_PFUTURE[0], self.BINS_PFUTURE[-1]
+
+        return {
+            "p_now": self.objective.probs_self_activity(probs, from_bin=i0, to_bin=i1),
+            "p_future": self.objective.probs_self_activity(probs, from_bin=j0, to_bin=j1),
+            "vad": self.va_classifier(out["x"]).sigmoid().squeeze(-1),
+            "p_bins": p_bins,
+            "p_bins_now": p_bins[:, :, i0 : i1 + 1].mean(dim=-1),
+            "p_bins_future": p_bins[:, :, j0 : j1 + 1].mean(dim=-1),
+        }

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from .config import VapConfig
 from ..encoder import build_audio_encoder
@@ -173,6 +173,22 @@ class BcDetGPT(nn.Module):
 
         return ret, new_cache
 
+    def forward_batch(self, x1: Tensor, x2: Tensor) -> Dict[str, Tensor]:
+        """Full-sequence forward without a KV cache (offline batch inference).
+
+        Computes the same values as ``forward(x1, x2, return_all_frames=True)``
+        but keeps them as tensors with a batch dimension.
+
+        Returns:
+            dict: ``p_bc_det`` of shape (B, T, 2).
+        """
+        o1 = self.ar_channel(x1)
+        o2 = self.ar_channel(x2)
+        out = self.ar(o1["x"], o2["x"])
+
+        bc = torch.cat((self.bc_classifier(out["x1"]), self.bc_classifier(out["x2"])), dim=-1)
+        return {"p_bc_det": bc.sigmoid()}
+
 
 class BcDetGPT_mono(BcDetGPT):
     """Single-channel (mono) variant of the BC detection model.
@@ -221,3 +237,9 @@ class BcDetGPT_mono(BcDetGPT):
         ret["p_bc_det"] = ret["p_bc_det"][0]
 
         return ret, new_cache
+
+    def forward_batch(self, x1: Tensor, x2: Tensor) -> Dict[str, Tensor]:
+        """Batch counterpart of :meth:`forward`: ``p_bc_det`` of shape (B, T) for channel 1."""
+        ret = super().forward_batch(x1, x2)
+        ret["p_bc_det"] = ret["p_bc_det"][..., 0]
+        return ret

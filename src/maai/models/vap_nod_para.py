@@ -436,3 +436,92 @@ class VapGPT_nod_para(nn.Module):
         ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache
+
+    def forward_batch(self, x1: Tensor, x2: Tensor) -> Dict[str, Tensor]:
+        """Full-sequence forward without a KV cache (offline batch inference).
+
+        Computes the same values as ``forward(x1, x2, return_all_frames=True)``
+        but keeps them as tensors with a batch dimension. ``x1`` / ``x2`` are
+        the raw encoder features in model order (the projections are applied
+        here, as in :meth:`forward`).
+
+        Returns:
+            dict: ``p_now``, ``p_future`` and ``vad`` of shape (B, T, 2) (in
+            the same channel order as :meth:`forward`), ``nod_repetitions`` of
+            shape (B, T, 3), ``nod_repetitions_pred`` and ``nod_swing_up_pred``
+            (int64) and the other values of shape (B, T).
+        """
+        if self.decrease_dimension is None:
+            raise RuntimeError("Call load_encoder before forward_batch.")
+
+        x1_raw, x2_raw = x1, x2
+        x1 = torch.relu(self.decrease_dimension(x1_raw))
+        x2 = torch.relu(self.decrease_dimension(x2_raw))
+        task_x1 = torch.relu(self.decrease_dimension_param(x1_raw))
+        task_x2 = torch.relu(self.decrease_dimension_param(x2_raw))
+
+        o1 = self.ar_channel(x1)
+        o2 = self.ar_channel(x2)
+        out = self.ar(o1["x"], o2["x"])
+        cross_out = out["x"]
+        if self.gpt_output_dropout is not None:
+            cross_out = self.gpt_output_dropout(cross_out)
+
+        p1 = self.ar_channel_param(task_x1)
+        p2 = self.ar_channel_param(task_x2)
+        tg_x = self.task_gpts["0"](p1["x"], p2["x"])["x"]
+        if self.task_gpt_output_dropout is not None:
+            tg_x = self.task_gpt_output_dropout(tg_x)
+
+        def _head_or_zeros(module: Optional[nn.Module], out_dim: int) -> Tensor:
+            if module is None:
+                return tg_x.new_zeros(*tg_x.shape[:-1], out_dim)
+            return module(tg_x)
+
+        nod_repetitions_out_dim = 1 if _NOD_REPETITIONS_BINARY == 1 else 3
+        nod_repetitions = _head_or_zeros(
+            self.nod_repetitions_head, nod_repetitions_out_dim
+        ).softmax(dim=-1)
+        nod_range = _head_or_zeros(self.nod_range_head, 1).squeeze(-1)
+        nod_speed = _head_or_zeros(self.nod_speed_head, 1).squeeze(-1)
+        nod_swing_up = _head_or_zeros(self.nod_swing_up_binary_head, 1).sigmoid().squeeze(-1)
+
+        # Same rule as _apply_repetitions_thresholds, vectorized over frames.
+        th = self.nod_repetitions_thresholds
+        t = torch.tensor(
+            [float(th.get("t0", 1.0)), float(th.get("t1", 1.0)), float(th.get("t2", 1.0))],
+            dtype=nod_repetitions.dtype,
+            device=nod_repetitions.device,
+        )
+        nod_repetitions_pred = torch.argmax(nod_repetitions / torch.clamp(t, min=1e-8), dim=-1)
+
+        probs = self.vap_head(cross_out).softmax(dim=-1)
+        p_now = self.objective.probs_next_speaker_aggregate(
+            probs, from_bin=self.BINS_P_NOW[0], to_bin=self.BINS_P_NOW[-1]
+        )
+        p_future = self.objective.probs_next_speaker_aggregate(
+            probs, from_bin=self.BINS_PFUTURE[0], to_bin=self.BINS_PFUTURE[1]
+        )
+        vad = torch.cat((self.va_classifier(out["x2"]), self.va_classifier(out["x1"])), dim=-1)
+
+        st = self.nod_param_stats
+        return {
+            "p_now": p_now.flip(-1),
+            "p_future": p_future.flip(-1),
+            "vad": vad.sigmoid(),
+            "p_bc": self.bc_head(cross_out).sigmoid().squeeze(-1),
+            "p_nod": self.nod_head(cross_out).sigmoid().squeeze(-1),
+            "nod_repetitions": nod_repetitions,
+            "nod_repetitions_pred": nod_repetitions_pred,
+            "nod_range": self.denormalize(
+                nod_range, float(st.get("range_mean", 0.0)), float(st.get("range_std", 1.0))
+            ),
+            "nod_speed": self.denormalize(
+                nod_speed, float(st.get("speed_mean", 0.0)), float(st.get("speed_std", 1.0))
+            ),
+            "nod_swing_up": nod_swing_up,
+            # Compare in float64 like forward() (python float vs threshold).
+            "nod_swing_up_pred": (
+                nod_swing_up.double() >= float(self.nod_swing_up_threshold)
+            ).long(),
+        }

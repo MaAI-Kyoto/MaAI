@@ -1,0 +1,3 @@
+# batch API
+
+::: maai.batch

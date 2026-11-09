@@ -152,6 +152,27 @@ maai = Maai(
 )
 ```
 
+### Batch Inference for Recorded Audio
+
+For audio that is already recorded, `MaaiBatch` scores whole recordings at
+once instead of frame by frame: the Mimi encoder runs over long chunks of
+several recordings in parallel, and each model's transformer runs over the
+whole sequence in one forward pass. The outputs match the realtime `Maai`
+frame by frame, as numpy arrays. Several models (`configs`) share one encoder
+pass. Both the Mimi models (`model_type="normal-ver2"`, the default) and the
+CPC models (`model_type="normal"`) are supported.
+
+```python
+from maai import MaaiBatch
+
+batch = MaaiBatch(mode="vap", lang="jp", device="cuda")
+result = batch.process(wav_ch1, wav_ch2)    # 16 kHz float32 arrays
+result["p_now"]      # (n_frames, 2)
+result["time_sec"]   # time of each prediction
+```
+
+- [MaaiBatch - Batch Inference for Recorded Audio](readme/batch.md)
+
 <br>
 
 ## 🎚️ Input / Output

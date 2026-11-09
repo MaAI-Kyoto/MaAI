@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 import torch.nn.functional as F
 
 from .config import VapConfig
@@ -196,3 +196,26 @@ class VapGPT_nod(nn.Module):
         ret = frames if return_all_frames else frames[-1]
 
         return ret, new_cache
+
+    def forward_batch(self, x1: Tensor, x2: Tensor) -> Dict[str, Tensor]:
+        """Full-sequence forward without a KV cache (offline batch inference).
+
+        Computes the same values as ``forward(x1, x2, return_all_frames=True)``
+        but keeps them as tensors with a batch dimension. ``x1`` / ``x2`` are
+        already in model order (see the channel swap in :meth:`encode_audio`).
+
+        Returns:
+            dict: ``p_bc``, ``p_nod_short``, ``p_nod_long`` and
+            ``p_nod_long_p`` of shape (B, T).
+        """
+        o1 = self.self_attention(x1)
+        o2 = self.self_attention(x2)
+        out = self.cross_attention(o1["x"], o2["x"])
+
+        nod = self.gt_head(out["x"]).softmax(dim=-1)
+        return {
+            "p_bc": self.bc_head(out["x"]).sigmoid().squeeze(-1),
+            "p_nod_short": nod[..., 1],
+            "p_nod_long": nod[..., 2],
+            "p_nod_long_p": nod[..., 3],
+        }
