@@ -324,12 +324,6 @@ class VapGPT_nod_para(nn.Module):
         if self.gpt_output_dropout is not None:
             cross_out = self.gpt_output_dropout(cross_out)
 
-        v1 = self.va_classifier(out["x1"])
-        v2 = self.va_classifier(out["x2"])
-        vad = torch.cat((v1, v2), dim=-1)
-        logits = self.vap_head(cross_out)
-        bc = self.bc_head(cross_out)
-        bc_detect = self.bc_detect_head(cross_out)
         nod_t = self.nod_head(cross_out)
 
         p1 = self.ar_channel_param(task_x1, past_kv=cache.get("arp1"))
@@ -383,18 +377,6 @@ class VapGPT_nod_para(nn.Module):
             "tg_pkv2c": (tg["past_k2_c"], tg["past_v2_c"]),
         }
 
-        probs = logits.softmax(dim=-1)
-        p_now = self.objective.probs_next_speaker_aggregate(
-            probs, from_bin=self.BINS_P_NOW[0], to_bin=self.BINS_P_NOW[-1]
-        )
-        p_future = self.objective.probs_next_speaker_aggregate(
-            probs, from_bin=self.BINS_PFUTURE[0], to_bin=self.BINS_PFUTURE[1]
-        )
-        p_now_all = p_now.to("cpu").tolist()[0]
-        p_future_all = p_future.to("cpu").tolist()[0]
-        vad1_all = v1.sigmoid().to("cpu").tolist()[0]
-        vad2_all = v2.sigmoid().to("cpu").tolist()[0]
-        p_bc_all = bc.sigmoid().to("cpu").tolist()[0]
         p_nod_all = nod_t.sigmoid().to("cpu").tolist()[0]
         nod_repetitions_all = nod_rep_logits.softmax(dim=-1).to("cpu").tolist()[0]
 
@@ -407,10 +389,6 @@ class VapGPT_nod_para(nn.Module):
             nod_repetitions = [float(value) for value in nod_repetitions_all[t]]
             nod_swing_up_prob = float(nod_swing_up_all[t][0])
             return {
-                "p_now": [p_now_all[t][1], p_now_all[t][0]],
-                "p_future": [p_future_all[t][1], p_future_all[t][0]],
-                "vad": [float(vad2_all[t][0]), float(vad1_all[t][0])],
-                "p_bc": float(p_bc_all[t][0]),
                 "p_nod": float(p_nod_all[t][0]),
                 "nod_repetitions": nod_repetitions,
                 "nod_repetitions_pred": self._apply_repetitions_thresholds(
@@ -446,10 +424,8 @@ class VapGPT_nod_para(nn.Module):
         here, as in :meth:`forward`).
 
         Returns:
-            dict: ``p_now``, ``p_future`` and ``vad`` of shape (B, T, 2) (in
-            the same channel order as :meth:`forward`), ``nod_repetitions`` of
-            shape (B, T, 3), ``nod_repetitions_pred`` and ``nod_swing_up_pred``
-            (int64) and the other values of shape (B, T).
+            dict: ``nod_repetitions`` of shape (B, T, 3), ``nod_repetitions_pred``
+            and ``nod_swing_up_pred`` (int64) and the other values of shape (B, T).
         """
         if self.decrease_dimension is None:
             raise RuntimeError("Call load_encoder before forward_batch.")
@@ -495,21 +471,8 @@ class VapGPT_nod_para(nn.Module):
         )
         nod_repetitions_pred = torch.argmax(nod_repetitions / torch.clamp(t, min=1e-8), dim=-1)
 
-        probs = self.vap_head(cross_out).softmax(dim=-1)
-        p_now = self.objective.probs_next_speaker_aggregate(
-            probs, from_bin=self.BINS_P_NOW[0], to_bin=self.BINS_P_NOW[-1]
-        )
-        p_future = self.objective.probs_next_speaker_aggregate(
-            probs, from_bin=self.BINS_PFUTURE[0], to_bin=self.BINS_PFUTURE[1]
-        )
-        vad = torch.cat((self.va_classifier(out["x2"]), self.va_classifier(out["x1"])), dim=-1)
-
         st = self.nod_param_stats
         return {
-            "p_now": p_now.flip(-1),
-            "p_future": p_future.flip(-1),
-            "vad": vad.sigmoid(),
-            "p_bc": self.bc_head(cross_out).sigmoid().squeeze(-1),
             "p_nod": self.nod_head(cross_out).sigmoid().squeeze(-1),
             "nod_repetitions": nod_repetitions,
             "nod_repetitions_pred": nod_repetitions_pred,

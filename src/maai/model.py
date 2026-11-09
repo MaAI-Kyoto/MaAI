@@ -948,7 +948,7 @@ class MaaiMultiple:
     CALC_PROCESS_TIME_INTERVAL = 100
 
     # Modes whose ``encode_audio`` swaps audio1/audio2 before model forward.
-    _SWAP_MODES = {"bc", "bc_2type", "nod", "nod_para"}
+    _SWAP_MODES = {"bc", "bc_2type", "nod", "nod_timing", "nod_para"}
 
     def __init__(
         self,
